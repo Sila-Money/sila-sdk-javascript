@@ -5,7 +5,8 @@
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.7.0",
-    "eslint": "^5.13.0"
+    "eslint": "^5.13.0",
+    "jshint": "^2.10.1"
   },
   "name": "sila-sdk",
   "version": "0.1.0",
