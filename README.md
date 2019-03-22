@@ -8,6 +8,8 @@
 
 That's it. You're ready to go!
 
+See the full documentation at [https://guide.silamoney.com/api/quick-start/node-sdk/documentation](https://guide.silamoney.com/api/quick-start/node-sdk/documentation)
+
 ### Testing
 
 Run unit tests and code coverage summary

@@ -2,17 +2,24 @@
   "scripts": {
     "build": "babel ./src -d ./lib",
     "lint": "eslint ./src",
-    "test": "nyc mocha --require babel-core/register"
+    "test": "nyc mocha --require babel-core/register",
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
+    "aws-param-store": "^2.1.0",
+    "aws-sdk": "^2.409.0",
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.7.0",
+    "cors": "^2.8.5",
     "eslint": "^5.13.0",
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-plugin-import": "^2.16.0",
     "jshint": "^2.10.1",
     "mocha": "^5.2.0",
-    "nyc": "^13.2.0"
+    "nyc": "^13.3.0",
+    "node-fetch": "^2.3.0",
+    "plaid": "^2.10.0",
+    "request-promise": "^4.2.2"
   },
   "nyc": {
     "reporter": [
@@ -21,22 +28,27 @@
     ]
   },
   "name": "sila-sdk",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "main": "index.js",
   "directories": {
     "lib": "lib"
   },
-  "dependencies": {},
+  "dependencies": {
+    "eth-crypto": "^1.3.2",
+    "request": "^2.88.0",
+    "uuid4": "^1.1.4",
+    "web3": "^1.0.0-beta.46"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Sila-Money/sila-sdk.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "MIT",
+  "keywords": ["sila", "ethereum", "ach", "payment"],
+  "author": "Sila, Inc",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/Sila-Money/sila-sdk/issues"
   },
   "homepage": "https://github.com/Sila-Money/sila-sdk#readme",
-  "description": ""
+  "description": "SDK Access to the Sila API"
 }
