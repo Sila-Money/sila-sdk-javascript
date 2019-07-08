@@ -395,7 +395,7 @@ exports.getAccounts = (handle, key) => {
   return promise;
 };
 
-exports.getTransactions = (handle, key) => {
+exports.getTransactions = (handle, key, filters = {}) => {
   const promise = new Promise((resolve, reject) => {
     template('header_msg')
       .then((temp) => {
@@ -403,6 +403,8 @@ exports.getTransactions = (handle, key) => {
 
         const message = setHeaders(temp, fullHandle);
         message.message = 'get_transactions_msg';
+
+        message.search_filters = filters;
 
         const opts = signOpts({
           uri: url('get_transactions'),

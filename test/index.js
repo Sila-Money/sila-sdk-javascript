@@ -13,11 +13,11 @@ import sila from '../src/index';
 // const plaid = require('plaid');
 // const plaidClient = new plaid.Client('Plaid Walkthrough Demo', )
 
-const web3 = new Web3('http://52.13.246.239:8080/');
+const web3 = new Web3('TESTNET ADDRESS GOES HERE');
 
 sila.configure({
-  key: '1AEE6A73F758ABAC123459F0F051C1629EFC9FFE9F0C1382FC035BE52891956AF16AC7DE08ABB49F41F0E2D94719940AD34DF4487940987A95AD154B54D60D8A',
-  handle: 'shamir.silamoney.eth',
+  key: 'REPLACE WITH A VALID KEY', // Add your private key here. USE ENV VARIABLE
+  handle: 'REPLACE WITH A VALID HANDLE', // Add your app handle here
 });
 
 const checkHandleTests = [
@@ -35,40 +35,13 @@ console.log(wallets);
 const salt = Math.random().toString(36).substring(7);
 
 const createEntityTests = [
+  // Add your tests here ...
   {
     input: {
-      first_name: 'SDK', last_name: 'Test_1', handle: `${salt}_test_1`, address: '34258 Iris Cir', city: 'Philomath', state: 'OR', zip: '97370', phone: '1234567890', email: 'test_1@silamoney.com', dob: '1983-09-28', ssn: '1234567890', crypto: wallets[0].address, private_key: wallets[0].privateKey,
+      first_name: 'First', last_name: 'Last', handle: `${salt}_test_1`, address: '123 Main St', city: 'Anytown', state: 'NY', zip: '12345', phone: '1234567890', email: 'test_1@silamoney.com', dob: '1990-01-01', ssn: '1234562222', crypto: wallets[0].address, private_key: wallets[0].privateKey,
     },
     expectedResult: 'SUCCESS',
     description: 'Valid registration test for test_1.silamoney.eth',
-  },
-  // {
-  //   input: {
-  //     first_name: 'SDK', last_name: 'Test_2', handle: `${salt}_test_2`, address: '34258 Iris Cir', city: 'Philomath', state: 'OR', zip: '97370', phone: '1234567890', email: 'test_2@silamoney.com', dob: '1983-09-28', ssn: '1234567890', crypto: wallets[0].address, private_key: wallets[0].privateKey,
-  //   },
-  //   expectedResult: 'FAILURE',
-  //   description: 'Attempted duplicate registration for test_2 with same Crypto Key as test_1',
-  // },
-  {
-    input: {
-      first_name: 'SDK', last_name: 'Test_2', handle: `${salt}_test_2`, address: '34258 Iris Cir', city: 'Philomath', state: 'Oregon', zip: '97370', phone: '1234567890', email: 'test_1@silamoney.com', dob: '1983-09-28', ssn: '1234567890', crypto: wallets[1].address, private_key: wallets[1].privateKey,
-    },
-    expectedResult: 'FAILURE',
-    description: 'Attempted to register with invalid State format',
-  },
-  {
-    input: {
-      first_name: 'SDK', last_name: 'Test_2', handle: `${salt}_test_2`, address: '34258 Iris Cir', city: 'Philomath', state: 'Oregon', zip: '97370', phone: '1234567890', ssn: '1234567890', email: 'test_1@silamoney.com', crypto: wallets[1].address, private_key: wallets[1].privateKey,
-    },
-    expectedResult: 'FAILURE',
-    description: 'Attempted to register without DOB',
-  },
-  {
-    input: {
-      first_name: 'SDK', last_name: 'Test_2', handle: `${salt}_test_2`, address: '34258 Iris Cir', city: 'Philomath', state: 'OR', zip: '97370', phone: '1234567890', email: 'test_1@silamoney.com', dob: '1983-09-28', ssn: '1234567890', crypto: wallets[1].address, private_key: wallets[1].privateKey,
-    },
-    expectedResult: 'SUCCESS',
-    description: 'Another valid registration for test_2',
   },
 ];
 
