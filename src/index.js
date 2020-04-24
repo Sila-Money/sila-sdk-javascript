@@ -1,8 +1,12 @@
+import crypto from 'eth-crypto';
+import request from 'request';
+import uuid4 from 'uuid4';
 import Web3 from 'web3';
 
-const uuid4 = require('uuid4');
-const request = require('request');
-const crypto = require('eth-crypto');
+import TransactionFilters from './models/transactionFilters';
+import User from './models/user';
+import Wallet from './models/wallet';
+import WalletFilters from './models/walletFilters';
 
 let appKey = null;
 let appHandle = null;
@@ -13,12 +17,14 @@ let logging = false;
 
 const web3 = new Web3('http://52.13.246.239:8080/');
 
-const url = path => baseUrl + path;
+const url = (path) => baseUrl + path;
+
 const getBalanceURL = () => {
   let balanceURL = '';
   switch (env) {
     case 'PROD':
-      balanceURL = (sandbox) ? 'https://sandbox.silatokenapi.silamoney.com/silaBalance'
+      balanceURL = sandbox
+        ? 'https://sandbox.silatokenapi.silamoney.com/silaBalance'
         : 'https://silatokenapi.silamoney.com/silaBalance';
       break;
     default:
@@ -26,17 +32,21 @@ const getBalanceURL = () => {
   }
   return balanceURL;
 };
-
-const sign = (string, key) => {
+/**
+ *
+ * @param {String} message The message to sign
+ * @param {*} key The key to sign the message with
+ */
+const sign = (message, key) => {
   if (!appKey || !key) {
     throw new Error('Unable to sign request: keys not set');
   }
-  const hash = crypto.hash.keccak256(string);
+  const hash = crypto.hash.keccak256(message);
   const signature = crypto.sign(key, hash);
 
   if (logging && env !== 'PROD') {
     console.log('*** MESSAGE STRING ***');
-    console.log(string);
+    console.log(message);
     console.log('*** HASH ***');
     console.log(hash);
     console.log('*** SIGNING WITH KEY ***');
@@ -56,57 +66,36 @@ const configureUrl = () => {
   }
 };
 
+/**
+ *
+ * @param {*} opts
+ * @param {*} key
+ */
 const signOpts = (opts, key) => {
   const options = opts;
-  options.headers = {};
-  options.headers.authsignature = sign(JSON.stringify(options.body), appKey);
-  options.headers.usersignature = sign(JSON.stringify(options.body), key);
+  if (opts.body.header) {
+    options.headers = {};
+    const bodyString = JSON.stringify(options.body);
+    options.headers.authsignature = sign(bodyString, appKey);
+    if (key) options.headers.usersignature = sign(bodyString, key);
+  }
   return options;
 };
 
+/**
+ *
+ * @param {Object} msg The header message
+ * @param {String} handle The user handle
+ */
 const setHeaders = (msg, handle) => {
   const message = msg;
   message.header.user_handle = handle;
   message.header.auth_handle = appHandle;
   message.header.reference = uuid4();
-  message.header.created = Math.round(new Date() / 1000);
+  message.header.created = Math.floor(Date.now() / 1000);
+  message.header.crypto = 'ETH';
+  message.header.version = '0.2';
   return message;
-};
-
-const template = (name) => {
-  const options = {
-    url: url('getschema?schema=MessageFactory'),
-    headers: {
-      'Content-Type': 'text/plain',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Max-Age': 3600,
-    },
-  };
-  return new Promise((res, rej) => {
-    request.get(options, (err, response, body) => {
-      if (response === undefined || response.statusCode !== 200) {
-        rej(new Error('Unable to get templates'));
-        return false;
-      }
-      if (err) {
-        rej(err);
-      }
-      const templates = JSON.parse(body);
-      let tmp = false;
-      for (let i = 0; i < templates.length; i += 1) {
-        if (name === templates[i].data.message) {
-          tmp = templates[i].data;
-          break;
-        }
-      }
-      if (!tmp) {
-        rej(new Error(`Unable to find "${name}" in the MessageFactory`));
-      } else {
-        res(tmp);
-      }
-      return null;
-    });
-  });
 };
 
 const post = (options) => {
@@ -119,12 +108,32 @@ const post = (options) => {
       if (err) {
         rej(err);
       }
-      res(body);
+      res({ statusCode: response.statusCode, data: body });
     });
   });
   return promise;
 };
 
+/**
+ *
+ * @param {String} path The path of the request
+ * @param {Object} body The body of the request
+ * @param {String} privateKey The user's private key
+ */
+const makeRequest = (path, body, privateKey = undefined) => {
+  let opts = {
+    uri: url(path),
+    json: true,
+    body,
+  };
+  opts = signOpts(opts, privateKey);
+  return post(opts);
+};
+
+/**
+ * Returns the handle with the .silamoney.eth suffix if not present
+ * @param {String} handle The handle
+ */
 const getFullHandle = (handle) => {
   let fullHandle = String(handle);
   if (!fullHandle.endsWith('.silamoney.eth')) {
@@ -133,343 +142,435 @@ const getFullHandle = (handle) => {
   return fullHandle;
 };
 
-exports.checkHandle = handle => new Promise((resolve, reject) => {
-  template('header_msg')
-    .then((temp) => {
-      const message = temp;
-      const fullHandle = getFullHandle(handle);
-      message.header.user_handle = fullHandle;
-      message.header.auth_handle = appHandle;
-      message.header.reference = uuid4();
-      message.header.created = Math.round(new Date() / 1000);
+/**
+ * Makes a call to /check_handle endpoint.
+ * @param {String} handle The user handle to check if it's available
+ */
+const checkHandle = (handle) => {
+  const fullHandle = getFullHandle(handle);
+  const message = setHeaders({ header: {} }, fullHandle);
+  message.message = 'header_msg';
 
-      const opts = {
-        uri: url('check_handle'),
-        json: true,
-        body: message,
-        headers: {
-          authsignature: sign(JSON.stringify(message), appKey),
-        },
-      };
-
-      post(opts)
-        .then(res => resolve(res))
-        .catch(err => reject(err));
-    })
-    .catch((err) => {
-      reject(err);
-    });
-});
-
-exports.register = (data) => {
-  const user = data;
-
-  const promise = new Promise((resolve, reject) => {
-    template('entity_msg')
-      .then((temp) => {
-        const message = temp;
-        const handle = getFullHandle(user.handle);
-
-        message.header.user_handle = handle;
-        message.header.auth_handle = appHandle;
-
-        message.address.city = user.city;
-        message.address.postal_code = user.zip;
-        message.address.state = user.state;
-        message.address.street_address_1 = user.address;
-
-        message.contact.phone = user.phone;
-        message.contact.email = user.email;
-
-        message.crypto_entry.crypto_address = user.crypto;
-
-        message.entity.birthdate = user.dob;
-        message.entity.first_name = user.first_name;
-        message.entity.last_name = user.last_name;
-        message.entity.entity_name = `${user.first_name} ${user.last_name}`;
-        message.entity.relationship = 'user';
-
-        message.identity.identity_value = user.ssn;
-
-        const opts = {
-          uri: url('register'),
-          json: true,
-          body: message,
-          headers: {
-            authsignature: sign(JSON.stringify(message), appKey),
-          },
-        };
-
-        post(opts)
-          .then(res2 => resolve(res2))
-          .catch(err => reject(err));
-      })
-      .catch((err) => {
-        reject(err);
-      });
-  });
-  return promise;
+  return makeRequest('check_handle', message);
 };
 
+/**
+ * Makes a call to /register endpoint.
+ * @param {User} user
+ */
+const register = (user) => {
+  const handle = getFullHandle(user.handle);
+  const message = setHeaders({ header: {} }, handle);
+  message.message = 'entity_msg';
 
-exports.requestKYC = (data, key) => {
-  const user = data;
+  message.address = {};
+  message.address.city = user.city;
+  message.address.postal_code = user.zip;
+  message.address.state = user.state;
+  message.address.street_address_1 = user.address;
+  message.address.address_alias = user.addresAlias;
+  message.address.country = 'US';
 
-  const promise = new Promise((resolve, reject) => {
-    template('header_msg')
-      .then((temp) => {
-        const message = temp;
-        const handle = getFullHandle(user.handle);
+  message.contact = {};
+  message.contact.contact_alias = user.contactAlias;
+  message.contact.phone = user.phone;
+  message.contact.email = user.email;
 
-        message.header.user_handle = handle;
-        message.header.auth_handle = appHandle;
+  message.crypto_entry = {};
+  message.crypto_entry.crypto_address = user.cryptoAddress;
+  message.crypto_entry.crypto_code = 'ETH';
+  message.crypto_entry.crypto_alias = user.cryptoAlias;
 
-        const opts = {
-          uri: url('request_kyc'),
-          json: true,
-          body: message,
-          headers: {
-            authsignature: sign(JSON.stringify(message), appKey),
-            usersignature: sign(JSON.stringify(message), key),
-          },
-        };
+  message.entity = {};
+  message.entity.birthdate = user.dateOfBirth;
+  message.entity.first_name = user.firstName;
+  message.entity.last_name = user.lastName;
+  message.entity.entity_name = `${user.firstName} ${user.lastName}`;
+  message.entity.relationship = 'user';
 
-        post(opts)
-          .then(res2 => resolve(res2))
-          .catch(err => reject(err));
-      })
-      .catch((err) => {
-        reject(err);
-      });
-  });
-  return promise;
+  message.identity = {};
+  message.identity.identity_value = user.ssn;
+  message.identity.identity_alias = 'SSN';
+
+  return makeRequest('register', message);
 };
 
-exports.checkKYC = (handle, key) => {
-  const promise = new Promise((resolve, reject) => {
-    template('header_msg')
-      .then((temp) => {
-        const fullHandle = getFullHandle(handle);
-        const message = setHeaders(temp, fullHandle);
+/**
+ * Makes a call to /request_kyc endpoint.
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ * @param {String} kycLevel The custom kyc level
+ */
+const requestKYC = (handle, privateKey, kycLevel = undefined) => {
+  const fullHandle = getFullHandle(handle);
+  const message = setHeaders({ header: {} }, fullHandle);
+  message.message = 'header_msg';
+  if (kycLevel) message.kyc_level = kycLevel;
 
-        const opts = signOpts({
-          uri: url('check_kyc'),
-          json: true,
-          body: message,
-        }, key);
-
-        post(opts)
-          .then(res => resolve(res))
-          .catch(err => reject(err));
-      })
-      .catch((err) => {
-        reject(err);
-      });
-  });
-  return promise;
+  return makeRequest('request_kyc', message, privateKey);
 };
 
-exports.linkAccount = (handle, key, publicToken) => {
-  const promise = new Promise((resolve, reject) => {
-    template('link_account_msg')
-      .then((temp) => {
-        const fullHandle = getFullHandle(handle);
-        const message = setHeaders(temp, fullHandle);
-        message.public_token = publicToken;
+/**
+ * Makes a call to /check_kyc endpoint.
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ */
+const checkKYC = (handle, privateKey) => {
+  const fullHandle = getFullHandle(handle);
+  const message = setHeaders({ header: {} }, fullHandle);
+  message.message = 'header_msg';
 
-        const opts = signOpts({
-          uri: url('link_account'),
-          json: true,
-          body: message,
-        }, key);
-
-        post(opts)
-          .then(res => resolve(res))
-          .catch(err => reject(err));
-      })
-      .catch((err) => {
-        reject(err);
-      });
-  });
-  return promise;
+  return makeRequest('check_kyc', message, privateKey);
 };
 
-exports.issueSila = (amount, handle, key) => {
-  const promise = new Promise((resolve, reject) => {
-    template('issue_msg')
-      .then((temp) => {
-        const fullHandle = getFullHandle(handle);
-        const message = setHeaders(temp, fullHandle);
-        message.amount = amount;
+/**
+ * Makes a call to /link_account endpoint.
+ * This method handles the direct account link flow
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ * @param {String} accountNumber The account number
+ * @param {String} routingNumber The routing number
+ * @param {String} accountName The account nickname
+ * @param {String} accountType The account type
+ */
+const linkAccountDirect = (
+  handle,
+  privateKey,
+  accountNumber,
+  routingNumber,
+  accountName = undefined,
+  accountType = undefined,
+) => {
+  const fullHandle = getFullHandle(handle);
+  const message = setHeaders({ header: {} }, fullHandle);
+  message.message = 'link_account_msg';
+  message.account_number = accountNumber;
+  message.routing_number = routingNumber;
+  if (accountType) message.account_type = accountType;
+  if (accountName) message.account_name = accountName;
 
-        const opts = signOpts({
-          uri: url('issue_sila'),
-          json: true,
-          body: message,
-        }, key);
-
-        post(opts)
-          .then(res => resolve(res))
-          .catch(err => reject(err));
-      })
-      .catch((err) => {
-        reject(err);
-      });
-  });
-  return promise;
+  return makeRequest('link_account', message, privateKey);
 };
 
-exports.redeemSila = (amount, handle, key) => {
-  const promise = new Promise((resolve, reject) => {
-    template('redeem_msg')
-      .then((temp) => {
-        const fullHandle = getFullHandle(handle);
-        const message = setHeaders(temp, fullHandle);
-        message.amount = amount;
+/**
+ * Makes a call to /link_account endpoint.
+ * This method handles the plaid's token flow.
+ * @param {String} handle The user hanlde
+ * @param {String} privateKey The user's wallet private key
+ * @param {String} publicToken Plaid's public token
+ * @param {String} accountName The account nickname
+ * @param {String} accountId The account id
+ */
+const linkAccount = (
+  handle,
+  privateKey,
+  publicToken,
+  accountName = undefined,
+  accountId = undefined,
+) => {
+  const fullHandle = getFullHandle(handle);
+  const message = setHeaders({ header: {} }, fullHandle);
+  message.message = 'link_account_msg';
+  message.public_token = publicToken;
+  if (accountId) message.account_id = accountId;
+  if (accountName) message.account_name = accountName;
 
-        const opts = signOpts({
-          uri: url('redeem_sila'),
-          json: true,
-          body: message,
-        }, key);
-
-        post(opts)
-          .then(res => resolve(res))
-          .catch(err => reject(err));
-      })
-      .catch((err) => {
-        reject(err);
-      });
-  });
-  return promise;
+  return makeRequest('link_account', message, privateKey);
 };
 
-exports.transferSila = (amount, handle, key, destination) => {
-  const promise = new Promise((resolve, reject) => {
-    template('transfer_msg')
-      .then((temp) => {
-        const fullHandle = getFullHandle(handle);
-        const fullDestination = getFullHandle(destination);
-        const message = setHeaders(temp, fullHandle);
-        message.amount = amount;
-        message.destination = fullDestination;
+/**
+ * Makes a call to /issue_sila endpoint.
+ * @param {Number} amount The amount of sila tokens to issue
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ * @param {String} accountName The nickname of the account to debit from. It defaults to 'default'.
+ */
+const issueSila = (amount, handle, privateKey, accountName = 'default') => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.amount = amount;
+  body.message = 'issue_msg';
+  body.account_name = accountName;
 
-        const opts = signOpts({
-          uri: url('transfer_sila'),
-          json: true,
-          body: message,
-        }, key);
-
-        post(opts)
-          .then(res => resolve(res))
-          .catch(err => reject(err));
-      })
-      .catch((err) => {
-        reject(err);
-      });
-  });
-  return promise;
+  return makeRequest('issue_sila', body, privateKey);
 };
 
-exports.getAccounts = (handle, key) => {
-  const promise = new Promise((resolve, reject) => {
-    template('get_accounts_msg')
-      .then((temp) => {
-        const fullHandle = getFullHandle(handle);
-        const message = setHeaders(temp, fullHandle);
+/**
+ * Makes a call to /redeem_sila endpoint.
+ * @param {Number} amount The amount of sila tokens to reedem
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ * @param {String} accountName The account nickname to credit with the tokens' value.
+ * It defaults to 'default'
+ */
+const redeemSila = (amount, handle, privateKey, accountName = 'default') => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.amount = amount;
+  body.account_name = accountName;
 
-        const opts = signOpts({
-          uri: url('get_accounts'),
-          json: true,
-          body: message,
-        }, key);
-
-        post(opts)
-          .then(res => resolve(res))
-          .catch(err => reject(err));
-      })
-      .catch((err) => {
-        reject(err);
-      });
-  });
-  return promise;
+  return makeRequest('redeem_sila', body, privateKey);
 };
 
-exports.getTransactions = (handle, key, filters = {}) => {
-  const promise = new Promise((resolve, reject) => {
-    template('header_msg')
-      .then((temp) => {
-        const fullHandle = getFullHandle(handle);
+/**
+ * Makes a call to /transfer_sila endpoint.
+ * @param {String} amount The amount of sila tokens to transfer
+ * @param {String} handle The origin user handle
+ * @param {String} privateKey The origin user's wallet private key
+ * @param {String} destinationHandle The destination user handle
+ * @param {String} walletNickname The destination user's wallet nickname
+ * @param {String} walletAddress The destination user's wallet address
+ */
+const transferSila = (
+  amount,
+  handle,
+  privateKey,
+  destinationHandle,
+  walletNickname = undefined,
+  walletAddress = undefined,
+) => {
+  const fullHandle = getFullHandle(handle);
+  const fullDestination = getFullHandle(destinationHandle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.amount = amount;
+  body.destination_handle = fullDestination;
+  if (walletNickname) body.destination_wallet = walletNickname;
+  if (walletAddress) body.destination_address = walletAddress;
 
-        const message = setHeaders(temp, fullHandle);
-        message.message = 'get_transactions_msg';
-
-        message.search_filters = filters;
-
-        const opts = signOpts({
-          uri: url('get_transactions'),
-          json: true,
-          body: message,
-        }, key);
-
-        post(opts)
-          .then(res => resolve(res))
-          .catch(err => reject(err));
-      })
-      .catch((err) => {
-        reject(err);
-      });
-  });
-  return promise;
+  return makeRequest('transfer_sila', body, privateKey);
 };
 
-exports.getBalance = (address) => {
-  const promise = new Promise((resolve, reject) => {
-    const message = { address };
+/**
+ * Makes a call to /get_accounts endpoint.
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ */
+const getAccounts = (handle, privateKey) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.message = 'get_accounts_msg';
 
-    const opts = {
-      uri: getBalanceURL(),
-      json: true,
-      body: message,
-    };
-
-    post(opts)
-      .then(res => resolve(res))
-      .catch(err => reject(err));
-  });
-  return promise;
+  return makeRequest('get_accounts', body, privateKey);
 };
 
-exports.addCrypto = (handle, key, address, alias) => {
-  const promise = new Promise((resolve, reject) => {
-    template('crypto_msg')
-      .then((temp) => {
-        const fullHandle = getFullHandle(handle);
-        const message = setHeaders(temp, fullHandle);
-        message.crypto_entry.crypto_alias = alias;
-        message.crypto_entry.crypto_address = address;
+/**
+ * Makes a call to /get_account_balance endpoint.
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ * @param {String} accountName The account name to retrieve the balance
+ */
+const getAccountBalance = (handle, privateKey, accountName) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.account_name = accountName;
 
-        const opts = signOpts({
-          uri: url('add_crypto'),
-          json: true,
-          body: message,
-        }, key);
-
-        post(opts)
-          .then(res => resolve(res))
-          .catch(err => reject(err));
-      })
-      .catch((err) => {
-        reject(err);
-      });
-  });
-  return promise;
+  return makeRequest('get_account_balance', body, privateKey);
 };
 
-exports.checkTransaction = id => id;
-exports.configure = (params) => { appKey = params.key; appHandle = params.handle; };
-exports.setEnvironment = (envString) => { env = envString.toUpperCase(); configureUrl(); console.log(`Setting environment to ${envString.toUpperCase()}: ${baseUrl}`); };
-exports.enableSandbox = () => { sandbox = true; configureUrl(); };
-exports.disableSandbox = () => { sandbox = false; configureUrl(); };
-exports.generateWallet = () => web3.eth.accounts.create();
-exports.setLogging = (log) => { logging = !!(log); };
+/**
+ * Makes a call to /plaid_sameday_auth endpoint.
+ * The account used in this endpoint must be in the microdeposit_pending_manual_verification status.
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ * @param {String} accountName The account nickname
+ */
+const plaidSamedayAuth = (handle, privateKey, accountName) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.account_name = accountName;
+  return makeRequest('plaid_sameday_auth', body, privateKey);
+};
+
+/**
+ * Makes a call to /register_wallet endpoint.
+ * If you need a new wallet you can use the generateWallet method.
+ * @param {String} handle The user handle
+ * @param {String} privateKey An already registered user's wallet private key
+ * @param {Wallet} wallet The new wallet
+ */
+const registerWallet = (handle, privateKey, wallet, nickname) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+
+  body.wallet_verification_signature = sign(wallet.address, wallet.privateKey);
+
+  body.wallet = {};
+  body.wallet.blockchain_address = wallet.address;
+  body.wallet.blockchain_network = 'ETH';
+  if (nickname) body.wallet.nickname = nickname;
+
+  return makeRequest('register_wallet', body, privateKey);
+};
+
+/**
+ * Makes a call to /get_wallets endpoint and returns the list of wallets that match the filters
+ * @param {String} handle The user handle
+ * @param {String} privateKey Any of the user's registered wallet's private key
+ * @param {WalletFilters} filters The filters used to narrow the search results
+ */
+const getWallets = (handle, privateKey, filters = undefined) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+
+  if (filters) body.search_filters = filters;
+
+  return makeRequest('get_wallets', body, privateKey);
+};
+
+/**
+ * Makes a call to /update_wallet endpoint.
+ * The wallet to update is the one used to sign the message.
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ * @param {Object} walletProperties The properties to update on the wallet
+ */
+const updateWallet = (handle, privateKey, walletProperties = {}) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+
+  if (walletProperties) {
+    if (walletProperties.nickname) body.nickname = walletProperties.nickname;
+    if (walletProperties.default) body.default = walletProperties.default;
+  }
+
+  return makeRequest('update_wallet', body, privateKey);
+};
+
+/**
+ * Makes a call to /get_wallet endpoint.
+ * The wallet to retrieve information is the one used to sign the message.
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ */
+const getWallet = (handle, privateKey) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+
+  return makeRequest('get_wallet', body, privateKey);
+};
+
+/**
+ * Makes a call to /delete_wallet endpoint.
+ * The wallet to delete is the one used to sign the message.
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ */
+const deleteWallet = (handle, privateKey) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+
+  return makeRequest('delete_wallet', body, privateKey);
+};
+
+/**
+ * Makes a call to /get_transactions endpoint.
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ * @param {TransactionFilters} filters The filters used to narrow the search results
+ */
+const getTransactions = (handle, privateKey, filters = {}) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+
+  body.message = 'get_transactions_msg';
+  body.search_filters = filters;
+
+  return makeRequest('get_transactions', body, privateKey);
+};
+
+/**
+ * Makes a call to /get_sila_balance endpoint.
+ * This method replaces getBalance.
+ * @param {String} address The wallet's blockchain address
+ */
+const getSilaBalance = (address) => {
+  const body = { address };
+
+  return makeRequest('get_sila_balance', body);
+};
+
+/**
+ * Makes a call to /silaBalance endpoint.
+ * @param {String} address The wallet's blockchain address
+ * @deprecated Since version 0.2.7. Use getSilaBalance instead.
+ */
+const getBalance = (address) => {
+  const body = { address };
+
+  const opts = {
+    uri: getBalanceURL(),
+    json: true,
+    body,
+  };
+
+  return post(opts);
+};
+
+/**
+ *
+ * @param {*} params The configuration parameters
+ */
+const configure = (params) => {
+  appKey = params.key;
+  appHandle = params.handle;
+};
+
+const setEnvironment = (envString) => {
+  env = envString.toUpperCase();
+  configureUrl();
+  console.log(`Setting environment to ${envString.toUpperCase()}: ${baseUrl}`);
+};
+
+const enableSandbox = () => {
+  sandbox = true;
+  configureUrl();
+};
+
+const disableSandbox = () => {
+  sandbox = false;
+  configureUrl();
+};
+
+/**
+ * @returns {Wallet} A new ETH wallet
+ */
+const generateWallet = () => {
+  const wallet = web3.eth.accounts.create();
+  return new Wallet(wallet.address, wallet.privateKey);
+};
+
+const setLogging = (log) => {
+  logging = !!log;
+};
+
+export default {
+  checkHandle,
+  checkKYC,
+  configure,
+  deleteWallet,
+  disableSandbox,
+  enableSandbox,
+  generateWallet,
+  getAccountBalance,
+  getAccounts,
+  getBalance,
+  getSilaBalance,
+  getTransactions,
+  getWallet,
+  getWallets,
+  issueSila,
+  linkAccount,
+  linkAccountDirect,
+  plaidSamedayAuth,
+  redeemSila,
+  register,
+  registerWallet,
+  requestKYC,
+  setEnvironment,
+  setLogging,
+  TransactionFilters,
+  transferSila,
+  updateWallet,
+  User,
+  WalletFilters,
+};
