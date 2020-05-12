@@ -2,20 +2,20 @@
 
 ## Installation
 
-> npm i sila-sdk
+> npm i @silamoney/sila-sdk
 
 ## Import the package
 
 ### Common JS syntax
 
 ```javascript
-const Sila = require('sila-sdk').default;
+const Sila = require('@silamoney/sila-sdk').default;
 ```
 
 ### ES6 module syntax
 
 ```javascript
-import Sila from 'sila-sdk';
+import Sila from '@silamoney/sila-sdk';
 ```
 
 ## Initialize the application
@@ -452,6 +452,11 @@ console.log(res.data.changes); // An array of the changes made to the wallet
 ### Delete Wallet
 
 Removes the wallet from the provided user handle. Any deleted wallets can't be readded.
+
+#### IMPORTANT NOTE:
+
+You **must** sign this request with the Private Key associated with the wallet
+that you want to delete. This is how you specify _which_ wallet to remove.
 
 ```javascript
 const res = await Sila.deleteWallet(userHandle, walletPrivateKey);
