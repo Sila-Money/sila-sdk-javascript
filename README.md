@@ -2,20 +2,20 @@
 
 ## Installation
 
-> npm i @silamoney/sila-sdk
+> npm i sila-sdk
 
 ## Import the package
 
 ### Common JS syntax
 
 ```javascript
-const Sila = require('@silamoney/sila-sdk').default;
+const Sila = require('sila-sdk').default;
 ```
 
 ### ES6 module syntax
 
 ```javascript
-import Sila from '@silamoney/sila-sdk';
+import Sila from 'sila-sdk';
 ```
 
 ## Initialize the application

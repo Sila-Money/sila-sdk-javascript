@@ -35,7 +35,7 @@
       "text"
     ]
   },
-  "name": "@silamoney/sila-sdk",
+  "name": "sila-sdk",
   "version": "0.2.7-rc.0",
   "main": "lib/index.js",
   "directories": {
