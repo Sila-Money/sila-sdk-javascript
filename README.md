@@ -226,7 +226,14 @@ const res = await Sila.issueSila(
   userHandle,
   walletPrivateKey,
   accountName,
-); // Account Name is optional but defaults to 'default'.
+  descriptor,
+  businessUuid,
+);
+/*
+Account Name is optional but defaults to 'default'.
+Descriptor is optional and sets the transaction description
+BusinessUuid is optional and sets the ACH Name of the transaction
+*/
 ```
 
 #### Success Response Object
@@ -250,7 +257,14 @@ const res = await Sila.transferSila(
   destinationHanle,
   walletNickname,
   walletAddress,
-); // Wallet Nickname and Wallet Address are not required. Both must be owned by the Destination Handle.
+  descriptor,
+  businessUuid,
+);
+/*
+Wallet Nickname and Wallet Address are not required. Both must be owned by the Destination Handle.
+Descriptor is optional and sets the transaction description
+BusinessUuid is optional and sets the ACH Name of the transaction
+*/
 ```
 
 #### Success Response Object
@@ -272,7 +286,14 @@ const res = await Sila.redeemSila(
   userHandle,
   walletPrivateKey,
   accountName,
-); // Account Name is optional but defaults to 'default'.
+  descriptor,
+  businessUuid,
+);
+/*
+Account Name is optional but defaults to 'default'.
+Descriptor is optional and sets the transaction description
+BusinessUuid is optional and sets the ACH Name of the transaction
+*/
 ```
 
 #### Success Response Object
