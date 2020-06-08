@@ -243,6 +243,8 @@ console.log(res.statusCode); // 200
 console.log(res.data.reference); // Random reference number
 console.log(res.data.status); // SUCCESS
 console.log(res.data.message); // Transaction submitted to processing queue
+console.log(res.data.descriptor); // The transaction description set by you or blank if not set
+console.log(res.data.transaction_id); // The transaction id
 ```
 
 ### Transfer Sila
@@ -274,6 +276,9 @@ console.log(res.statusCode); // 200
 console.log(res.data.reference); // Random reference number
 console.log(res.data.status); // SUCCESS
 console.log(res.data.message); // Transaction submitted to processing queue
+console.log(res.data.destination_address); // The destination wallet address
+console.log(res.data.descriptor); // The transaction description set by you or blank if not set
+console.log(res.data.transaction_id); // The transaction id
 ```
 
 ### Redeem Sila
@@ -303,6 +308,8 @@ console.log(res.statusCode); // 200
 console.log(res.data.reference); // Random reference number
 console.log(res.data.status); // SUCCESS
 console.log(res.data.message); // Transaction submitted to processing queue
+console.log(res.data.descriptor); // The transaction description set by you or blank if not set
+console.log(res.data.transaction_id); // The transaction id
 ```
 
 ### Get Transactions

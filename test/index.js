@@ -815,7 +815,7 @@ describe('Check Handle', function () {
     it(sample.description, async () => {
       try {
         const res = await sila.checkHandle(sample.input);
-
+        
         assert.equal(res.statusCode, sample.statusCode);
         assert.equal(res.data.status, sample.expectedResult);
       } catch (err) {
@@ -1132,6 +1132,8 @@ describe('Issue Sila', function () {
         assert.equal(res.statusCode, test.statusCode);
         assert.equal(res.data.status, test.expectedResult);
         assert.match(res.data.message, test.messageRegex);
+        if (res.data.status === 'SUCCESS')
+          assert.isString(res.data.transaction_id);
         if (test.descriptor && res.data.descriptor)
           assert.equal(res.data.descriptor, test.descriptor);
       } catch (err) {
@@ -1169,6 +1171,10 @@ describe('Transfer Sila', function () {
         assert.equal(res.statusCode, test.statusCode);
         assert.equal(res.data.status, test.expectedResult);
         assert.match(res.data.message, test.messageRegex);
+        if (res.data.status === 'SUCCESS') {
+          assert.isString(res.data.transaction_id);
+          assert.isString(res.data.destination_address);
+        }
         if (test.descriptor && res.data.descriptor)
           assert.equal(res.data.descriptor, test.descriptor);
       } catch (e) {
@@ -1236,6 +1242,8 @@ describe('Redeem Sila', function () {
         assert.equal(res.statusCode, test.statusCode);
         assert.equal(res.data.status, test.expectedResult);
         assert.match(res.data.message, test.messageRegex);
+        if (res.data.status === 'SUCCESS')
+          assert.isString(res.data.transaction_id);
         if (test.descriptor && res.data.descriptor)
           assert.equal(res.data.descriptor, test.descriptor);
       } catch (e) {
