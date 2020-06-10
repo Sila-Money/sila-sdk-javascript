@@ -226,7 +226,14 @@ const res = await Sila.issueSila(
   userHandle,
   walletPrivateKey,
   accountName,
-); // Account Name is optional but defaults to 'default'.
+  descriptor,
+  businessUuid,
+);
+/*
+Account Name is optional but defaults to 'default'.
+Descriptor is optional and sets the transaction description
+BusinessUuid is optional and sets the ACH Name of the transaction
+*/
 ```
 
 #### Success Response Object
@@ -236,6 +243,8 @@ console.log(res.statusCode); // 200
 console.log(res.data.reference); // Random reference number
 console.log(res.data.status); // SUCCESS
 console.log(res.data.message); // Transaction submitted to processing queue
+console.log(res.data.descriptor); // The transaction description set by you or blank if not set
+console.log(res.data.transaction_id); // The transaction id
 ```
 
 ### Transfer Sila
@@ -250,7 +259,14 @@ const res = await Sila.transferSila(
   destinationHanle,
   walletNickname,
   walletAddress,
-); // Wallet Nickname and Wallet Address are not required. Both must be owned by the Destination Handle.
+  descriptor,
+  businessUuid,
+);
+/*
+Wallet Nickname and Wallet Address are not required. Both must be owned by the Destination Handle.
+Descriptor is optional and sets the transaction description
+BusinessUuid is optional and sets the ACH Name of the transaction
+*/
 ```
 
 #### Success Response Object
@@ -260,6 +276,9 @@ console.log(res.statusCode); // 200
 console.log(res.data.reference); // Random reference number
 console.log(res.data.status); // SUCCESS
 console.log(res.data.message); // Transaction submitted to processing queue
+console.log(res.data.destination_address); // The destination wallet address
+console.log(res.data.descriptor); // The transaction description set by you or blank if not set
+console.log(res.data.transaction_id); // The transaction id
 ```
 
 ### Redeem Sila
@@ -272,7 +291,14 @@ const res = await Sila.redeemSila(
   userHandle,
   walletPrivateKey,
   accountName,
-); // Account Name is optional but defaults to 'default'.
+  descriptor,
+  businessUuid,
+);
+/*
+Account Name is optional but defaults to 'default'.
+Descriptor is optional and sets the transaction description
+BusinessUuid is optional and sets the ACH Name of the transaction
+*/
 ```
 
 #### Success Response Object
@@ -282,6 +308,8 @@ console.log(res.statusCode); // 200
 console.log(res.data.reference); // Random reference number
 console.log(res.data.status); // SUCCESS
 console.log(res.data.message); // Transaction submitted to processing queue
+console.log(res.data.descriptor); // The transaction description set by you or blank if not set
+console.log(res.data.transaction_id); // The transaction id
 ```
 
 ### Get Transactions

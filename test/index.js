@@ -101,6 +101,14 @@ const plaidToken = () => {
   return promise;
 };
 
+const validBusinessUuid = '9f280665-629f-45bf-a694-133c86bffd5e';
+const invalidBusinessUuid = '6d933c10-fa89-41ab-b443-2e78a7cc8cac';
+const issueTransactionDescriptor = 'Issue Trans';
+const transferDescriptor = 'Transfer Trans';
+const redeemDescriptor = 'Redeem Trans';
+const achRegexString = `${invalidBusinessUuid} does not have an approved ACH display name`;
+const achRegex = new RegExp(achRegexString);
+
 const checkHandleTests = [
   {
     input: handles[0],
@@ -499,6 +507,28 @@ const issueSilaTests = [
     description: `${handles[2]} should fail issue sila tokens`,
     messageRegex: /not ID verified/,
   },
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    amount: 100,
+    statusCode: 200,
+    descriptor: issueTransactionDescriptor,
+    businessUuid: validBusinessUuid,
+    expectedResult: 'SUCCESS',
+    description: `${handles[0]} should issue sila tokens successfully with business uuid and descriptor`,
+    messageRegex: /submitted to processing queue/,
+  },
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    amount: 100,
+    statusCode: 400,
+    descriptor: issueTransactionDescriptor,
+    businessUuid: invalidBusinessUuid,
+    expectedResult: 'FAILURE',
+    description: `${handles[0]} should fail issue sila tokens with invalid business uuid and descriptor`,
+    messageRegex: achRegex,
+  },
 ];
 
 /**
@@ -635,6 +665,30 @@ const transferSilaTests = [
     expectedResult: 'SUCCESS',
     messageRegex: /Transaction submitted to processing queue/,
   },
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    destinationHanle: handles[1],
+    amount: 100,
+    descriptor: transferDescriptor,
+    businessUuid: validBusinessUuid,
+    description: `${handles[0]} should transfer to ${handles[1]} with business uuid and descriptor`,
+    statusCode: 200,
+    expectedResult: 'SUCCESS',
+    messageRegex: /Transaction submitted to processing queue/,
+  },
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    destinationHanle: handles[1],
+    amount: 100,
+    descriptor: transferDescriptor,
+    businessUuid: invalidBusinessUuid,
+    description: `${handles[0]} should fail transfer to ${handles[1]} with invalid business uuid and descriptor`,
+    statusCode: 400,
+    expectedResult: 'FAILURE',
+    messageRegex: achRegex,
+  },
 ];
 
 const pollTransferTests = [
@@ -698,6 +752,28 @@ const redeemSilaTests = [
     expectedResult: 'SUCCESS',
     messageRegex: /Transaction submitted to processing queue/,
   },
+  {
+    handle: handles[1],
+    key: wallets[1].privateKey,
+    amount: 100,
+    descriptor: redeemDescriptor,
+    businessUuid: validBusinessUuid,
+    description: `${handles[1]} should redeem sila with business uuid and descriptor`,
+    statusCode: 200,
+    expectedResult: 'SUCCESS',
+    messageRegex: /Transaction submitted to processing queue/,
+  },
+  {
+    handle: handles[1],
+    key: wallets[1].privateKey,
+    amount: 100,
+    descriptor: redeemDescriptor,
+    businessUuid: invalidBusinessUuid,
+    description: `${handles[1]} should fail redeem sila with invalid business uuid and descriptors`,
+    statusCode: 400,
+    expectedResult: 'FAILURE',
+    messageRegex: achRegex,
+  },
 ];
 
 const pollRedeemTests = [
@@ -739,7 +815,7 @@ describe('Check Handle', function () {
     it(sample.description, async () => {
       try {
         const res = await sila.checkHandle(sample.input);
-
+        
         assert.equal(res.statusCode, sample.statusCode);
         assert.equal(res.data.status, sample.expectedResult);
       } catch (err) {
@@ -1044,11 +1120,22 @@ describe('Issue Sila', function () {
   issueSilaTests.forEach((test) => {
     it(test.description, async () => {
       try {
-        const res = await sila.issueSila(test.amount, test.handle, test.key);
+        const res = await sila.issueSila(
+          test.amount,
+          test.handle,
+          test.key,
+          undefined,
+          test.descriptor,
+          test.businessUuid,
+        );
         issueReferences.push(res.data.reference);
         assert.equal(res.statusCode, test.statusCode);
         assert.equal(res.data.status, test.expectedResult);
         assert.match(res.data.message, test.messageRegex);
+        if (res.data.status === 'SUCCESS')
+          assert.isString(res.data.transaction_id);
+        if (test.descriptor && res.data.descriptor)
+          assert.equal(res.data.descriptor, test.descriptor);
       } catch (err) {
         assert.fail(err);
       }
@@ -1077,11 +1164,19 @@ describe('Transfer Sila', function () {
           test.destinationHanle,
           test.walletNickname,
           test.walletAddress,
+          test.descriptor,
+          test.businessUuid,
         );
         transferReferences.push(res.data.reference);
         assert.equal(res.statusCode, test.statusCode);
         assert.equal(res.data.status, test.expectedResult);
         assert.match(res.data.message, test.messageRegex);
+        if (res.data.status === 'SUCCESS') {
+          assert.isString(res.data.transaction_id);
+          assert.isString(res.data.destination_address);
+        }
+        if (test.descriptor && res.data.descriptor)
+          assert.equal(res.data.descriptor, test.descriptor);
       } catch (e) {
         assert.fail(e);
       }
@@ -1135,11 +1230,22 @@ describe('Redeem Sila', function () {
   redeemSilaTests.forEach((test) => {
     it(test.description, async () => {
       try {
-        const res = await sila.redeemSila(test.amount, test.handle, test.key);
+        const res = await sila.redeemSila(
+          test.amount,
+          test.handle,
+          test.key,
+          undefined,
+          test.descriptor,
+          test.businessUuid,
+        );
         redeemReferences.push(res.data.reference);
         assert.equal(res.statusCode, test.statusCode);
         assert.equal(res.data.status, test.expectedResult);
         assert.match(res.data.message, test.messageRegex);
+        if (res.data.status === 'SUCCESS')
+          assert.isString(res.data.transaction_id);
+        if (test.descriptor && res.data.descriptor)
+          assert.equal(res.data.descriptor, test.descriptor);
       } catch (e) {
         assert.fail(e);
       }
@@ -1148,7 +1254,7 @@ describe('Redeem Sila', function () {
 });
 
 describe('Poll Redeem Sila', function () {
-  this.timeout(300000);
+  this.timeout(480000);
   pollRedeemTests.forEach((test) => {
     it(test.description, async () => {
       await pollGetTransactionsTest(test, redeemReferences);

@@ -283,14 +283,25 @@ const linkAccount = (
  * @param {Number} amount The amount of sila tokens to issue
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
- * @param {String} accountName The nickname of the account to debit from. It defaults to 'default'.
+ * @param {String} accountName The nickname of the account to debit from. It defaults to 'default' (optional).
+ * @param {String} descriptor The transaction descriptor (optional).
+ * @param {String} businessUuid The UUID of the business for the ACH name (optional)
  */
-const issueSila = (amount, handle, privateKey, accountName = 'default') => {
+const issueSila = (
+  amount,
+  handle,
+  privateKey,
+  accountName = 'default',
+  descriptor = undefined,
+  businessUuid = undefined,
+) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
   body.amount = amount;
   body.message = 'issue_msg';
   body.account_name = accountName;
+  if (descriptor) body.descriptor = descriptor;
+  if (businessUuid) body.business_uuid = businessUuid;
 
   return makeRequest('issue_sila', body, privateKey);
 };
@@ -301,13 +312,24 @@ const issueSila = (amount, handle, privateKey, accountName = 'default') => {
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
  * @param {String} accountName The account nickname to credit with the tokens' value.
- * It defaults to 'default'
+ * @param {String} descriptor The transaction descriptor (optional)
+ * @param {String} businessUuid The UUID of the business for the ACH name (optional)
  */
-const redeemSila = (amount, handle, privateKey, accountName = 'default') => {
+const redeemSila = (
+  amount,
+  handle,
+  privateKey,
+  accountName = 'default',
+  descriptor = undefined,
+  businessUuid = undefined,
+) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
   body.amount = amount;
+  body.message = 'redeem_msg';
   body.account_name = accountName;
+  if (descriptor) body.descriptor = descriptor;
+  if (businessUuid) body.business_uuid = businessUuid;
 
   return makeRequest('redeem_sila', body, privateKey);
 };
@@ -318,8 +340,10 @@ const redeemSila = (amount, handle, privateKey, accountName = 'default') => {
  * @param {String} handle The origin user handle
  * @param {String} privateKey The origin user's wallet private key
  * @param {String} destinationHandle The destination user handle
- * @param {String} walletNickname The destination user's wallet nickname
- * @param {String} walletAddress The destination user's wallet address
+ * @param {String} walletNickname The destination user's wallet nickname (optional)
+ * @param {String} walletAddress The destination user's wallet address (optional)
+ * @param {String} descriptor The transaction descriptor (optional)
+ * @param {String} businessUuid The UUID of the business for the ACH name (optional)
  */
 const transferSila = (
   amount,
@@ -328,6 +352,8 @@ const transferSila = (
   destinationHandle,
   walletNickname = undefined,
   walletAddress = undefined,
+  descriptor = undefined,
+  businessUuid = undefined,
 ) => {
   const fullHandle = getFullHandle(handle);
   const fullDestination = getFullHandle(destinationHandle);
@@ -336,6 +362,8 @@ const transferSila = (
   body.destination_handle = fullDestination;
   if (walletNickname) body.destination_wallet = walletNickname;
   if (walletAddress) body.destination_address = walletAddress;
+  if (descriptor) body.descriptor = descriptor;
+  if (businessUuid) body.business_uuid = businessUuid;
 
   return makeRequest('transfer_sila', body, privateKey);
 };

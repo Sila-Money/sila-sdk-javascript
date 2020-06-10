@@ -3,23 +3,23 @@ class User {
     /**
      * @type {String}
      */
-    this.handle;
+    this.handle = undefined;
     /**
      * @type {String}
      */
-    this.city;
+    this.city = undefined;
     /**
      * @type {String}
      */
-    this.zip;
+    this.zip = undefined;
     /**
      * @type {String}
      */
-    this.state;
+    this.state = undefined;
     /**
      * @type {String}
      */
-    this.address;
+    this.address = undefined;
     /**
      * @type {String}
      */
@@ -27,11 +27,11 @@ class User {
     /**
      * @type {String}
      */
-    this.phone;
+    this.phone = undefined;
     /**
      * @type {String}
      */
-    this.email;
+    this.email = undefined;
     /**
      * @type {String}
      */
@@ -40,7 +40,7 @@ class User {
      * The blockchain address
      * @type {String}
      */
-    this.cryptoAddress;
+    this.cryptoAddress = undefined;
     /**
      * @type {String}
      */
@@ -48,19 +48,19 @@ class User {
     /**
      * @type {String}
      */
-    this.dateOfBirth;
+    this.dateOfBirth = undefined;
     /**
      * @type {String}
      */
-    this.firstName;
+    this.firstName = undefined;
     /**
      * @type {String}
      */
-    this.lastName;
+    this.lastName = undefined;
     /**
      * @type {String}
      */
-    this.ssn;
+    this.ssn = undefined;
   }
 }
 
