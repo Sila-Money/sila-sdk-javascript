@@ -13,10 +13,8 @@ strategy:
   matrix:
     node10:
       nodeVersion: '10.x'
-      publishTestResults: false
     node12:
       nodeVersion: '12.x'
-      publishTestResults: true
 
 steps:
 - task: NodeTool@0
@@ -37,4 +35,4 @@ steps:
     testResultsFormat: 'JUnit'
     testResultsFiles: 'coverage/test-*.xml'
   displayName: 'Publish test results'
-  condition: and(succeeded(), eq(variables['publishTestResults'], true))
+  condition: succeededOrFailed()
