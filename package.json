@@ -34,7 +34,8 @@
   "nyc": {
     "reporter": [
       "lcov",
-      "text"
+      "text",
+      "cobertura"
     ]
   },
   "name": "sila-sdk",
