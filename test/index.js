@@ -811,13 +811,44 @@ const plaidSamedayAuthTests = [
 
 describe('Get Business Types', function () {
   this.timeout(300000);
-  it('Successfully retreived business types', async () => {
+  it('Successfully retreive business types', async () => {
     try {
       const res = await sila.getBusinessTypes();
 
       assert.equal(res.statusCode, 200);
       assert.equal(res.data.success, true);
       assert(res.data.business_types.length > 0);
+    } catch (err) {
+      assert.fail(err);
+    }
+  });
+})
+
+describe('Get Business Roles', function () {
+  this.timeout(300000);
+  it('Successfully retreive business roles', async () => {
+    try {
+      const res = await sila.getBusinessTypes();
+
+      assert.equal(res.statusCode, 200);
+      assert.equal(res.data.success, true);
+      assert(res.data.business_types.length > 0);
+    } catch (err) {
+      assert.fail(err);
+    }
+  });
+})
+
+describe('Get Naics Categories', function () {
+  this.timeout(300000);
+  it('Successfully retreive naics categories', async () => {
+    try {
+      const res = await sila.getNacisCategories();
+
+      assert.equal(res.statusCode, 200);
+      assert.equal(res.data.success, true);
+      assert(res.data.naics_categories['Accommodation and Food Services']);
+      assert(res.data.naics_categories['Accommodation and Food Services'][0].code);
     } catch (err) {
       assert.fail(err);
     }

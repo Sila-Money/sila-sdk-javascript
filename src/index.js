@@ -540,6 +540,18 @@ const getBusinessTypes = () => {
   return makeRequest('get_business_types', body);
 };
 
+const getBusinessRoles = () => {
+  const body = setHeaders({ header: {} });
+
+  return makeRequest('get_business_roles', body);
+};
+
+const getNacisCategories = () => {
+  const body = setHeaders({ header: {} });
+
+  return makeRequest('get_naics_categories', body);
+};
+
 /**
  *
  * @param {*} params The configuration parameters
@@ -607,5 +619,7 @@ export default {
   updateWallet,
   User,
   WalletFilters,
-  getBusinessTypes
+  getBusinessTypes,
+  getBusinessRoles,
+  getNacisCategories
 };
