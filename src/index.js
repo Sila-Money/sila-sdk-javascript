@@ -185,12 +185,17 @@ const register = (user) => {
   message.entity.birthdate = user.dateOfBirth;
   message.entity.first_name = user.firstName;
   message.entity.last_name = user.lastName;
-  message.entity.entity_name = `${user.firstName} ${user.lastName}`;
+  message.entity.entity_name = user.entity_name ? user.entity_name : `${user.firstName} ${user.lastName}`;
   message.entity.relationship = 'user';
+  message.entity.type = user.business_type ? 'business' : 'individual';
+  message.entity.business_type = user.business_type;
+  message.entity.business_website = user.business_website;
+  message.entity.doing_business_as = user.doing_business_as;
+  message.entity.naics_code = user.naics_code;
 
   message.identity = {};
-  message.identity.identity_value = user.ssn;
-  message.identity.identity_alias = 'SSN';
+  message.identity.identity_value = user.ssn ? user.ssn : user.ein;
+  message.identity.identity_alias = user.ssn ? 'SSN' : 'EIN';
 
   return makeRequest('register', message);
 };

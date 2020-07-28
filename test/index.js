@@ -24,11 +24,13 @@ const wallets = [
   sila.generateWallet(),
   sila.generateWallet(),
   sila.generateWallet(),
+  sila.generateWallet(),
 ];
 
 console.log(wallets);
 
 const handles = [
+  `nodeSDK-${uuid4()}`,
   `nodeSDK-${uuid4()}`,
   `nodeSDK-${uuid4()}`,
   `nodeSDK-${uuid4()}`,
@@ -63,11 +65,23 @@ fourthUser.firstName = 'Fourth';
 fourthUser.email = 'test_3@silamoney.com';
 fourthUser.cryptoAddress = wallets[4].address;
 
+const businessUser = Object.assign({}, firstUser);
+businessUser.entity_name = 'test business';
+businessUser.ssn = undefined;
+businessUser.ein = '320567252';
+businessUser.email = 'test_4@silamoney.com';
+businessUser.cryptoAddress = wallets[5].address;
+businessUser.business_type = 'corporation';
+businessUser.business_website = 'https://www.yourbusinesscustomer.com';
+businessUser.doing_business_as = 'doing business co';
+businessUser.naics_code = 721;
+
 [
   firstUser.handle,
   secondUser.handle,
   thirdUser.handle,
   fourthUser.handle,
+  businessUser.handle
 ] = handles;
 
 const plaidToken = () => {
@@ -166,6 +180,12 @@ const createEntityTests = [
     expectedResult: 'SUCCESS',
     statusCode: 200,
     description: `Valid registration test for ${handles[3]}.silamoney.eth`,
+  },
+  {
+    input: businessUser,
+    expectedResult: 'SUCCESS',
+    statusCode: 200,
+    description: `Valid registration test for ${handles[4]}.silamoney.eth`,
   },
 ];
 
