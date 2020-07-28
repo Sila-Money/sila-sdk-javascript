@@ -534,6 +534,12 @@ const getBalance = (address) => {
   return post(opts);
 };
 
+const getBusinessTypes = () => {
+  const body = setHeaders({ header: {} });
+
+  return makeRequest('get_business_types', body);
+};
+
 /**
  *
  * @param {*} params The configuration parameters
@@ -601,4 +607,5 @@ export default {
   updateWallet,
   User,
   WalletFilters,
+  getBusinessTypes
 };

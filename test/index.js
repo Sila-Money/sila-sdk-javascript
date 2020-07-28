@@ -809,13 +809,28 @@ const plaidSamedayAuthTests = [
   },
 ];
 
+describe('Get Business Types', function () {
+  this.timeout(300000);
+  it('Successfully retreived business types', async () => {
+    try {
+      const res = await sila.getBusinessTypes();
+
+      assert.equal(res.statusCode, 200);
+      assert.equal(res.data.success, true);
+      assert(res.data.business_types.length > 0);
+    } catch (err) {
+      assert.fail(err);
+    }
+  });
+})
+
 describe('Check Handle', function () {
   this.timeout(300000);
   checkHandleTests.forEach((sample) => {
     it(sample.description, async () => {
       try {
         const res = await sila.checkHandle(sample.input);
-        
+
         assert.equal(res.statusCode, sample.statusCode);
         assert.equal(res.data.status, sample.expectedResult);
       } catch (err) {
