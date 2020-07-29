@@ -1000,6 +1000,20 @@ describe('Unlink business member', function () {
   })
 })
 
+describe('Get Entity', function () {
+  this.timeout(300000);
+  it(`Get first user entity`, async () => {
+    try {
+      const res = await sila.getEntity(handles[0], wallets[0].privateKey);
+
+      assert.equal(res.statusCode, 200);
+      assert.equal(res.data.user_handle.toLowerCase(), handles[0].toLowerCase());
+    } catch (err) {
+      assert.fail(err);
+    }
+  })
+})
+
 describe('Check Handle taken', function () {
   this.timeout(300000);
   checkHandleTakenTests.forEach((sample) => {

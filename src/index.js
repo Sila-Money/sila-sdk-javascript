@@ -573,6 +573,18 @@ const getEntities = (entity_type) => {
 /** 
 * @param {String} user_handle
 * @param {String} user_private_key
+*/
+const getEntity = (user_handle, user_private_key) => {
+  const body = setHeaders({ header: {} }, user_handle);
+
+  body.user_handle = user_handle;
+
+  return makeRequest('get_entity', body, user_private_key);
+};
+
+/** 
+* @param {String} user_handle
+* @param {String} user_private_key
 * @param {String} business_handle
 * @param {String} business_private_key
 * @param {String} role
@@ -683,5 +695,6 @@ export default {
   getNacisCategories,
   getEntities,
   linkBusinessMember,
-  unlinkBusinessMember
+  unlinkBusinessMember,
+  getEntity
 };
