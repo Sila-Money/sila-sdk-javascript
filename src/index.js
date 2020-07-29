@@ -623,6 +623,39 @@ const unlinkBusinessMember = (
   return makeRequest('unlink_business_member', body, user_private_key, business_private_key);
 };
 
+/** 
+* @param {String} user_handle
+* @param {String} user_private_key
+* @param {String} business_handle
+* @param {String} business_private_key
+* @param {String} member_handle
+* @param {String} certification_token
+*/
+const certifyBeneficialOwner = (
+  user_handle, user_private_key, business_handle, business_private_key, member_handle, certification_token
+) => {
+  const body = setHeaders({ header: {} }, user_handle, business_handle);
+
+  body.member_handle = member_handle;
+  body.certification_token = certification_token;
+
+  return makeRequest('certify_beneficial_owner', body, user_private_key, business_private_key);
+};
+
+/** 
+* @param {String} user_handle
+* @param {String} user_private_key
+* @param {String} business_handle
+* @param {String} business_private_key
+*/
+const certifyBusiness = (
+  user_handle, user_private_key, business_handle, business_private_key
+) => {
+  const body = setHeaders({ header: {} }, user_handle, business_handle);
+
+  return makeRequest('certify_business', body, user_private_key, business_private_key);
+};
+
 /**
  *
  * @param {*} params The configuration parameters
@@ -696,5 +729,7 @@ export default {
   getEntities,
   linkBusinessMember,
   unlinkBusinessMember,
-  getEntity
+  getEntity,
+  certifyBeneficialOwner,
+  certifyBusiness
 };

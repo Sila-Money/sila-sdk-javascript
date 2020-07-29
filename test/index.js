@@ -245,6 +245,13 @@ const requestKYCTests = [
     statusCode: 200,
     description: `"${handles[3]}.silamoney.eth" should be sent for KYC check.`,
   },
+  {
+    handle: handles[4],
+    key: wallets[5].privateKey,
+    expectedResult: 'SUCCESS',
+    statusCode: 200,
+    description: `"${handles[3]}.silamoney.eth" should be sent for KYC check.`,
+  },
 ];
 
 const checkKYCTests = [
@@ -279,6 +286,14 @@ const checkKYCTests = [
     expectedResult: 'SUCCESS',
     messageRegex: /\bpassed\b/,
     description: `"${handles[3]}.silamoney.eth" should pass KYC check.`,
+  },
+  {
+    handle: handles[4],
+    key: wallets[5].privateKey,
+    statusCode: 200,
+    expectedResult: 'FAILURE',
+    messageRegex: /\bpassed\b/,
+    description: `"${handles[4]}.silamoney.eth" should pass KYC check.`,
   },
 ];
 
@@ -860,7 +875,7 @@ const linkBusinessMemberTests = [
     user_private_key: wallets[0].privateKey,
     business_handle: handles[4],
     business_private_key: wallets[5].privateKey,
-    member_handle: handles[2],
+    member_handle: handles[3],
     role: 'beneficial_owner',
     details: 'first beneficial owner',
     ownership_stake: 0.6
@@ -1075,7 +1090,8 @@ describe('Successful Check KYC', function () {
         while (
           statusCode === 200 &&
           status === 'FAILURE' &&
-          message.includes('pending')
+          message.includes('pending') &&
+          !message.includes('passed')
         ) {
           await sleep(30000, test.description); // eslint-disable-line no-await-in-loop
           res = await sila.checkKYC(test.handle, test.key); // eslint-disable-line no-await-in-loop
@@ -1091,6 +1107,39 @@ describe('Successful Check KYC', function () {
     });
   });
 });
+
+describe('Certify Beneficial Owner', function () {
+  this.timeout(300000);
+  it(`Successfully certify beneficial owner`, async () => {
+    try {
+      const res = await sila.certifyBeneficialOwner(
+        handles[0], wallets[0].privateKey, handles[4], wallets[5].privateKey,
+        handles[3], (await sila.getEntity(handles[3], wallets[4].privateKey)).data.memberships[0].certification_token
+      );
+
+      assert.equal(res.statusCode, 200);
+      assert(res.data.success);
+    } catch (err) {
+      assert.fail(err);
+    }
+  })
+})
+
+describe('Certify Business', function () {
+  this.timeout(300000);
+  it(`Successfully certify business`, async () => {
+    try {
+      const res = await sila.certifyBusiness(
+        handles[0], wallets[0].privateKey, handles[4], wallets[5].privateKey
+      );
+
+      assert.equal(res.statusCode, 200);
+      assert(res.data.success);
+    } catch (err) {
+      assert.fail(err);
+    }
+  })
+})
 
 describe('Link Account - Direct', function () {
   this.timeout(300000);
