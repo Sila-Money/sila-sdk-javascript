@@ -829,6 +829,44 @@ const plaidSamedayAuthTests = [
   },
 ];
 
+const linkBusinessMemberTests = [
+  {
+    user_handle: handles[0],
+    user_private_key: wallets[0].privateKey,
+    business_handle: handles[4],
+    business_private_key: wallets[5].privateKey,
+    role: 'administrator',
+    details: 'first admin'
+  },
+  {
+    user_handle: handles[0],
+    user_private_key: wallets[0].privateKey,
+    business_handle: handles[4],
+    business_private_key: wallets[5].privateKey,
+    role: 'controlling_officer',
+    details: 'first controlling officer'
+  },
+  {
+    user_handle: handles[0],
+    user_private_key: wallets[0].privateKey,
+    business_handle: handles[4],
+    business_private_key: wallets[5].privateKey,
+    member_handle: handles[1],
+    role: 'administrator',
+    details: 'second admin'
+  },
+  {
+    user_handle: handles[0],
+    user_private_key: wallets[0].privateKey,
+    business_handle: handles[4],
+    business_private_key: wallets[5].privateKey,
+    member_handle: handles[2],
+    role: 'beneficial_owner',
+    details: 'first beneficial owner',
+    ownership_stake: 0.6
+  }
+]
+
 describe('Get Business Types', function () {
   this.timeout(300000);
   it('Successfully retreive business types', async () => {
@@ -875,6 +913,29 @@ describe('Get Naics Categories', function () {
   });
 })
 
+describe('Get Entities', function () {
+  this.timeout(300000);
+  it('Successfully retreive entities', async () => {
+    try {
+      const res = await sila.getEntities("individual");
+
+      assert.equal(res.statusCode, 200);
+      assert.equal(res.data.success, true);
+      assert(res.data.entities.individuals.length > 0);
+      assert(res.data.entities.businesses.length === 0);
+
+      const res2 = await sila.getEntities("business");
+
+      assert.equal(res2.statusCode, 200);
+      assert.equal(res2.data.success, true);
+      assert(res2.data.entities.individuals.length === 0);
+      assert(res2.data.entities.businesses.length > 0);
+    } catch (err) {
+      assert.fail(err);
+    }
+  });
+})
+
 describe('Check Handle', function () {
   this.timeout(300000);
   checkHandleTests.forEach((sample) => {
@@ -905,6 +966,39 @@ describe('Register', function () {
     });
   });
 });
+
+describe('Link business member', function () {
+  this.timeout(300000);
+  linkBusinessMemberTests.forEach((member) => {
+    it(`${member.user_handle} should be linked`, async () => {
+      try {
+        const res = await sila.linkBusinessMember(member.user_handle, member.user_private_key,
+          member.business_handle, member.business_private_key, member.role, member.member_handle,
+          member.details, member.ownership_stake);
+
+        assert.equal(res.statusCode, 200);
+        assert(res.data.success);
+      } catch (err) {
+        assert.fail(err);
+      }
+    })
+  })
+})
+
+describe('Unlink business member', function () {
+  this.timeout(300000);
+  it(`second admin should be unlinked`, async () => {
+    try {
+      const res = await sila.unlinkBusinessMember(handles[1], wallets[1].privateKey,
+        handles[4], wallets[5].privateKey, 'administrator');
+
+      assert.equal(res.statusCode, 200);
+      assert(res.data.success);
+    } catch (err) {
+      assert.fail(err);
+    }
+  })
+})
 
 describe('Check Handle taken', function () {
   this.timeout(300000);
@@ -1255,21 +1349,6 @@ describe('Poll Transfer Sila', function () {
   pollTransferTests.forEach((test) => {
     it(test.description, async () => {
       await pollGetTransactionsTest(test, transferReferences);
-    });
-  });
-});
-
-describe('Sila Balance', function () {
-  this.timeout(300000);
-  silaBalanceTests.forEach((test) => {
-    it(test.description, async () => {
-      try {
-        const res = await sila.getBalance(test.address);
-        assert.equal(res.statusCode, test.statusCode);
-        assert.isAtLeast(res.data.silaBalance, test.balance);
-      } catch (e) {
-        assert.fail(e);
-      }
     });
   });
 });
