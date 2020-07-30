@@ -901,11 +901,11 @@ describe('Get Business Roles', function () {
   this.timeout(300000);
   it('Successfully retreive business roles', async () => {
     try {
-      const res = await sila.getBusinessTypes();
+      const res = await sila.getBusinessRoles();
 
       assert.equal(res.statusCode, 200);
       assert.equal(res.data.success, true);
-      assert(res.data.business_types.length > 0);
+      assert(res.data.business_roles.length > 0);
     } catch (err) {
       assert.fail(err);
     }
