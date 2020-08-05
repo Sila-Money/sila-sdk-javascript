@@ -71,13 +71,14 @@ const configureUrl = () => {
  * @param {*} opts
  * @param {*} key
  */
-const signOpts = (opts, key) => {
+const signOpts = (opts, key, business_private_key) => {
   const options = opts;
   if (opts.body.header) {
     options.headers = {};
     const bodyString = JSON.stringify(options.body);
     options.headers.authsignature = sign(bodyString, appKey);
     if (key) options.headers.usersignature = sign(bodyString, key);
+    if (business_private_key) options.headers.businesssignature = sign(bodyString, business_private_key);
   }
   return options;
 };
@@ -87,9 +88,10 @@ const signOpts = (opts, key) => {
  * @param {Object} msg The header message
  * @param {String} handle The user handle
  */
-const setHeaders = (msg, handle) => {
+const setHeaders = (msg, handle, business_handle) => {
   const message = msg;
   message.header.user_handle = handle;
+  message.header.business_handle = business_handle;
   message.header.auth_handle = appHandle;
   message.header.reference = uuid4();
   message.header.created = Math.floor(Date.now() / 1000);
@@ -120,13 +122,13 @@ const post = (options) => {
  * @param {Object} body The body of the request
  * @param {String} privateKey The user's private key
  */
-const makeRequest = (path, body, privateKey = undefined) => {
+const makeRequest = (path, body, privateKey = undefined, business_private_key = undefined) => {
   let opts = {
     uri: url(path),
     json: true,
     body,
   };
-  opts = signOpts(opts, privateKey);
+  opts = signOpts(opts, privateKey, business_private_key);
   return post(opts);
 };
 
@@ -185,12 +187,17 @@ const register = (user) => {
   message.entity.birthdate = user.dateOfBirth;
   message.entity.first_name = user.firstName;
   message.entity.last_name = user.lastName;
-  message.entity.entity_name = `${user.firstName} ${user.lastName}`;
+  message.entity.entity_name = user.entity_name ? user.entity_name : `${user.firstName} ${user.lastName}`;
   message.entity.relationship = 'user';
+  message.entity.type = user.business_type ? 'business' : 'individual';
+  message.entity.business_type = user.business_type;
+  message.entity.business_website = user.business_website;
+  message.entity.doing_business_as = user.doing_business_as;
+  message.entity.naics_code = user.naics_code;
 
   message.identity = {};
-  message.identity.identity_value = user.ssn;
-  message.identity.identity_alias = 'SSN';
+  message.identity.identity_value = user.ssn ? user.ssn : user.ein;
+  message.identity.identity_alias = user.ssn ? 'SSN' : 'EIN';
 
   return makeRequest('register', message);
 };
@@ -534,6 +541,121 @@ const getBalance = (address) => {
   return post(opts);
 };
 
+const getBusinessTypes = () => {
+  const body = setHeaders({ header: {} });
+
+  return makeRequest('get_business_types', body);
+};
+
+const getBusinessRoles = () => {
+  const body = setHeaders({ header: {} });
+
+  return makeRequest('get_business_roles', body);
+};
+
+const getNacisCategories = () => {
+  const body = setHeaders({ header: {} });
+
+  return makeRequest('get_naics_categories', body);
+};
+
+/** 
+* @param {String} entity_type optional entity type filter.
+*/
+const getEntities = (entity_type) => {
+  const body = setHeaders({ header: {} });
+
+  body.entity_type = entity_type;
+
+  return makeRequest('get_entities', body);
+};
+
+/** 
+* @param {String} user_handle
+* @param {String} user_private_key
+*/
+const getEntity = (user_handle, user_private_key) => {
+  const body = setHeaders({ header: {} }, user_handle);
+
+  body.user_handle = user_handle;
+
+  return makeRequest('get_entity', body, user_private_key);
+};
+
+/** 
+* @param {String} user_handle
+* @param {String} user_private_key
+* @param {String} business_handle
+* @param {String} business_private_key
+* @param {String} role
+* @param {String} member_handle
+* @param {String} details
+* @param {double} ownership_stake
+*/
+const linkBusinessMember = (
+  user_handle, user_private_key, business_handle, business_private_key, role, member_handle, details,
+  ownership_stake
+) => {
+  const body = setHeaders({ header: {} }, user_handle, business_handle);
+
+  body.role = role;
+  body.member_handle = member_handle;
+  body.details = details;
+  body.ownership_stake = ownership_stake;
+
+  return makeRequest('link_business_member', body, user_private_key, business_private_key);
+};
+
+/** 
+* @param {String} user_handle
+* @param {String} user_private_key
+* @param {String} business_handle
+* @param {String} business_private_key
+* @param {String} role
+*/
+const unlinkBusinessMember = (
+  user_handle, user_private_key, business_handle, business_private_key, role
+) => {
+  const body = setHeaders({ header: {} }, user_handle, business_handle);
+
+  body.role = role;
+
+  return makeRequest('unlink_business_member', body, user_private_key, business_private_key);
+};
+
+/** 
+* @param {String} user_handle
+* @param {String} user_private_key
+* @param {String} business_handle
+* @param {String} business_private_key
+* @param {String} member_handle
+* @param {String} certification_token
+*/
+const certifyBeneficialOwner = (
+  user_handle, user_private_key, business_handle, business_private_key, member_handle, certification_token
+) => {
+  const body = setHeaders({ header: {} }, user_handle, business_handle);
+
+  body.member_handle = member_handle;
+  body.certification_token = certification_token;
+
+  return makeRequest('certify_beneficial_owner', body, user_private_key, business_private_key);
+};
+
+/** 
+* @param {String} user_handle
+* @param {String} user_private_key
+* @param {String} business_handle
+* @param {String} business_private_key
+*/
+const certifyBusiness = (
+  user_handle, user_private_key, business_handle, business_private_key
+) => {
+  const body = setHeaders({ header: {} }, user_handle, business_handle);
+
+  return makeRequest('certify_business', body, user_private_key, business_private_key);
+};
+
 /**
  *
  * @param {*} params The configuration parameters
@@ -601,4 +723,13 @@ export default {
   updateWallet,
   User,
   WalletFilters,
+  getBusinessTypes,
+  getBusinessRoles,
+  getNacisCategories,
+  getEntities,
+  linkBusinessMember,
+  unlinkBusinessMember,
+  getEntity,
+  certifyBeneficialOwner,
+  certifyBusiness
 };

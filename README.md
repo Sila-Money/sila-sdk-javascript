@@ -64,6 +64,7 @@ console.log(res.data.message); // User is already taken
 Attaches KYC data and specified blockchain address to an assigned handle.
 
 ```javascript
+// Individual user
 const user = new Sila.User();
 user.handle = 'user.silamoney.eth';
 user.firstName = 'First';
@@ -77,6 +78,23 @@ user.email = 'test_1@silamoney.com';
 user.dateOfBirth = '1990-01-01';
 user.ssn = '123456222';
 user.cryptoAddress = 'The wallet blockchain address';
+
+// Business user
+const user = new Sila.User();
+user.handle = 'user.silamoney.eth';
+user.entity_name = 'test business';
+user.address = '123 Main St';
+user.city = 'Anytown';
+user.state = 'NY';
+user.zip = '12345';
+user.phone = '1234567890';
+user.ein = '320567252';
+user.email = 'test_4@silamoney.com';
+user.cryptoAddress = 'The wallet blockchain address';
+user.business_type = 'corporation';
+user.business_website = 'https://www.yourbusinesscustomer.com';
+user.doing_business_as = 'doing business co';
+user.naics_code = 721;
 
 const res = await Sila.register(user);
 ```
@@ -513,6 +531,137 @@ const res = await Sila.getBalance(walletAddress);
 ```javascript
 console.log(res.statusCode); // 200
 console.log(res.data.silaBalance); // Amount of Sila tokens in the wallet
+```
+
+### Get Business Types
+
+Gets a list of valid business types that can be registered.
+
+```javascript
+const res = await sila.getBusinessTypes();
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // TRUE
+console.log(res.data.business_types); // Business types list
+```
+
+### Get Business Roles
+
+Retrieves the list of pre-defined business roles.
+
+```javascript
+const res = await sila.getBusinessRoles();
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // TRUE
+console.log(res.data.business_roles); // Business roles list
+```
+
+### Get Naics Categories
+
+```javascript
+const res = await sila.getNacisCategories();
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // TRUE
+console.log(res.data.naics_categories); // Categories list
+```
+
+### Get Entities
+
+```javascript
+const res = await sila.getEntities(entity_type); // Entity type is optional, it can be 'individual' or 'business'
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // TRUE
+console.log(res.data.entities.individuals); // Individual entities list
+console.log(res.data.entities.businesses); // Business entities list
+```
+
+### Get Entity
+
+```javascript
+const res = await sila.getEntity(user_handle, private_key);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // TRUE
+console.log(res.data); // Data contains many information such as entity type, entity information, contact information, etc.
+```
+
+### Link Business Member
+
+```javascript
+const res = await sila.linkBusinessMember(user_handle, user_private_key, business_handle, business_private_key, role, member_handle, details, ownership_stake);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // TRUE
+console.log(res.data.message); // Response message
+```
+
+### Unlink Business Member
+
+```javascript
+const res = await sila.unlinkBusinessMember(user_handle, user_private_key, business_handle, business_private_key, role);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // TRUE
+console.log(res.data.message); // Response message
+```
+
+### Certify Beneficial Owner
+
+```javascript
+const res = await sila.certifyBeneficialOwner(user_handle, user_private_key, business_handle, business_private_key, member_handle, certification_token);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // TRUE
+console.log(res.data.message); // Response message
+```
+
+### Certify Business
+
+```javascript
+const res = await sila.certifyBusiness(user_handle, user_private_key, business_handle, business_private_key);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // TRUE
+console.log(res.data.message); // Response message
 ```
 
 ## Development
