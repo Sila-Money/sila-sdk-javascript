@@ -24,11 +24,13 @@ const wallets = [
   sila.generateWallet(),
   sila.generateWallet(),
   sila.generateWallet(),
+  sila.generateWallet(),
 ];
 
 console.log(wallets);
 
 const handles = [
+  `nodeSDK-${uuid4()}`,
   `nodeSDK-${uuid4()}`,
   `nodeSDK-${uuid4()}`,
   `nodeSDK-${uuid4()}`,
@@ -63,11 +65,23 @@ fourthUser.firstName = 'Fourth';
 fourthUser.email = 'test_3@silamoney.com';
 fourthUser.cryptoAddress = wallets[4].address;
 
+const businessUser = Object.assign({}, firstUser);
+businessUser.entity_name = 'test business';
+businessUser.ssn = undefined;
+businessUser.ein = '320567252';
+businessUser.email = 'test_4@silamoney.com';
+businessUser.cryptoAddress = wallets[5].address;
+businessUser.business_type = 'corporation';
+businessUser.business_website = 'https://www.yourbusinesscustomer.com';
+businessUser.doing_business_as = 'doing business co';
+businessUser.naics_code = 721;
+
 [
   firstUser.handle,
   secondUser.handle,
   thirdUser.handle,
   fourthUser.handle,
+  businessUser.handle
 ] = handles;
 
 const plaidToken = () => {
@@ -167,6 +181,12 @@ const createEntityTests = [
     statusCode: 200,
     description: `Valid registration test for ${handles[3]}.silamoney.eth`,
   },
+  {
+    input: businessUser,
+    expectedResult: 'SUCCESS',
+    statusCode: 200,
+    description: `Valid registration test for ${handles[4]}.silamoney.eth`,
+  },
 ];
 
 const checkHandleTakenTests = [
@@ -225,6 +245,13 @@ const requestKYCTests = [
     statusCode: 200,
     description: `"${handles[3]}.silamoney.eth" should be sent for KYC check.`,
   },
+  {
+    handle: handles[4],
+    key: wallets[5].privateKey,
+    expectedResult: 'SUCCESS',
+    statusCode: 200,
+    description: `"${handles[3]}.silamoney.eth" should be sent for KYC check.`,
+  },
 ];
 
 const checkKYCTests = [
@@ -259,6 +286,14 @@ const checkKYCTests = [
     expectedResult: 'SUCCESS',
     messageRegex: /\bpassed\b/,
     description: `"${handles[3]}.silamoney.eth" should pass KYC check.`,
+  },
+  {
+    handle: handles[4],
+    key: wallets[5].privateKey,
+    statusCode: 200,
+    expectedResult: 'FAILURE',
+    messageRegex: /\bpassed\b/,
+    description: `"${handles[4]}.silamoney.eth" should pass KYC check.`,
   },
 ];
 
@@ -809,13 +844,120 @@ const plaidSamedayAuthTests = [
   },
 ];
 
+const linkBusinessMemberTests = [
+  {
+    user_handle: handles[0],
+    user_private_key: wallets[0].privateKey,
+    business_handle: handles[4],
+    business_private_key: wallets[5].privateKey,
+    role: 'administrator',
+    details: 'first admin'
+  },
+  {
+    user_handle: handles[0],
+    user_private_key: wallets[0].privateKey,
+    business_handle: handles[4],
+    business_private_key: wallets[5].privateKey,
+    role: 'controlling_officer',
+    details: 'first controlling officer'
+  },
+  {
+    user_handle: handles[0],
+    user_private_key: wallets[0].privateKey,
+    business_handle: handles[4],
+    business_private_key: wallets[5].privateKey,
+    member_handle: handles[1],
+    role: 'administrator',
+    details: 'second admin'
+  },
+  {
+    user_handle: handles[0],
+    user_private_key: wallets[0].privateKey,
+    business_handle: handles[4],
+    business_private_key: wallets[5].privateKey,
+    member_handle: handles[3],
+    role: 'beneficial_owner',
+    details: 'first beneficial owner',
+    ownership_stake: 0.6
+  }
+]
+
+describe('Get Business Types', function () {
+  this.timeout(300000);
+  it('Successfully retreive business types', async () => {
+    try {
+      const res = await sila.getBusinessTypes();
+
+      assert.equal(res.statusCode, 200);
+      assert.equal(res.data.success, true);
+      assert(res.data.business_types.length > 0);
+    } catch (err) {
+      assert.fail(err);
+    }
+  });
+})
+
+describe('Get Business Roles', function () {
+  this.timeout(300000);
+  it('Successfully retreive business roles', async () => {
+    try {
+      const res = await sila.getBusinessRoles();
+
+      assert.equal(res.statusCode, 200);
+      assert.equal(res.data.success, true);
+      assert(res.data.business_roles.length > 0);
+    } catch (err) {
+      assert.fail(err);
+    }
+  });
+})
+
+describe('Get Naics Categories', function () {
+  this.timeout(300000);
+  it('Successfully retreive naics categories', async () => {
+    try {
+      const res = await sila.getNacisCategories();
+
+      assert.equal(res.statusCode, 200);
+      assert.equal(res.data.success, true);
+      assert(res.data.naics_categories['Accommodation and Food Services']);
+      assert(res.data.naics_categories['Accommodation and Food Services'][0].code);
+    } catch (err) {
+      assert.fail(err);
+    }
+  });
+})
+
+describe('Get Entities', function () {
+  this.timeout(300000);
+  it('Successfully retreive entities', async () => {
+    try {
+      const res = await sila.getEntities("individual");
+
+      assert.equal(res.statusCode, 200);
+      assert.equal(res.data.success, true);
+      assert(res.data.entities.individuals.length > 0);
+      assert(res.data.entities.businesses.length === 0);
+
+      const res2 = await sila.getEntities("business");
+
+      assert.equal(res2.statusCode, 200);
+      assert.equal(res2.data.success, true);
+      assert(res2.data.entities.individuals.length === 0);
+      assert(res2.data.entities.businesses.length > 0);
+    } catch (err) {
+      assert.fail(err);
+    }
+  });
+})
+
 describe('Check Handle', function () {
   this.timeout(300000);
   checkHandleTests.forEach((sample) => {
     it(sample.description, async () => {
       try {
         const res = await sila.checkHandle(sample.input);
-        
+
         assert.equal(res.statusCode, sample.statusCode);
         assert.equal(res.data.status, sample.expectedResult);
       } catch (err) {
@@ -839,6 +981,53 @@ describe('Register', function () {
     });
   });
 });
+
+describe('Link business member', function () {
+  this.timeout(300000);
+  linkBusinessMemberTests.forEach((member) => {
+    it(`${member.user_handle} should be linked`, async () => {
+      try {
+        const res = await sila.linkBusinessMember(member.user_handle, member.user_private_key,
+          member.business_handle, member.business_private_key, member.role, member.member_handle,
+          member.details, member.ownership_stake);
+
+        assert.equal(res.statusCode, 200);
+        assert(res.data.success);
+      } catch (err) {
+        assert.fail(err);
+      }
+    })
+  })
+})
+
+describe('Unlink business member', function () {
+  this.timeout(300000);
+  it(`second admin should be unlinked`, async () => {
+    try {
+      const res = await sila.unlinkBusinessMember(handles[1], wallets[1].privateKey,
+        handles[4], wallets[5].privateKey, 'administrator');
+
+      assert.equal(res.statusCode, 200);
+      assert(res.data.success);
+    } catch (err) {
+      assert.fail(err);
+    }
+  })
+})
+
+describe('Get Entity', function () {
+  this.timeout(300000);
+  it(`Get first user entity`, async () => {
+    try {
+      const res = await sila.getEntity(handles[0], wallets[0].privateKey);
+
+      assert.equal(res.statusCode, 200);
+      assert.equal(res.data.user_handle.toLowerCase(), handles[0].toLowerCase());
+    } catch (err) {
+      assert.fail(err);
+    }
+  })
+})
 
 describe('Check Handle taken', function () {
   this.timeout(300000);
@@ -901,7 +1090,8 @@ describe('Successful Check KYC', function () {
         while (
           statusCode === 200 &&
           status === 'FAILURE' &&
-          message.includes('pending')
+          message.includes('pending') &&
+          !message.includes('passed')
         ) {
           await sleep(30000, test.description); // eslint-disable-line no-await-in-loop
           res = await sila.checkKYC(test.handle, test.key); // eslint-disable-line no-await-in-loop
@@ -917,6 +1107,39 @@ describe('Successful Check KYC', function () {
     });
   });
 });
+
+describe('Certify Beneficial Owner', function () {
+  this.timeout(300000);
+  it(`Successfully certify beneficial owner`, async () => {
+    try {
+      const res = await sila.certifyBeneficialOwner(
+        handles[0], wallets[0].privateKey, handles[4], wallets[5].privateKey,
+        handles[3], (await sila.getEntity(handles[3], wallets[4].privateKey)).data.memberships[0].certification_token
+      );
+
+      assert.equal(res.statusCode, 200);
+      assert(res.data.success);
+    } catch (err) {
+      assert.fail(err);
+    }
+  })
+})
+
+describe('Certify Business', function () {
+  this.timeout(300000);
+  it(`Successfully certify business`, async () => {
+    try {
+      const res = await sila.certifyBusiness(
+        handles[0], wallets[0].privateKey, handles[4], wallets[5].privateKey
+      );
+
+      assert.equal(res.statusCode, 200);
+      assert(res.data.success);
+    } catch (err) {
+      assert.fail(err);
+    }
+  })
+})
 
 describe('Link Account - Direct', function () {
   this.timeout(300000);
@@ -1189,21 +1412,6 @@ describe('Poll Transfer Sila', function () {
   pollTransferTests.forEach((test) => {
     it(test.description, async () => {
       await pollGetTransactionsTest(test, transferReferences);
-    });
-  });
-});
-
-describe('Sila Balance', function () {
-  this.timeout(300000);
-  silaBalanceTests.forEach((test) => {
-    it(test.description, async () => {
-      try {
-        const res = await sila.getBalance(test.address);
-        assert.equal(res.statusCode, test.statusCode);
-        assert.isAtLeast(res.data.silaBalance, test.balance);
-      } catch (e) {
-        assert.fail(e);
-      }
     });
   });
 });

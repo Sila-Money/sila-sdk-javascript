@@ -61,6 +61,30 @@ class User {
      * @type {String}
      */
     this.ssn = undefined;
+    /**
+     * @type {String}
+     */
+    this.entity_name = undefined;
+    /**
+     * @type {String}
+     */
+    this.business_type = undefined;
+    /**
+     * @type {String}
+     */
+    this.business_website = undefined;
+    /**
+     * @type {String}
+     */
+    this.doing_business_as = undefined;
+    /**
+     * @type {String}
+     */
+    this.naics_code = undefined;
+    /**
+     * @type {String}
+     */
+    this.ein = undefined;
   }
 }
 
