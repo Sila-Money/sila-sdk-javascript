@@ -376,10 +376,257 @@ const transferSila = (
 };
 
 /**
- * Makes a call to /get_accounts endpoint.
+ * Makes a call to /delete/email endpoint.
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
+ * @param {String} email The user's new email 
  */
+const deleteEmail = (
+  handle,
+  privateKey,
+  uuid,
+) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.uuid = uuid;
+  return makeRequest('delete/email/', body, privateKey);
+};
+/**
+ * Makes a call to /delete/phone endpoint.
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ * @param {String} phone The user's new phone 
+ */
+const deletePhone = (
+  handle,
+  privateKey,
+  uuid,
+) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.uuid = uuid;
+
+  return makeRequest('delete/phone/', body, privateKey);
+};
+
+/**
+ * Makes a call to /update/address endpoint.
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ * @param {String} address The user's new address 
+ */
+const deleteAdress = (
+  handle,
+  privateKey,
+  uuid,
+) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.uuid = uuid;
+
+  return makeRequest('delete/address/', body, privateKey);
+};
+
+/**
+ * Makes a call to /delete/identity endpoint.
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ * @param {String} identity The user's new identity 
+ */
+const deleteIdentity = (
+  handle,
+  privateKey,
+  uuid
+) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.uuid = uuid;
+
+  return makeRequest('delete/identity/', body, privateKey);
+};
+
+/**
+ * Makes a call to /update/email endpoint.
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ * @param {String} email The user's new email 
+ */
+const updateEmail = (
+  handle,
+  privateKey,
+  email,
+  uuid,
+) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.email = email;
+  body.uuid = uuid;
+
+  return makeRequest('update/email/', body, privateKey);
+};
+/**
+ * Makes a call to /update/phone endpoint.
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ * @param {String} phone The user's new phone 
+ */
+const updatePhone = (
+  handle,
+  privateKey,
+  phone,
+  uuid,
+) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.phone = phone;
+  body.uuid = uuid;
+
+  return makeRequest('update/phone/', body, privateKey);
+};
+
+/**
+ * Makes a call to /update/address endpoint.
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ * @param {String} address The user's new address 
+ */
+const updateAdress = (
+  handle,
+  privateKey,
+  address,
+  uuid,
+) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.address_alias = address_alias;
+  body.street_address_2 = street_address_2;
+  body.street_address_1 = street_address_1;
+  body.city = city;
+  body.state = state;
+  body.postal_code = postal_code;
+  body.country = country;
+  body.uuid = uuid;
+
+  return makeRequest('update/address/', body, privateKey);
+};
+
+/**
+ * Makes a call to /update/identity endpoint.
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ * @param {String} identity_alias The user's new identity alias
+ * @param {String} identity_value The user's new identity value
+ */
+const updateIdentity = (
+  handle,
+  privateKey,
+  identity,
+  uuid
+) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.identity_alias = identity_alias;
+  body.identity_value = identity_value;
+  body.uuid = uuid;
+
+  return makeRequest('update/identity/', body, privateKey);
+};
+
+/**
+ * Makes a call to /add/email endpoint.
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ * @param {String} email The user's new email 
+ */
+const addEmail = (
+  handle,
+  privateKey,
+  email,
+) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.email = email;
+
+  return makeRequest('add/email/', body, privateKey);
+};
+
+/**
+ * Makes a call to /add/phone endpoint.
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ * @param {String} phone The user's new phone 
+ */
+const addPhone = (
+  handle,
+  privateKey,
+  phone,
+) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.phone = phone;
+
+  return makeRequest('add/phone/', body, privateKey);
+};
+
+/**
+ * Makes a call to /add/identity endpoint.
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ * @param {String} identity_alias The user's new identity alias
+ * @param {String} identity_value The user's new identity value
+ * 
+ */
+const addIdentity = (
+  handle,
+  privateKey,
+  identity_alias,
+  identity_value,
+) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.identity_alias = identity_alias;
+  body.identity_value = identity_value;
+
+
+  return makeRequest('add/identity/', body, privateKey);
+};
+
+/**
+ * Makes a call to /add/address endpoint.
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ * @param {String} address The user's new address 
+ */
+const addAddress = (
+  handle,
+  privateKey,
+  address_alias,
+  street_address_1,
+  street_address_2,
+  city,
+  state,
+  postal_code,
+  country,
+
+) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.address_alias = address_alias;
+  body.street_address_2 = street_address_2;
+  body.street_address_1 = street_address_1;
+  body.city = city;
+  body.state = state;
+  body.postal_code = postal_code;
+  body.country = country;
+
+  return makeRequest('add/address/', body, privateKey);
+};
+
+  /**
+   * Makes a call to /get_accounts endpoint.
+   * @param {String} handle The user handle
+   * @param {String} privateKey The user's wallet private key
+   */
 const getAccounts = (handle, privateKey) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
@@ -731,5 +978,17 @@ export default {
   unlinkBusinessMember,
   getEntity,
   certifyBeneficialOwner,
-  certifyBusiness
+  certifyBusiness,
+  addEmail,
+  addPhone,
+  addIdentity,
+  addAddress,
+  updateEmail,
+  updatePhone,
+  updateIdentity,
+  updateAdress,
+  deleteEmail,
+  deletePhone,
+  deleteIdentity,
+  deleteAdress,
 };
