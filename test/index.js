@@ -695,10 +695,10 @@ const transferSilaTests = [
     key: wallets[4].privateKey,
     destinationHanle: handles[0],
     amount: 100,
-    description: `${handles[3]} should init transfer to ${handles[0]}`,
-    statusCode: 200,
-    expectedResult: 'SUCCESS',
-    messageRegex: /Transaction submitted to processing queue/,
+    description: `${handles[3]} should fail to init transfer to ${handles[0]}`,
+    statusCode: 400,
+    expectedResult: 'FAILURE',
+    messageRegex: /Bad request/,
   },
   {
     handle: handles[0],
@@ -735,15 +735,6 @@ const pollTransferTests = [
     expectedResult: true,
     status: 'success',
     description: `${handles[0]} should transfer sila tokens`,
-  },
-  {
-    handle: handles[3],
-    key: wallets[4].privateKey,
-    filterIndex: 6,
-    statusCode: 200,
-    expectedResult: true,
-    status: 'failed',
-    description: `${handles[3]} should fail transfer sila tokens`,
   },
 ];
 
@@ -782,10 +773,10 @@ const redeemSilaTests = [
     handle: handles[3],
     key: wallets[4].privateKey,
     amount: 100,
-    description: `${handles[3]} should init redeem sila`,
-    statusCode: 200,
-    expectedResult: 'SUCCESS',
-    messageRegex: /Transaction submitted to processing queue/,
+    description: `${handles[3]} should fail to init redeem sila`,
+    statusCode: 400,
+    expectedResult: 'FAILURE',
+    messageRegex: /Bad request/,
   },
   {
     handle: handles[1],
@@ -820,15 +811,6 @@ const pollRedeemTests = [
     expectedResult: true,
     status: 'success',
     description: `${handles[1]} should redeem sila tokens`,
-  },
-  {
-    handle: handles[3],
-    key: wallets[4].privateKey,
-    filterIndex: 1,
-    statusCode: 200,
-    expectedResult: true,
-    status: 'failed',
-    description: `${handles[3]} should fail redeem sila tokens`,
   },
 ];
 
@@ -1945,7 +1927,7 @@ describe('Issue Sila', function () {
           test.descriptor,
           test.businessUuid,
         );
-        issueReferences.push(res.data.reference);
+        if (res.statusCode === 200) issueReferences.push(res.data.reference);
         assert.equal(res.statusCode, test.statusCode);
         assert.equal(res.data.status, test.expectedResult);
         assert.match(res.data.message, test.messageRegex);
@@ -1984,7 +1966,7 @@ describe('Transfer Sila', function () {
           test.descriptor,
           test.businessUuid,
         );
-        transferReferences.push(res.data.reference);
+        if (res.statusCode === 200) transferReferences.push(res.data.reference);
         assert.equal(res.statusCode, test.statusCode);
         assert.equal(res.data.status, test.expectedResult);
         assert.match(res.data.message, test.messageRegex);
@@ -2040,7 +2022,7 @@ describe('Redeem Sila', function () {
           test.descriptor,
           test.businessUuid,
         );
-        redeemReferences.push(res.data.reference);
+        if (res.statusCode === 200) redeemReferences.push(res.data.reference);
         assert.equal(res.statusCode, test.statusCode);
         assert.equal(res.data.status, test.expectedResult);
         assert.match(res.data.message, test.messageRegex);
@@ -2069,7 +2051,11 @@ describe('Plaid Sameday Auth', function () {
   plaidSamedayAuthTests.forEach((test) => {
     it(test.description, async () => {
       try {
-        const res = await sila.plaidSamedayAuth(test.key, test.accountName);
+        const res = await sila.plaidSamedayAuth(
+          test.handle,
+          test.key,
+          test.accountName,
+        );
         assert.equal(res.statusCode, test.statusCode);
         assert.equal(res.data.status, test.expectedResult);
         assert.match(res.data.message, test.messageRegex);
