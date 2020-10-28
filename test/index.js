@@ -81,7 +81,7 @@ businessUser.naics_code = 721;
   secondUser.handle,
   thirdUser.handle,
   fourthUser.handle,
-  businessUser.handle
+  businessUser.handle,
 ] = handles;
 
 const plaidToken = () => {
@@ -695,10 +695,10 @@ const transferSilaTests = [
     key: wallets[4].privateKey,
     destinationHanle: handles[0],
     amount: 100,
-    description: `${handles[3]} should init transfer to ${handles[0]}`,
-    statusCode: 200,
-    expectedResult: 'SUCCESS',
-    messageRegex: /Transaction submitted to processing queue/,
+    description: `${handles[3]} should fail to init transfer to ${handles[0]}`,
+    statusCode: 400,
+    expectedResult: 'FAILURE',
+    messageRegex: /Insufficient wallet balance/,
   },
   {
     handle: handles[0],
@@ -735,15 +735,6 @@ const pollTransferTests = [
     expectedResult: true,
     status: 'success',
     description: `${handles[0]} should transfer sila tokens`,
-  },
-  {
-    handle: handles[3],
-    key: wallets[4].privateKey,
-    filterIndex: 6,
-    statusCode: 200,
-    expectedResult: true,
-    status: 'failed',
-    description: `${handles[3]} should fail transfer sila tokens`,
   },
 ];
 
@@ -782,10 +773,10 @@ const redeemSilaTests = [
     handle: handles[3],
     key: wallets[4].privateKey,
     amount: 100,
-    description: `${handles[3]} should init redeem sila`,
-    statusCode: 200,
-    expectedResult: 'SUCCESS',
-    messageRegex: /Transaction submitted to processing queue/,
+    description: `${handles[3]} should fail to init redeem sila`,
+    statusCode: 400,
+    expectedResult: 'FAILURE',
+    messageRegex: /Insufficient wallet balance/,
   },
   {
     handle: handles[1],
@@ -821,15 +812,6 @@ const pollRedeemTests = [
     status: 'success',
     description: `${handles[1]} should redeem sila tokens`,
   },
-  {
-    handle: handles[3],
-    key: wallets[4].privateKey,
-    filterIndex: 1,
-    statusCode: 200,
-    expectedResult: true,
-    status: 'failed',
-    description: `${handles[3]} should fail redeem sila tokens`,
-  },
 ];
 
 const plaidSamedayAuthTests = [
@@ -844,27 +826,29 @@ const plaidSamedayAuthTests = [
   },
 ];
 
+const registrationData = [];
+
 const addEmailTests = [
   {
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 200,
-    expectedResult: false,
+    expectedResult: true,
     status: 'SUCCESS',
-    email:'erickjeronimo1@gmail.com',
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
+    email: 'erickjeronimo1@gmail.com',
+    description: `${handles[1]} should add email`,
+    messageRegex: /Successfully added email/,
   },
   {
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 400,
-    expectedResult: true,
+    expectedResult: false,
     status: 'FAILURE',
-    email:'',
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
-  }
+    email: '',
+    description: `${handles[1]} should fail to add email`,
+    messageRegex: /Bad request/,
+  },
 ];
 
 const addPhoneTests = [
@@ -872,22 +856,22 @@ const addPhoneTests = [
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 200,
-    expectedResult: false,
+    expectedResult: true,
     status: 'SUCCESS',
-    phone:'erickjeronimo1@gmail.com',
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
+    phone: '1234567890',
+    description: `${handles[1]} should add phone`,
+    messageRegex: /Successfully added phone/,
   },
   {
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 400,
-    expectedResult: true,
+    expectedResult: false,
     status: 'FAILURE',
-    email:'',
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
-  }
+    email: '',
+    description: `${handles[1]} should fail to add phone`,
+    messageRegex: /Bad request/,
+  },
 ];
 
 const addIdentityTests = [
@@ -895,24 +879,28 @@ const addIdentityTests = [
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 200,
-    expectedResult: false,
+    expectedResult: true,
     status: 'SUCCESS',
-    identity_alias:'SSN',
-    identity_value:'543212222',
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
+    identity: {
+      alias: 'SSN',
+      value: '543212222',
+    },
+    description: `${handles[1]} should add identity`,
+    messageRegex: /Successfully added identity/,
   },
   {
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 400,
-    expectedResult: true,
+    expectedResult: false,
     status: 'FAILURE',
-    identity_alias:'',
-    identity_value:'',
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
-  }
+    identity: {
+      alias: '',
+      value: '',
+    },
+    description: `${handles[1]} should fail to add identity`,
+    messageRegex: /Bad request/,
+  },
 ];
 
 const addAddressTests = [
@@ -920,28 +908,32 @@ const addAddressTests = [
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 200,
-    expectedResult: false,
+    expectedResult: true,
     status: 'SUCCESS',
-    address_alias: "Home Number Two",
-    street_address_1: "324 Songbird Avenue",
-    street_address_2: "Apt. 132",
-    city: "Portland",
-    state: "VA",
-    postal_code: "12345",
-    country: "US",
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
+    address: {
+      alias: 'Home Number Two',
+      street_address_1: '324 Songbird Avenue',
+      street_address_2: 'Apt. 132',
+      city: 'Portland',
+      state: 'VA',
+      postal_code: '12345',
+      country: 'US',
+    },
+    description: `${handles[1]} should add address`,
+    messageRegex: /Successfully added address/,
   },
   {
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 400,
-    expectedResult: true,
+    expectedResult: false,
     status: 'FAILURE',
-    email:'',
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
-  }
+    address: {
+      street_address_2: undefined,
+    },
+    description: `${handles[1]} should fail to add address`,
+    messageRegex: /Bad request/,
+  },
 ];
 
 const updateEmailTests = [
@@ -949,24 +941,28 @@ const updateEmailTests = [
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 200,
-    expectedResult: false,
+    expectedResult: true,
     status: 'SUCCESS',
-    email:'erickjeronimo1@gmail.com',
-    uuid: "7f83044b-63c8-4d56-b107-d52fa7ae2d7a",
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
+    email: {
+      email: 'erickjeronimo1@gmail.com',
+      uuid: 4,
+    },
+    description: `${handles[1]} should update email`,
+    messageRegex: /Successfully updated email/,
   },
   {
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 400,
-    expectedResult: true,
+    expectedResult: false,
     status: 'FAILURE',
-    email:'',
-    uuid: "",
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
-  }
+    email: {
+      email: '',
+      uuid: undefined,
+    },
+    description: `${handles[1]} should fail to update email`,
+    messageRegex: /Bad request/,
+  },
 ];
 
 const updatePhoneTests = [
@@ -974,24 +970,28 @@ const updatePhoneTests = [
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 200,
-    expectedResult: false,
+    expectedResult: true,
     status: 'SUCCESS',
-    phone:'erickjeronimo1@gmail.com',
-    uuid: "7f83044b-63c8-4d56-b107-d52fa7ae2d7a",
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
+    phone: {
+      phone: '1234567890',
+      uuid: 5,
+    },
+    description: `${handles[1]} should update phone`,
+    messageRegex: /Successfully updated phone/,
   },
   {
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 400,
-    expectedResult: true,
+    expectedResult: false,
     status: 'FAILURE',
-    phone:'',
-    uuid: "",
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
-  }
+    phone: {
+      phone: '',
+      uuid: undefined,
+    },
+    description: `${handles[1]} should fail to update phone`,
+    messageRegex: /Bad request/,
+  },
 ];
 
 const updateIdentityTests = [
@@ -999,26 +999,30 @@ const updateIdentityTests = [
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 200,
-    expectedResult: false,
+    expectedResult: true,
     status: 'SUCCESS',
-    identity_alias:'SSN',
-    identity_value:'543212222',
-    uuid: "",
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
+    identity: {
+      alias: 'SSN',
+      value: '543212222',
+      uuid: 6,
+    },
+    description: `${handles[1]} should update identity`,
+    messageRegex: /Successfully updated identity/,
   },
   {
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 400,
-    expectedResult: true,
+    expectedResult: false,
     status: 'FAILURE',
-    identity_alias:'',
-    identity_value:'',
-    uuid: "",
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
-  }
+    identity: {
+      alias: '',
+      value: '',
+      uuid: undefined,
+    },
+    description: `${handles[1]} should fail to update identity`,
+    messageRegex: /Bad request/,
+  },
 ];
 
 const updateAddressTests = [
@@ -1026,36 +1030,40 @@ const updateAddressTests = [
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 200,
-    expectedResult: false,
+    expectedResult: true,
     status: 'SUCCESS',
-    address_alias: "Home Number Two",
-    street_address_1: "324 Songbird Avenue",
-    street_address_2: "Apt. 132",
-    city: "Portland",
-    state: "VA",
-    postal_code: "12345",
-    country: "US",
-    uuid: "",
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
+    address: {
+      alias: 'Home Number Two',
+      street_address_1: '324 Songbird Avenue',
+      street_address_2: 'Apt. 132',
+      city: 'Portland',
+      state: 'VA',
+      postal_code: '12345',
+      country: 'US',
+      uuid: 7,
+    },
+    description: `${handles[1]} should update address`,
+    messageRegex: /Successfully updated address/,
   },
   {
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 400,
-    expectedResult: true,
+    expectedResult: false,
     status: 'FAILURE',
-    address_alias: "",
-    street_address_1: "",
-    street_address_2: "",
-    city: "",
-    state: "",
-    postal_code: "",
-    country: "",
-    uuid: "",
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
-  }
+    address: {
+      alias: '',
+      street_address_1: '',
+      street_address_2: '',
+      city: '',
+      state: '',
+      postal_code: '',
+      country: '',
+      uuid: undefined,
+    },
+    description: `${handles[1]} should fail to update address`,
+    messageRegex: /Bad request/,
+  },
 ];
 
 const deleteEmailTests = [
@@ -1063,20 +1071,22 @@ const deleteEmailTests = [
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 200,
-    expectedResult: false,
+    expectedResult: true,
     status: 'SUCCESS',
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
+    uuid: 0,
+    description: `${handles[1]} should delete email`,
+    messageRegex: /Successfully deleted email/,
   },
   {
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 400,
-    expectedResult: true,
+    expectedResult: false,
     status: 'FAILURE',
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
-  }
+    uuid: undefined,
+    description: `${handles[1]} should fail to delete email`,
+    messageRegex: /Bad request/,
+  },
 ];
 
 const deletePhoneTests = [
@@ -1084,20 +1094,22 @@ const deletePhoneTests = [
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 200,
-    expectedResult: false,
+    expectedResult: true,
     status: 'SUCCESS',
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
+    uuid: 1,
+    description: `${handles[1]} should delete phone`,
+    messageRegex: /Successfully deleted phone/,
   },
   {
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 400,
-    expectedResult: true,
+    expectedResult: false,
     status: 'FAILURE',
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
-  }
+    uuid: undefined,
+    description: `${handles[1]} should fail to delete phone`,
+    messageRegex: /Bad request/,
+  },
 ];
 
 const deleteIdentityTests = [
@@ -1105,20 +1117,22 @@ const deleteIdentityTests = [
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 200,
-    expectedResult: false,
+    expectedResult: true,
     status: 'SUCCESS',
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
+    uuid: 2,
+    description: `${handles[1]} should delete identity`,
+    messageRegex: /Successfully deleted identity/,
   },
   {
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 400,
-    expectedResult: true,
+    expectedResult: false,
     status: 'FAILURE',
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
-  }
+    uuid: undefined,
+    description: `${handles[1]} should fail to delete identity`,
+    messageRegex: /Bad request/,
+  },
 ];
 
 const deleteAddressTests = [
@@ -1126,20 +1140,22 @@ const deleteAddressTests = [
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 200,
-    expectedResult: false,
+    expectedResult: true,
     status: 'SUCCESS',
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
+    uuid: 3,
+    description: `${handles[1]} should delete address`,
+    messageRegex: /Successfully deleted address/,
   },
   {
     handle: handles[0],
     key: wallets[0].privateKey,
     statusCode: 400,
-    expectedResult: true,
+    expectedResult: false,
     status: 'FAILURE',
-    description: `${handles[1]} should redeem sila tokens`,
-    messageRegex: /added email "microdeposit_pending_manual_verification"/,
-  }
+    uuid: undefined,
+    description: `${handles[1]} should fail to delete address`,
+    messageRegex: /Bad request/,
+  },
 ];
 
 const linkBusinessMemberTests = [
@@ -1149,7 +1165,7 @@ const linkBusinessMemberTests = [
     business_handle: handles[4],
     business_private_key: wallets[5].privateKey,
     role: 'administrator',
-    details: 'first admin'
+    details: 'first admin',
   },
   {
     user_handle: handles[0],
@@ -1157,7 +1173,7 @@ const linkBusinessMemberTests = [
     business_handle: handles[4],
     business_private_key: wallets[5].privateKey,
     role: 'controlling_officer',
-    details: 'first controlling officer'
+    details: 'first controlling officer',
   },
   {
     user_handle: handles[0],
@@ -1166,7 +1182,7 @@ const linkBusinessMemberTests = [
     business_private_key: wallets[5].privateKey,
     member_handle: handles[1],
     role: 'administrator',
-    details: 'second admin'
+    details: 'second admin',
   },
   {
     user_handle: handles[0],
@@ -1176,9 +1192,9 @@ const linkBusinessMemberTests = [
     member_handle: handles[3],
     role: 'beneficial_owner',
     details: 'first beneficial owner',
-    ownership_stake: 0.6
-  }
-]
+    ownership_stake: 0.6,
+  },
+];
 
 describe('Get Business Types', function () {
   this.timeout(300000);
@@ -1193,7 +1209,7 @@ describe('Get Business Types', function () {
       assert.fail(err);
     }
   });
-})
+});
 
 describe('Get Business Roles', function () {
   this.timeout(300000);
@@ -1208,7 +1224,7 @@ describe('Get Business Roles', function () {
       assert.fail(err);
     }
   });
-})
+});
 
 describe('Get Naics Categories', function () {
   this.timeout(300000);
@@ -1219,25 +1235,27 @@ describe('Get Naics Categories', function () {
       assert.equal(res.statusCode, 200);
       assert.equal(res.data.success, true);
       assert(res.data.naics_categories['Accommodation and Food Services']);
-      assert(res.data.naics_categories['Accommodation and Food Services'][0].code);
+      assert(
+        res.data.naics_categories['Accommodation and Food Services'][0].code,
+      );
     } catch (err) {
       assert.fail(err);
     }
   });
-})
+});
 
 describe('Get Entities', function () {
   this.timeout(300000);
   it('Successfully retreive entities', async () => {
     try {
-      const res = await sila.getEntities("individual");
+      const res = await sila.getEntities('individual');
 
       assert.equal(res.statusCode, 200);
       assert.equal(res.data.success, true);
       assert(res.data.entities.individuals.length > 0);
       assert(res.data.entities.businesses.length === 0);
 
-      const res2 = await sila.getEntities("business");
+      const res2 = await sila.getEntities('business');
 
       assert.equal(res2.statusCode, 200);
       assert.equal(res2.data.success, true);
@@ -1247,7 +1265,7 @@ describe('Get Entities', function () {
       assert.fail(err);
     }
   });
-})
+});
 
 describe('Check Handle', function () {
   this.timeout(300000);
@@ -1285,33 +1303,45 @@ describe('Link business member', function () {
   linkBusinessMemberTests.forEach((member) => {
     it(`${member.user_handle} should be linked`, async () => {
       try {
-        const res = await sila.linkBusinessMember(member.user_handle, member.user_private_key,
-          member.business_handle, member.business_private_key, member.role, member.member_handle,
-          member.details, member.ownership_stake);
+        const res = await sila.linkBusinessMember(
+          member.user_handle,
+          member.user_private_key,
+          member.business_handle,
+          member.business_private_key,
+          member.role,
+          member.member_handle,
+          member.details,
+          member.ownership_stake,
+        );
 
         assert.equal(res.statusCode, 200);
         assert(res.data.success);
       } catch (err) {
         assert.fail(err);
       }
-    })
-  })
-})
+    });
+  });
+});
 
 describe('Unlink business member', function () {
   this.timeout(300000);
   it(`second admin should be unlinked`, async () => {
     try {
-      const res = await sila.unlinkBusinessMember(handles[1], wallets[1].privateKey,
-        handles[4], wallets[5].privateKey, 'administrator');
+      const res = await sila.unlinkBusinessMember(
+        handles[1],
+        wallets[1].privateKey,
+        handles[4],
+        wallets[5].privateKey,
+        'administrator',
+      );
 
       assert.equal(res.statusCode, 200);
       assert(res.data.success);
     } catch (err) {
       assert.fail(err);
     }
-  })
-})
+  });
+});
 
 describe('Get Entity', function () {
   this.timeout(300000);
@@ -1320,12 +1350,252 @@ describe('Get Entity', function () {
       const res = await sila.getEntity(handles[0], wallets[0].privateKey);
 
       assert.equal(res.statusCode, 200);
-      assert.equal(res.data.user_handle.toLowerCase(), handles[0].toLowerCase());
+      assert.equal(res.data.success, true);
+      assert.equal(res.data.status, 'SUCCESS');
+      assert.equal(
+        res.data.user_handle.toLowerCase(),
+        handles[0].toLowerCase(),
+      );
+      registrationData.push(res.data.emails[0].uuid);
+      registrationData.push(res.data.phones[0].uuid);
+      registrationData.push(res.data.identities[0].uuid);
+      registrationData.push(res.data.addresses[0].uuid);
     } catch (err) {
       assert.fail(err);
     }
-  })
-})
+  });
+});
+
+describe('Delete Email', function () {
+  this.timeout(300000);
+  deleteEmailTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const uuid =
+          test.uuid !== undefined ? registrationData[test.uuid] : test.uuid;
+        const res = await sila.deleteEmail(test.handle, test.key, uuid);
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.status, test.status);
+        assert.match(res.data.message, test.messageRegex);
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
+  });
+});
+
+describe('Delete Phone', function () {
+  this.timeout(300000);
+  deletePhoneTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const uuid = test.uuid ? registrationData[test.uuid] : test.uuid;
+        const res = await sila.deletePhone(test.handle, test.key, uuid);
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.status, test.status);
+        assert.match(res.data.message, test.messageRegex);
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
+  });
+});
+
+describe('Delete Identity', function () {
+  this.timeout(300000);
+  deleteIdentityTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const uuid = test.uuid ? registrationData[test.uuid] : test.uuid;
+        const res = await sila.deleteIdentity(test.handle, test.key, uuid);
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.status, test.status);
+        assert.match(res.data.message, test.messageRegex);
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
+  });
+});
+
+describe('Delete Address', function () {
+  this.timeout(300000);
+  deleteAddressTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const uuid = test.uuid ? registrationData[test.uuid] : test.uuid;
+        const res = await sila.deleteAddress(test.handle, test.key, uuid);
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.status, test.status);
+        assert.match(res.data.message, test.messageRegex);
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
+  });
+});
+
+describe('Add Email', function () {
+  this.timeout(300000);
+  addEmailTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const res = await sila.addEmail(test.handle, test.key, test.email);
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.success, test.expectedResult);
+        assert.equal(res.data.status, test.status);
+        assert.match(res.data.message, test.messageRegex);
+        if (res.statusCode === 200) registrationData.push(res.data.email.uuid);
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
+  });
+});
+
+describe('Add Phone', function () {
+  this.timeout(300000);
+  addPhoneTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const res = await sila.addPhone(test.handle, test.key, test.phone);
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.success, test.expectedResult);
+        assert.equal(res.data.status, test.status);
+        assert.match(res.data.message, test.messageRegex);
+        if (res.statusCode === 200) registrationData.push(res.data.phone.uuid);
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
+  });
+});
+
+describe('Add Identity', function () {
+  this.timeout(300000);
+  addIdentityTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const res = await sila.addIdentity(
+          test.handle,
+          test.key,
+          test.identity,
+        );
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.success, test.expectedResult);
+        assert.equal(res.data.status, test.status);
+        assert.match(res.data.message, test.messageRegex);
+        if (res.statusCode === 200)
+          registrationData.push(res.data.identity.uuid);
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
+  });
+});
+
+describe('Add Address', function () {
+  this.timeout(300000);
+  addAddressTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const res = await sila.addAddress(test.handle, test.key, test.address);
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.success, test.expectedResult);
+        assert.equal(res.data.status, test.status);
+        assert.match(res.data.message, test.messageRegex);
+        if (res.statusCode === 200)
+          registrationData.push(res.data.address.uuid);
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
+  });
+});
+
+describe('Update Email', function () {
+  this.timeout(300000);
+  updateEmailTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const email = Object.assign({}, test.email);
+        email.uuid = test.email.uuid
+          ? registrationData[test.email.uuid]
+          : test.email.uuid;
+        const res = await sila.updateEmail(test.handle, test.key, email);
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.success, test.expectedResult);
+        assert.equal(res.data.status, test.status);
+        assert.match(res.data.message, test.messageRegex);
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
+  });
+});
+
+describe('Update Phone', function () {
+  this.timeout(300000);
+  updatePhoneTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const phone = Object.assign({}, test.phone);
+        phone.uuid = test.phone.uuid
+          ? registrationData[test.phone.uuid]
+          : test.phone.uuid;
+        const res = await sila.updatePhone(test.handle, test.key, phone);
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.success, test.expectedResult);
+        assert.equal(res.data.status, test.status);
+        assert.match(res.data.message, test.messageRegex);
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
+  });
+});
+
+describe('Update Identity', function () {
+  this.timeout(300000);
+  updateIdentityTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const identity = Object.assign({}, test.identity);
+        identity.uuid = test.identity.uuid
+          ? registrationData[test.identity.uuid]
+          : test.identity.uuid;
+        const res = await sila.updateIdentity(test.handle, test.key, identity);
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.success, test.expectedResult);
+        assert.equal(res.data.status, test.status);
+        assert.match(res.data.message, test.messageRegex);
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
+  });
+});
+
+describe('Update Address', function () {
+  this.timeout(300000);
+  updateAddressTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const address = Object.assign({}, test.address);
+        address.uuid = test.address.uuid
+          ? registrationData[test.address.uuid]
+          : test.address.uuid;
+        const res = await sila.updateAddress(test.handle, test.key, address);
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.success, test.expectedResult);
+        assert.equal(res.data.status, test.status);
+        assert.match(res.data.message, test.messageRegex);
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
+  });
+});
 
 describe('Check Handle taken', function () {
   this.timeout(300000);
@@ -1411,8 +1681,13 @@ describe('Certify Beneficial Owner', function () {
   it(`Successfully certify beneficial owner`, async () => {
     try {
       const res = await sila.certifyBeneficialOwner(
-        handles[0], wallets[0].privateKey, handles[4], wallets[5].privateKey,
-        handles[3], (await sila.getEntity(handles[3], wallets[4].privateKey)).data.memberships[0].certification_token
+        handles[0],
+        wallets[0].privateKey,
+        handles[4],
+        wallets[5].privateKey,
+        handles[3],
+        (await sila.getEntity(handles[3], wallets[4].privateKey)).data
+          .memberships[0].certification_token,
       );
 
       assert.equal(res.statusCode, 200);
@@ -1420,15 +1695,18 @@ describe('Certify Beneficial Owner', function () {
     } catch (err) {
       assert.fail(err);
     }
-  })
-})
+  });
+});
 
 describe('Certify Business', function () {
   this.timeout(300000);
   it(`Successfully certify business`, async () => {
     try {
       const res = await sila.certifyBusiness(
-        handles[0], wallets[0].privateKey, handles[4], wallets[5].privateKey
+        handles[0],
+        wallets[0].privateKey,
+        handles[4],
+        wallets[5].privateKey,
       );
 
       assert.equal(res.statusCode, 200);
@@ -1436,8 +1714,8 @@ describe('Certify Business', function () {
     } catch (err) {
       assert.fail(err);
     }
-  })
-})
+  });
+});
 
 describe('Link Account - Direct', function () {
   this.timeout(300000);
@@ -1649,7 +1927,7 @@ describe('Issue Sila', function () {
           test.descriptor,
           test.businessUuid,
         );
-        issueReferences.push(res.data.reference);
+        if (res.statusCode === 200) issueReferences.push(res.data.reference);
         assert.equal(res.statusCode, test.statusCode);
         assert.equal(res.data.status, test.expectedResult);
         assert.match(res.data.message, test.messageRegex);
@@ -1688,7 +1966,7 @@ describe('Transfer Sila', function () {
           test.descriptor,
           test.businessUuid,
         );
-        transferReferences.push(res.data.reference);
+        if (res.statusCode === 200) transferReferences.push(res.data.reference);
         assert.equal(res.statusCode, test.statusCode);
         assert.equal(res.data.status, test.expectedResult);
         assert.match(res.data.message, test.messageRegex);
@@ -1744,7 +2022,7 @@ describe('Redeem Sila', function () {
           test.descriptor,
           test.businessUuid,
         );
-        redeemReferences.push(res.data.reference);
+        if (res.statusCode === 200) redeemReferences.push(res.data.reference);
         assert.equal(res.statusCode, test.statusCode);
         assert.equal(res.data.status, test.expectedResult);
         assert.match(res.data.message, test.messageRegex);
@@ -1780,256 +2058,6 @@ describe('Plaid Sameday Auth', function () {
         );
         assert.equal(res.statusCode, test.statusCode);
         assert.equal(res.data.status, test.expectedResult);
-        assert.match(res.data.message, test.messageRegex);
-      } catch (e) {
-        assert.fail(e);
-      }
-    });
-  });
-});
-
-describe('Add Email', function () {
-  this.timeout(300000);
-  addEmailTests.forEach((test) => {
-    it(test.description, async () => {
-      try {
-        const res = await sila.addEmail(
-          test.handle,
-          test.key,
-          test.email,
-        );
-        assert.equal(res.statusCode, test.statusCode);
-        assert.equal(res.data.status, test.status);
-        assert.match(res.data.message, test.messageRegex);
-      } catch (e) {
-        assert.fail(e);
-      }
-    });
-  });
-});
-
-describe('Add Phone', function () {
-  this.timeout(300000);
-  addPhoneTest.forEach((test) => {
-    it(test.description, async () => {
-      try {
-        const res = await sila.addPhone(
-          test.handle,
-          test.key,
-          test.phone,
-        );
-        assert.equal(res.statusCode, test.statusCode);
-        assert.equal(res.data.status, test.status);
-        assert.match(res.data.message, test.messageRegex);
-      } catch (e) {
-        assert.fail(e);
-      }
-    });
-  });
-});
-
-
-describe('Add Identity', function () {
-  this.timeout(300000);
-  addIdentityTests.forEach((test) => {
-    it(test.description, async () => {
-      try {
-        const res = await sila.addIdentity(
-          test.handle,
-          test.key,
-          test.identity,
-        );
-        assert.equal(res.statusCode, test.statusCode);
-        assert.equal(res.data.status, test.status);
-        assert.match(res.data.message, test.messageRegex);
-      } catch (e) {
-        assert.fail(e);
-      }
-    });
-  });
-});
-
-describe('Add Address', function () {
-  this.timeout(300000);
-  addAddressTests.forEach((test) => {
-    it(test.description, async () => {
-      try {
-        const res = await sila.addAddress(
-          test.handle,
-          test.key,
-          test.address,
-        );
-        assert.equal(res.statusCode, test.statusCode);
-        assert.equal(res.data.status, test.status);
-        assert.match(res.data.message, test.messageRegex);
-      } catch (e) {
-        assert.fail(e);
-      }
-    });
-  });
-});
-
-describe('Update Email', function () {
-  this.timeout(300000);
-  updateEmailTests.forEach((test) => {
-    it(test.description, async () => {
-      try {
-        const res = await sila.updateEmail(
-          test.handle,
-          test.key,
-          test.email,
-          test.uuid
-        );
-        assert.equal(res.statusCode, test.statusCode);
-        assert.equal(res.data.status, test.status);
-        assert.match(res.data.message, test.messageRegex);
-      } catch (e) {
-        assert.fail(e);
-      }
-    });
-  });
-});
-
-describe('Update Phone', function () {
-  this.timeout(300000);
-  updatePhoneTest.forEach((test) => {
-    it(test.description, async () => {
-      try {
-        const res = await sila.updatePhone(
-          test.handle,
-          test.key,
-          test.phone,
-          test.uuid
-        );
-        assert.equal(res.statusCode, test.statusCode);
-        assert.equal(res.data.status, test.status);
-        assert.match(res.data.message, test.messageRegex);
-      } catch (e) {
-        assert.fail(e);
-      }
-    });
-  });
-});
-
-
-describe('Update Identity', function () {
-  this.timeout(300000);
-  updateIdentityTests.forEach((test) => {
-    it(test.description, async () => {
-      try {
-        const res = await sila.updateIdentity(
-          test.handle,
-          test.key,
-          test.identity_alias,
-          test.identity_value,
-          test.uuid
-        );
-        assert.equal(res.statusCode, test.statusCode);
-        assert.equal(res.data.status, test.status);
-        assert.match(res.data.message, test.messageRegex);
-      } catch (e) {
-        assert.fail(e);
-      }
-    });
-  });
-});
-
-describe('Update Address', function () {
-  this.timeout(300000);
-  updateAddressTests.forEach((test) => {
-    it(test.description, async () => {
-      try {
-        const res = await sila.updateAddress(
-          test.handle,
-          test.key,
-          test.address_alias,
-          test.street_address_1,
-          test.street_address_2,
-          test.city,
-          test.state,
-          test.postal_code,
-          test.country,
-          test.uuid,
-        );
-        assert.equal(res.statusCode, test.statusCode);
-        assert.equal(res.data.status, test.status);
-        assert.match(res.data.message, test.messageRegex);
-      } catch (e) {
-        assert.fail(e);
-      }
-    });
-  });
-});
-
-describe('Delete Email', function () {
-  this.timeout(300000);
-  deleteEmailTests.forEach((test) => {
-    it(test.description, async () => {
-      try {
-        const res = await sila.deleteEmail(
-          test.handle,
-          test.key,
-        );
-        assert.equal(res.statusCode, test.statusCode);
-        assert.equal(res.data.status, test.status);
-        assert.match(res.data.message, test.messageRegex);
-      } catch (e) {
-        assert.fail(e);
-      }
-    });
-  });
-});
-
-describe('Delete Phone', function () {
-  this.timeout(300000);
-  deletePhoneTest.forEach((test) => {
-    it(test.description, async () => {
-      try {
-        const res = await sila.deletePhone(
-          test.handle,
-          test.key,
-        );
-        assert.equal(res.statusCode, test.statusCode);
-        assert.equal(res.data.status, test.status);
-        assert.match(res.data.message, test.messageRegex);
-      } catch (e) {
-        assert.fail(e);
-      }
-    });
-  });
-});
-
-
-describe('Delete Identity', function () {
-  this.timeout(300000);
-  deleteIdentityTests.forEach((test) => {
-    it(test.description, async () => {
-      try {
-        const res = await sila.deleteIdentity(
-          test.handle,
-          test.key,
-        );
-        assert.equal(res.statusCode, test.statusCode);
-        assert.equal(res.data.status, test.status);
-        assert.match(res.data.message, test.messageRegex);
-      } catch (e) {
-        assert.fail(e);
-      }
-    });
-  });
-});
-
-describe('Delete Address', function () {
-  this.timeout(300000);
-  deleteAddressTests.forEach((test) => {
-    it(test.description, async () => {
-      try {
-        const res = await sila.deleteAdress(
-          test.handle,
-          test.key,
-        );
-        assert.equal(res.statusCode, test.statusCode);
-        assert.equal(res.data.status, test.status);
         assert.match(res.data.message, test.messageRegex);
       } catch (e) {
         assert.fail(e);
