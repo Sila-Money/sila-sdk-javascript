@@ -69,16 +69,18 @@ const configureUrl = () => {
 /**
  *
  * @param {*} opts
- * @param {*} key
+ * @param {String} key
+ * @param {String} businessPrivateKey
  */
-const signOpts = (opts, key, business_private_key) => {
+const signOpts = (opts, key, businessPrivateKey) => {
   const options = opts;
   if (opts.body.header) {
     options.headers = {};
     const bodyString = JSON.stringify(options.body);
     options.headers.authsignature = sign(bodyString, appKey);
     if (key) options.headers.usersignature = sign(bodyString, key);
-    if (business_private_key) options.headers.businesssignature = sign(bodyString, business_private_key);
+    if (businessPrivateKey)
+      options.headers.businesssignature = sign(bodyString, businessPrivateKey);
   }
   return options;
 };
@@ -87,11 +89,12 @@ const signOpts = (opts, key, business_private_key) => {
  *
  * @param {Object} msg The header message
  * @param {String} handle The user handle
+ * @param {String} businessHandle
  */
-const setHeaders = (msg, handle, business_handle) => {
+const setHeaders = (msg, handle, businessHandle) => {
   const message = msg;
   message.header.user_handle = handle;
-  message.header.business_handle = business_handle;
+  message.header.business_handle = businessHandle;
   message.header.auth_handle = appHandle;
   message.header.reference = uuid4();
   message.header.created = Math.floor(Date.now() / 1000);
@@ -122,7 +125,12 @@ const post = (options) => {
  * @param {Object} body The body of the request
  * @param {String} privateKey The user's private key
  */
-const makeRequest = (path, body, privateKey = undefined, business_private_key = undefined) => {
+const makeRequest = (
+  path,
+  body,
+  privateKey = undefined,
+  business_private_key = undefined,
+) => {
   let opts = {
     uri: url(path),
     json: true,
@@ -187,7 +195,9 @@ const register = (user) => {
   message.entity.birthdate = user.dateOfBirth;
   message.entity.first_name = user.firstName;
   message.entity.last_name = user.lastName;
-  message.entity.entity_name = user.entity_name ? user.entity_name : `${user.firstName} ${user.lastName}`;
+  message.entity.entity_name = user.entity_name
+    ? user.entity_name
+    : `${user.firstName} ${user.lastName}`;
   message.entity.relationship = 'user';
   message.entity.type = user.business_type ? 'business' : 'individual';
   message.entity.business_type = user.business_type;
@@ -375,258 +385,185 @@ const transferSila = (
   return makeRequest('transfer_sila', body, privateKey);
 };
 
+const deleteRegistrationData = (path, handle, privateKey, uuid) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.uuid = uuid;
+
+  return makeRequest(`delete/${path}`, body, privateKey);
+};
+
 /**
  * Makes a call to /delete/email endpoint.
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
- * @param {String} email The user's new email 
+ * @param {String} email The user's new email
  */
-const deleteEmail = (
-  handle,
-  privateKey,
-  uuid,
-) => {
-  const fullHandle = getFullHandle(handle);
-  const body = setHeaders({ header: {} }, fullHandle);
-  body.uuid = uuid;
-  return makeRequest('delete/email/', body, privateKey);
-};
+const deleteEmail = (handle, privateKey, uuid) =>
+  deleteRegistrationData('email', handle, privateKey, uuid);
+
 /**
  * Makes a call to /delete/phone endpoint.
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
- * @param {String} phone The user's new phone 
+ * @param {String} uuid The user's new phone
  */
-const deletePhone = (
-  handle,
-  privateKey,
-  uuid,
-) => {
-  const fullHandle = getFullHandle(handle);
-  const body = setHeaders({ header: {} }, fullHandle);
-  body.uuid = uuid;
-
-  return makeRequest('delete/phone/', body, privateKey);
-};
+const deletePhone = (handle, privateKey, uuid) =>
+  deleteRegistrationData('phone', handle, privateKey, uuid);
 
 /**
- * Makes a call to /update/address endpoint.
+ * Makes a call to /delete/address endpoint.
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
- * @param {String} address The user's new address 
+ * @param {String} uuid The user's new address
  */
-const deleteAdress = (
-  handle,
-  privateKey,
-  uuid,
-) => {
-  const fullHandle = getFullHandle(handle);
-  const body = setHeaders({ header: {} }, fullHandle);
-  body.uuid = uuid;
-
-  return makeRequest('delete/address/', body, privateKey);
-};
+const deleteAddress = (handle, privateKey, uuid) =>
+  deleteRegistrationData('address', handle, privateKey, uuid);
 
 /**
  * Makes a call to /delete/identity endpoint.
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
- * @param {String} identity The user's new identity 
+ * @param {String} uuid The user's new identity
  */
-const deleteIdentity = (
-  handle,
-  privateKey,
-  uuid
-) => {
-  const fullHandle = getFullHandle(handle);
-  const body = setHeaders({ header: {} }, fullHandle);
-  body.uuid = uuid;
-
-  return makeRequest('delete/identity/', body, privateKey);
-};
+const deleteIdentity = (handle, privateKey, uuid) =>
+  deleteRegistrationData('identity', handle, privateKey, uuid);
 
 /**
  * Makes a call to /update/email endpoint.
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
- * @param {String} email The user's new email 
+ * @param {Object} email The updated email
  */
-const updateEmail = (
-  handle,
-  privateKey,
-  email,
-  uuid,
-) => {
+const updateEmail = (handle, privateKey, email) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
-  body.email = email;
-  body.uuid = uuid;
+  body.email = email.email;
+  body.uuid = email.uuid;
 
-  return makeRequest('update/email/', body, privateKey);
+  return makeRequest('update/email', body, privateKey);
 };
 /**
  * Makes a call to /update/phone endpoint.
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
- * @param {String} phone The user's new phone 
+ * @param {Object} phone The updated phone
  */
-const updatePhone = (
-  handle,
-  privateKey,
-  phone,
-  uuid,
-) => {
+const updatePhone = (handle, privateKey, phone) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
-  body.phone = phone;
-  body.uuid = uuid;
+  body.phone = phone.phone;
+  body.uuid = phone.uuid;
 
-  return makeRequest('update/phone/', body, privateKey);
+  return makeRequest('update/phone', body, privateKey);
 };
 
 /**
  * Makes a call to /update/address endpoint.
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
- * @param {String} address The user's new address 
+ * @param {Object} address The updated address
  */
-const updateAdress = (
-  handle,
-  privateKey,
-  address,
-  uuid,
-) => {
+const updateAddress = (handle, privateKey, address) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
-  body.address_alias = address_alias;
-  body.street_address_2 = street_address_2;
-  body.street_address_1 = street_address_1;
-  body.city = city;
-  body.state = state;
-  body.postal_code = postal_code;
-  body.country = country;
-  body.uuid = uuid;
+  body.address_alias = address.alias;
+  body.street_address_2 = address.street_address_2;
+  body.street_address_1 = address.street_address_1;
+  body.city = address.city;
+  body.state = address.state;
+  body.postal_code = address.postal_code;
+  body.country = address.country;
+  body.uuid = address.uuid;
 
-  return makeRequest('update/address/', body, privateKey);
+  return makeRequest('update/address', body, privateKey);
 };
 
 /**
  * Makes a call to /update/identity endpoint.
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
- * @param {String} identity_alias The user's new identity alias
- * @param {String} identity_value The user's new identity value
+ * @param {Object} identity The updated identity
  */
-const updateIdentity = (
-  handle,
-  privateKey,
-  identity,
-  uuid
-) => {
+const updateIdentity = (handle, privateKey, identity) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
-  body.identity_alias = identity_alias;
-  body.identity_value = identity_value;
-  body.uuid = uuid;
+  body.identity_alias = identity.alias;
+  body.identity_value = identity.value;
+  body.uuid = identity.uuid;
 
-  return makeRequest('update/identity/', body, privateKey);
+  return makeRequest('update/identity', body, privateKey);
 };
 
 /**
  * Makes a call to /add/email endpoint.
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
- * @param {String} email The user's new email 
+ * @param {String} email The user's new email
  */
-const addEmail = (
-  handle,
-  privateKey,
-  email,
-) => {
+const addEmail = (handle, privateKey, email) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
   body.email = email;
 
-  return makeRequest('add/email/', body, privateKey);
+  return makeRequest('add/email', body, privateKey);
 };
 
 /**
  * Makes a call to /add/phone endpoint.
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
- * @param {String} phone The user's new phone 
+ * @param {String} phone The user's new phone
  */
-const addPhone = (
-  handle,
-  privateKey,
-  phone,
-) => {
+const addPhone = (handle, privateKey, phone) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
   body.phone = phone;
 
-  return makeRequest('add/phone/', body, privateKey);
+  return makeRequest('add/phone', body, privateKey);
 };
 
 /**
  * Makes a call to /add/identity endpoint.
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
- * @param {String} identity_alias The user's new identity alias
- * @param {String} identity_value The user's new identity value
- * 
+ * @param {Object} identity The user's new identity alias
+ *
  */
-const addIdentity = (
-  handle,
-  privateKey,
-  identity_alias,
-  identity_value,
-) => {
+const addIdentity = (handle, privateKey, identity) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
-  body.identity_alias = identity_alias;
-  body.identity_value = identity_value;
+  body.identity_alias = identity.alias;
+  body.identity_value = identity.value;
 
-
-  return makeRequest('add/identity/', body, privateKey);
+  return makeRequest('add/identity', body, privateKey);
 };
 
 /**
  * Makes a call to /add/address endpoint.
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
- * @param {String} address The user's new address 
+ * @param {Object} address The user's new address
  */
-const addAddress = (
-  handle,
-  privateKey,
-  address_alias,
-  street_address_1,
-  street_address_2,
-  city,
-  state,
-  postal_code,
-  country,
-
-) => {
+const addAddress = (handle, privateKey, address) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
-  body.address_alias = address_alias;
-  body.street_address_2 = street_address_2;
-  body.street_address_1 = street_address_1;
-  body.city = city;
-  body.state = state;
-  body.postal_code = postal_code;
-  body.country = country;
+  body.address_alias = address.alias;
+  body.street_address_2 = address.street_address_2;
+  body.street_address_1 = address.street_address_1;
+  body.city = address.city;
+  body.state = address.state;
+  body.postal_code = address.postal_code;
+  body.country = address.country;
 
-  return makeRequest('add/address/', body, privateKey);
+  return makeRequest('add/address', body, privateKey);
 };
 
-  /**
-   * Makes a call to /get_accounts endpoint.
-   * @param {String} handle The user handle
-   * @param {String} privateKey The user's wallet private key
-   */
+/**
+ * Makes a call to /get_accounts endpoint.
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ */
 const getAccounts = (handle, privateKey) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
@@ -806,101 +743,139 @@ const getNacisCategories = () => {
   return makeRequest('get_naics_categories', body);
 };
 
-/** 
-* @param {String} entity_type optional entity type filter.
-*/
-const getEntities = (entity_type) => {
+/**
+ * @param {String} entityType optional entity type filter.
+ */
+const getEntities = (entityType) => {
   const body = setHeaders({ header: {} });
 
-  body.entity_type = entity_type;
+  body.entity_type = entityType;
 
   return makeRequest('get_entities', body);
 };
 
-/** 
-* @param {String} user_handle
-* @param {String} user_private_key
-*/
-const getEntity = (user_handle, user_private_key) => {
-  const body = setHeaders({ header: {} }, user_handle);
+/**
+ * @param {String} userHandle
+ * @param {String} userPrivateKey
+ */
+const getEntity = (userHandle, userPrivateKey) => {
+  const body = setHeaders({ header: {} }, userHandle);
 
-  body.user_handle = user_handle;
+  body.user_handle = userHandle;
 
-  return makeRequest('get_entity', body, user_private_key);
+  return makeRequest('get_entity', body, userPrivateKey);
 };
 
-/** 
-* @param {String} user_handle
-* @param {String} user_private_key
-* @param {String} business_handle
-* @param {String} business_private_key
-* @param {String} role
-* @param {String} member_handle
-* @param {String} details
-* @param {double} ownership_stake
-*/
+/**
+ * @param {String} userHandle
+ * @param {String} userPrivateKey
+ * @param {String} businessHandle
+ * @param {String} businessPrivateKey
+ * @param {String} role
+ * @param {String} memberHandle
+ * @param {String} details
+ * @param {double} ownership_stake
+ */
 const linkBusinessMember = (
-  user_handle, user_private_key, business_handle, business_private_key, role, member_handle, details,
-  ownership_stake
+  userHandle,
+  userPrivateKey,
+  businessHandle,
+  businessPrivateKey,
+  role,
+  memberHandle,
+  details,
+  ownershipStake,
 ) => {
-  const body = setHeaders({ header: {} }, user_handle, business_handle);
+  const body = setHeaders({ header: {} }, userHandle, businessHandle);
 
   body.role = role;
-  body.member_handle = member_handle;
+  body.member_handle = memberHandle;
   body.details = details;
-  body.ownership_stake = ownership_stake;
+  body.ownership_stake = ownershipStake;
 
-  return makeRequest('link_business_member', body, user_private_key, business_private_key);
+  return makeRequest(
+    'link_business_member',
+    body,
+    userPrivateKey,
+    businessPrivateKey,
+  );
 };
 
-/** 
-* @param {String} user_handle
-* @param {String} user_private_key
-* @param {String} business_handle
-* @param {String} business_private_key
-* @param {String} role
-*/
+/**
+ * @param {String} userHandle
+ * @param {String} userPrivateKey
+ * @param {String} businessHandle
+ * @param {String} businessPrivateKey
+ * @param {String} role
+ */
 const unlinkBusinessMember = (
-  user_handle, user_private_key, business_handle, business_private_key, role
+  userHandle,
+  userPrivateKey,
+  businessHandle,
+  businessPrivateKey,
+  role,
 ) => {
-  const body = setHeaders({ header: {} }, user_handle, business_handle);
+  const body = setHeaders({ header: {} }, userHandle, businessHandle);
 
   body.role = role;
 
-  return makeRequest('unlink_business_member', body, user_private_key, business_private_key);
+  return makeRequest(
+    'unlink_business_member',
+    body,
+    userPrivateKey,
+    businessPrivateKey,
+  );
 };
 
-/** 
-* @param {String} user_handle
-* @param {String} user_private_key
-* @param {String} business_handle
-* @param {String} business_private_key
-* @param {String} member_handle
-* @param {String} certification_token
-*/
+/**
+ * @param {String} userHandle
+ * @param {String} userPrivateKey
+ * @param {String} businessHandle
+ * @param {String} businessPrivateKey
+ * @param {String} memberHandle
+ * @param {String} certificationToken
+ */
 const certifyBeneficialOwner = (
-  user_handle, user_private_key, business_handle, business_private_key, member_handle, certification_token
+  userHandle,
+  userPrivateKey,
+  businessHandle,
+  businessPrivateKey,
+  memberHandle,
+  certificationToken,
 ) => {
-  const body = setHeaders({ header: {} }, user_handle, business_handle);
+  const body = setHeaders({ header: {} }, userHandle, businessHandle);
 
-  body.member_handle = member_handle;
-  body.certification_token = certification_token;
+  body.member_handle = memberHandle;
+  body.certification_token = certificationToken;
 
-  return makeRequest('certify_beneficial_owner', body, user_private_key, business_private_key);
+  return makeRequest(
+    'certify_beneficial_owner',
+    body,
+    userPrivateKey,
+    businessPrivateKey,
+  );
 };
 
-/** 
-* @param {String} user_handle
-* @param {String} user_private_key
-* @param {String} business_handle
-* @param {String} business_private_key
-*/
+/**
+ * @param {String} userHandle
+ * @param {String} userPrivateKey
+ * @param {String} businessHandle
+ * @param {String} businessPrivateKey
+ */
 const certifyBusiness = (
-  user_handle, user_private_key, business_handle, business_private_key
+  userHandle,
+  userPrivateKey,
+  businessHandle,
+  businessPrivateKey,
 ) => {
-  const body = setHeaders({ header: {} }, user_handle, business_handle);
+  const body = setHeaders({ header: {} }, userHandle, businessHandle);
 
-  return makeRequest('certify_business', body, user_private_key, business_private_key);
+  return makeRequest(
+    'certify_business',
+    body,
+    userPrivateKey,
+    businessPrivateKey,
+  );
 };
 
 /**
@@ -986,9 +961,9 @@ export default {
   updateEmail,
   updatePhone,
   updateIdentity,
-  updateAdress,
+  updateAddress,
   deleteEmail,
   deletePhone,
   deleteIdentity,
-  deleteAdress,
+  deleteAddress,
 };
