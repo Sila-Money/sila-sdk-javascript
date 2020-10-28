@@ -698,7 +698,7 @@ const transferSilaTests = [
     description: `${handles[3]} should fail to init transfer to ${handles[0]}`,
     statusCode: 400,
     expectedResult: 'FAILURE',
-    messageRegex: /Bad request/,
+    messageRegex: /Insufficient wallet balance/,
   },
   {
     handle: handles[0],
@@ -776,7 +776,7 @@ const redeemSilaTests = [
     description: `${handles[3]} should fail to init redeem sila`,
     statusCode: 400,
     expectedResult: 'FAILURE',
-    messageRegex: /Bad request/,
+    messageRegex: /Insufficient wallet balance/,
   },
   {
     handle: handles[1],
