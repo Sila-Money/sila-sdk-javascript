@@ -332,8 +332,9 @@ const issueSila = (
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
  * @param {String} accountName The account nickname to credit with the tokens' value.
- * @param {String} descriptor The transaction descriptor (optional)
- * @param {String} businessUuid The UUID of the business for the ACH name (optional)
+ * @param {String} descriptor Optional. Max Length 100
+ * @param {String} businessUuid Optional. UUID of a business with an approved ACH name. The format should be a UUID string.
+ * @param {String} processingType Optional. Choice field. Examples: STANDARD_ACH or SAME_DAY_ACH
  */
 const redeemSila = (
   amount,
@@ -342,6 +343,7 @@ const redeemSila = (
   accountName = 'default',
   descriptor = undefined,
   businessUuid = undefined,
+  processingType = undefined,
 ) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
@@ -350,6 +352,7 @@ const redeemSila = (
   body.account_name = accountName;
   if (descriptor) body.descriptor = descriptor;
   if (businessUuid) body.business_uuid = businessUuid;
+  body.processing_type = processingType;
 
   return makeRequest('redeem_sila', body, privateKey);
 };
