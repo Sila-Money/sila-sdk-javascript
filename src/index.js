@@ -496,6 +496,27 @@ const updateIdentity = (handle, privateKey, identity) => {
 };
 
 /**
+ * Update an existing entity (name, birthdate, or business data).
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's private key
+ * @param {Object} entity The updated entity
+ */
+const updateEntity = (handle, privateKey, entity) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.first_name = entity.first_name;
+  body.last_name = entity.last_name;
+  body.entity_name = entity.entity_name;
+  body.birthdate = entity.birthdate;
+  body.business_type = entity.business_type;
+  body.naics_code = entity.naics_code;
+  body.doing_business_as = entity.doing_business_as;
+  body.business_website = entity.business_website;
+
+  return makeRequest('update/entity', body, privateKey);
+};
+
+/**
  * Makes a call to /add/email endpoint.
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
@@ -962,6 +983,7 @@ export default {
   updatePhone,
   updateIdentity,
   updateAddress,
+  updateEntity,
   deleteEmail,
   deletePhone,
   deleteIdentity,
