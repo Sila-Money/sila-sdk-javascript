@@ -893,6 +893,67 @@ console.log(res.data.address.country);
 console.log(res.data.address.postal_code);
 ```
 
+### Update Entity (Individual)
+
+```javascript
+const entity = {
+  first_name: 'NewFirst',
+  last_name: 'NewLast',
+  entity_name: 'NewFirst NewLast',
+  birthdate: '1994-01-08',
+};
+const res = await sila.updateEntity(userHandle, userPrivateKey, entity);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // true
+console.log(res.data.status); // SUCCESS
+console.log(res.data.message); // Successfully updated entity
+console.log(res.data.user_handle);
+console.log(res.data.identity_type); // individual
+console.log(res.data.entity.created_epoch);
+console.log(res.data.entity.entity_name);
+console.log(res.data.entity.birthdate);
+console.log(res.data.entity.first_name);
+console.log(res.data.entity.last_name);
+```
+
+### Update Entity (Business)
+
+```javascript
+const entity = {
+  entity_name: 'New Company',
+  business_type: 'corporation',
+  naics_code: 721,
+  doing_business_as: 'NC Ltc.',
+  business_website: 'https://newdomain.go',
+};
+const res = await sila.updateEntity(userHandle, userPrivateKey, entity);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // true
+console.log(res.data.status); // SUCCESS
+console.log(res.data.message); // Successfully updated entity
+console.log(res.data.user_handle);
+console.log(res.data.identity_type); // business
+console.log(res.data.entity.created_epoch);
+console.log(res.data.entity.entity_name);
+console.log(res.data.entity.business_type);
+console.log(res.data.entity.naics_code);
+console.log(res.data.entity.business_uuid);
+console.log(res.data.entity.naics_category);
+console.log(res.data.entity.naics_subcategory);
+console.log(res.data.entity.doing_business_as);
+console.log(res.data.entity.business_website);
+```
+
 ### Delete Email
 
 ```javascript

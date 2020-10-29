@@ -250,7 +250,7 @@ const requestKYCTests = [
     key: wallets[5].privateKey,
     expectedResult: 'SUCCESS',
     statusCode: 200,
-    description: `"${handles[3]}.silamoney.eth" should be sent for KYC check.`,
+    description: `"${handles[4]}.silamoney.eth" should be sent for KYC check.`,
   },
 ];
 
@@ -1066,6 +1066,40 @@ const updateAddressTests = [
   },
 ];
 
+const updateEntityTests = [
+  {
+    handle: handles[0],
+    privateKey: wallets[0].privateKey,
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    description: `${handles[0]} should update entity`,
+    messageRegex: /Successfully updated entity/,
+    entity: {
+      first_name: 'NewFirst',
+      last_name: 'NewLast',
+      entity_name: 'NewFirst NewLast',
+      birthdate: '1994-01-08',
+    },
+  },
+  {
+    handle: handles[4],
+    privateKey: wallets[5].privateKey,
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    description: `${handles[4]} should update entity`,
+    messageRegex: /Successfully updated entity/,
+    entity: {
+      entity_name: 'New Company',
+      business_type: 'corporation',
+      naics_code: 721,
+      doing_business_as: 'NC Ltc.',
+      business_website: 'https://newdomain.go',
+    },
+  },
+];
+
 const deleteEmailTests = [
   {
     handle: handles[0],
@@ -1590,6 +1624,49 @@ describe('Update Address', function () {
         assert.equal(res.data.success, test.expectedResult);
         assert.equal(res.data.status, test.status);
         assert.match(res.data.message, test.messageRegex);
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
+  });
+});
+
+describe('Update Entity', function () {
+  this.timeout(300000);
+  updateEntityTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const res = await sila.updateEntity(
+          test.handle,
+          test.privateKey,
+          test.entity,
+        );
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.success, test.expectedResult);
+        assert.equal(res.data.status, test.status);
+        assert.match(res.data.message, test.messageRegex);
+        assert.isTrue(res.data.user_handle.includes(test.handle.toLowerCase()));
+        assert.isNumber(res.data.entity.created_epoch);
+        assert.equal(res.data.entity.entity_name, test.entity.entity_name);
+        if (res.data.entity_type === 'individual') {
+          assert.equal(res.data.entity.birthdate, test.entity.birthdate);
+          assert.equal(res.data.entity.first_name, test.entity.first_name);
+          assert.equal(res.data.entity.last_name, test.entity.last_name);
+        } else if (res.data.entity_type === 'business') {
+          assert.equal(
+            res.data.entity.business_type,
+            test.entity.business_type,
+          );
+          assert.equal(res.data.entity.naics_code, test.entity.naics_code);
+          assert.equal(
+            res.data.entity.doing_business_as,
+            test.entity.doing_business_as,
+          );
+          assert.equal(
+            res.data.entity.business_website,
+            test.entity.business_website,
+          );
+        }
       } catch (e) {
         assert.fail(e);
       }
