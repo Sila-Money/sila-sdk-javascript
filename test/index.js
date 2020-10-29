@@ -564,6 +564,16 @@ const issueSilaTests = [
     description: `${handles[0]} should fail issue sila tokens with invalid business uuid and descriptor`,
     messageRegex: achRegex,
   },
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    amount: 100,
+    statusCode: 200,
+    processingType: 'SAME_DAY_ACH',
+    expectedResult: 'SUCCESS',
+    description: `${handles[0]} should issue sila tokens successfully with processing type`,
+    messageRegex: /submitted to processing queue/,
+  },
 ];
 
 /**
@@ -2003,6 +2013,7 @@ describe('Issue Sila', function () {
           undefined,
           test.descriptor,
           test.businessUuid,
+          test.processingType,
         );
         if (res.statusCode === 200) issueReferences.push(res.data.reference);
         assert.equal(res.statusCode, test.statusCode);

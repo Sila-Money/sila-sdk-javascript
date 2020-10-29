@@ -301,8 +301,9 @@ const linkAccount = (
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
  * @param {String} accountName The nickname of the account to debit from. It defaults to 'default' (optional).
- * @param {String} descriptor The transaction descriptor (optional).
- * @param {String} businessUuid The UUID of the business for the ACH name (optional)
+ * @param {String} descriptor Optional. Max Length 100. Note that only the first 10 characters show on the resulting bank statement.
+ * @param {String} businessUuid Optional. UUID of a business with an approved ACH name. The format should be a UUID string.
+ * @param {String} processingType Optional. Choice field. Examples: STANDARD_ACH or SAME_DAY_ACH
  */
 const issueSila = (
   amount,
@@ -311,6 +312,7 @@ const issueSila = (
   accountName = 'default',
   descriptor = undefined,
   businessUuid = undefined,
+  processingType = undefined,
 ) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
@@ -319,6 +321,7 @@ const issueSila = (
   body.account_name = accountName;
   if (descriptor) body.descriptor = descriptor;
   if (businessUuid) body.business_uuid = businessUuid;
+  body.processing_type = processingType;
 
   return makeRequest('issue_sila', body, privateKey);
 };
