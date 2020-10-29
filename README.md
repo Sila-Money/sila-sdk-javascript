@@ -611,7 +611,16 @@ console.log(res.data); // Data contains many information such as entity type, en
 ### Link Business Member
 
 ```javascript
-const res = await sila.linkBusinessMember(user_handle, user_private_key, business_handle, business_private_key, role, member_handle, details, ownership_stake);
+const res = await sila.linkBusinessMember(
+  user_handle,
+  user_private_key,
+  business_handle,
+  business_private_key,
+  role,
+  member_handle,
+  details,
+  ownership_stake,
+);
 ```
 
 #### Success Response Object
@@ -625,7 +634,13 @@ console.log(res.data.message); // Response message
 ### Unlink Business Member
 
 ```javascript
-const res = await sila.unlinkBusinessMember(user_handle, user_private_key, business_handle, business_private_key, role);
+const res = await sila.unlinkBusinessMember(
+  user_handle,
+  user_private_key,
+  business_handle,
+  business_private_key,
+  role,
+);
 ```
 
 #### Success Response Object
@@ -639,7 +654,14 @@ console.log(res.data.message); // Response message
 ### Certify Beneficial Owner
 
 ```javascript
-const res = await sila.certifyBeneficialOwner(user_handle, user_private_key, business_handle, business_private_key, member_handle, certification_token);
+const res = await sila.certifyBeneficialOwner(
+  user_handle,
+  user_private_key,
+  business_handle,
+  business_private_key,
+  member_handle,
+  certification_token,
+);
 ```
 
 #### Success Response Object
@@ -653,7 +675,12 @@ console.log(res.data.message); // Response message
 ### Certify Business
 
 ```javascript
-const res = await sila.certifyBusiness(user_handle, user_private_key, business_handle, business_private_key);
+const res = await sila.certifyBusiness(
+  user_handle,
+  user_private_key,
+  business_handle,
+  business_private_key,
+);
 ```
 
 #### Success Response Object
@@ -662,6 +689,268 @@ const res = await sila.certifyBusiness(user_handle, user_private_key, business_h
 console.log(res.statusCode); // 200
 console.log(res.data.success); // TRUE
 console.log(res.data.message); // Response message
+```
+
+### Add Email
+
+```javascript
+const res = await sila.addEmail(userHandle, userPrivateKey, email);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // true
+console.log(res.data.status); // SUCCESS
+console.log(res.data.message); // Successfully added email
+console.log(res.data.email.added_epoch);
+console.log(res.data.email.modified_epoch);
+console.log(res.data.email.uuid);
+console.log(res.data.email.email);
+```
+
+### Add Phone
+
+```javascript
+const res = await sila.addPhone(userHandle, userPrivateKey, phone);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // true
+console.log(res.data.status); // SUCCESS
+console.log(res.data.message); // Successfully added phone
+console.log(res.data.phone.added_epoch);
+console.log(res.data.phone.modified_epoch);
+console.log(res.data.phone.uuid);
+console.log(res.data.phone.phone);
+```
+
+### Add Identity
+
+```javascript
+const identity = {
+  alias: 'SSN',
+  value: '543212222',
+};
+const res = await sila.addIdentity(userHandle, userPrivateKey, identity);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // true
+console.log(res.data.status); // SUCCESS
+console.log(res.data.message); // Successfully added identity
+console.log(res.data.identity.added_epoch);
+console.log(res.data.identity.modified_epoch);
+console.log(res.data.identity.uuid);
+console.log(res.data.identity.identity_type);
+console.log(res.data.identity.identity);
+```
+
+### Add Address
+
+```javascript
+const address = {
+  alias: 'Home Number Two',
+  street_address_1: '324 Songbird Avenue',
+  street_address_2: 'Apt. 132',
+  city: 'Portland',
+  state: 'VA',
+  postal_code: '12345',
+  country: 'US',
+};
+const res = await sila.addAddress(userHandle, userPrivateKey, address);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // true
+console.log(res.data.status); // SUCCESS
+console.log(res.data.message); // Successfully added address
+console.log(res.data.address.added_epoch);
+console.log(res.data.address.modified_epoch);
+console.log(res.data.address.uuid);
+console.log(res.data.address.nickname);
+console.log(res.data.address.street_address_1);
+console.log(res.data.address.street_address_2);
+console.log(res.data.address.city);
+console.log(res.data.address.state);
+console.log(res.data.address.country);
+console.log(res.data.address.postal_code);
+```
+
+### Update Email
+
+```javascript
+const email = {
+  uuid: 'some-uuid-code',
+  email: 'new.email@yournewemail.com',
+};
+const res = await sila.updateEmail(userHandle, userPrivateKey, email);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // true
+console.log(res.data.status); // SUCCESS
+console.log(res.data.message); // Successfully updated email
+console.log(res.data.email.added_epoch);
+console.log(res.data.email.modified_epoch);
+console.log(res.data.email.uuid);
+console.log(res.data.email.email);
+```
+
+### Update Phone
+
+```javascript
+const phone = {
+  uuid: 'some-uuid-code',
+  phone: '1234567890',
+};
+const res = await sila.updatePhone(userHandle, userPrivateKey, phone);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // true
+console.log(res.data.status); // SUCCESS
+console.log(res.data.message); // Successfully updated phone
+console.log(res.data.phone.added_epoch);
+console.log(res.data.phone.modified_epoch);
+console.log(res.data.phone.uuid);
+console.log(res.data.phone.phone);
+```
+
+### Update Identity
+
+```javascript
+const identity = {
+  uuid: 'some-uuid-code',
+  alias: 'SSN',
+  value: '543212222',
+};
+const res = await sila.updateIdentity(userHandle, userPrivateKey, identity);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // true
+console.log(res.data.status); // SUCCESS
+console.log(res.data.message); // Successfully update identity
+console.log(res.data.identity.added_epoch);
+console.log(res.data.identity.modified_epoch);
+console.log(res.data.identity.uuid);
+console.log(res.data.identity.identity_type);
+console.log(res.data.identity.identity);
+```
+
+### Update Address
+
+```javascript
+const address = {
+  uuid: 'some-uuid-code',
+  alias: 'Home Number Two',
+  street_address_1: '324 Songbird Avenue',
+  street_address_2: 'Apt. 132',
+  city: 'Portland',
+  state: 'VA',
+  postal_code: '12345',
+  country: 'US',
+};
+const res = await sila.updateAddress(userHandle, userPrivateKey, address);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // true
+console.log(res.data.status); // SUCCESS
+console.log(res.data.message); // Successfully updated address
+console.log(res.data.address.added_epoch);
+console.log(res.data.address.modified_epoch);
+console.log(res.data.address.uuid);
+console.log(res.data.address.nickname);
+console.log(res.data.address.street_address_1);
+console.log(res.data.address.street_address_2);
+console.log(res.data.address.city);
+console.log(res.data.address.state);
+console.log(res.data.address.country);
+console.log(res.data.address.postal_code);
+```
+
+### Delete Email
+
+```javascript
+const res = await sila.deleteEmail(userHandle, userPrivatekey, uuid);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // true
+console.log(res.data.status); // SUCCESS
+console.log(res.data.message); // Successfully deleted email
+```
+
+### Delete Phone
+
+```javascript
+const res = await sila.deletePhone(userHandle, userPrivatekey, uuid);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // true
+console.log(res.data.status); // SUCCESS
+console.log(res.data.message); // Successfully deleted phone
+```
+
+### Delete Identity
+
+```javascript
+const res = await sila.deleteIdentity(userHandle, userPrivatekey, uuid);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // true
+console.log(res.data.status); // SUCCESS
+console.log(res.data.message); // Successfully deleted identity
+```
+
+### Delete Address
+
+```javascript
+const res = await sila.deleteAddress(userHandle, userPrivatekey, uuid);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // true
+console.log(res.data.status); // SUCCESS
+console.log(res.data.message); // Successfully deleted address
 ```
 
 ## Development
