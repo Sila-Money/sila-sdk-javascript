@@ -314,11 +314,13 @@ const res = await Sila.redeemSila(
   accountName,
   descriptor,
   businessUuid,
+  processingType,
 );
 /*
 Account Name is optional but defaults to 'default'.
 Descriptor is optional and sets the transaction description
 BusinessUuid is optional and sets the ACH Name of the transaction
+ProcessingType is optional and can be one of STANDARD_ACH or SAME_DAY_ACH
 */
 ```
 
@@ -327,6 +329,7 @@ BusinessUuid is optional and sets the ACH Name of the transaction
 ```javascript
 console.log(res.statusCode); // 200
 console.log(res.data.reference); // Random reference number
+console.log(res.data.success); // true
 console.log(res.data.status); // SUCCESS
 console.log(res.data.message); // Transaction submitted to processing queue
 console.log(res.data.descriptor); // The transaction description set by you or blank if not set

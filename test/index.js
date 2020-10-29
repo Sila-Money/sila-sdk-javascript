@@ -810,6 +810,16 @@ const redeemSilaTests = [
     expectedResult: 'FAILURE',
     messageRegex: achRegex,
   },
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    amount: 100,
+    processingType: 'SAME_DAY_ACH',
+    description: `${handles[1]} should redeem sila with processing type`,
+    statusCode: 200,
+    expectedResult: 'SUCCESS',
+    messageRegex: /Transaction submitted to processing queue/,
+  },
 ];
 
 const pollRedeemTests = [
