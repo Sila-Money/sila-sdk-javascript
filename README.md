@@ -593,7 +593,7 @@ console.log(res.data.business_roles); // Business roles list
 ### Get Naics Categories
 
 ```javascript
-const res = await sila.getNacisCategories();
+const res = await sila.getNaicsCategories();
 ```
 
 #### Success Response Object

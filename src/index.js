@@ -766,22 +766,38 @@ const getBalance = (address) => {
   return post(opts);
 };
 
+/**
+ * Gets a list of valid business types that can be registered.
+ */
 const getBusinessTypes = () => {
   const body = setHeaders({ header: {} });
 
   return makeRequest('get_business_types', body);
 };
 
+/**
+ * Gets a list of valid business roles that can be used to link individuals to businesses.
+ */
 const getBusinessRoles = () => {
   const body = setHeaders({ header: {} });
 
   return makeRequest('get_business_roles', body);
 };
 
-const getNacisCategories = () => {
+/**
+ * Gets a list of valid NAICS codes sorted by category and listed with their describing subcategory.
+ */
+const getNaicsCategories = () => {
   const body = setHeaders({ header: {} });
 
   return makeRequest('get_naics_categories', body);
+};
+
+/**
+ * @deprecated Since version 0.2.13-rc. Use getNaicsCategories instead.
+ */
+const getNacisCategories = () => {
+  return getNaicsCategories();
 };
 
 /**
@@ -990,6 +1006,7 @@ export default {
   getBusinessTypes,
   getBusinessRoles,
   getNacisCategories,
+  getNaicsCategories,
   getEntities,
   linkBusinessMember,
   unlinkBusinessMember,
