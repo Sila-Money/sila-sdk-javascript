@@ -604,6 +604,30 @@ console.log(res.data.success); // TRUE
 console.log(res.data.naics_categories); // Categories list
 ```
 
+### Get Document Types
+
+```javascript
+// Pagination is optional
+const pagination = {
+  page: 1,
+  perPage: 5,
+};
+const res = await sila.getDocumentTypes(pagination);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 2000
+console.log(res.data.success); // true
+console.log(res.data.status); // SUCCESS
+console.log(res.data.message); // Document type details returned
+console.log(res.data.document_types[0].name);
+console.log(res.data.document_types[0].label);
+console.log(res.data.document_types[0].identity_type);
+console.log(res.data.pagination); // Pagination information (returned_count, total_count, current_page, total_pages)
+```
+
 ### Get Entities
 
 ```javascript

@@ -153,6 +153,38 @@ const getFullHandle = (handle) => {
 };
 
 /**
+ *
+ * @param {String} queryParameters The current query parameters
+ * @param {String} name The name of the query parameter
+ * @param {String} value The value of the query parameter
+ */
+const getQueryParameter = (queryParameters, name, value) => {
+  let newQueryParameters = queryParameters;
+  if (value !== undefined && value !== null) {
+    newQueryParameters += newQueryParameters.length > 0 ? '&' : '?';
+    newQueryParameters += `${name}=${value}`;
+  }
+  return newQueryParameters;
+};
+
+const getQueryParameters = (parameters) => {
+  let queryParameters = '';
+  if (parameters) {
+    queryParameters = getQueryParameter(
+      queryParameters,
+      'page',
+      parameters.page,
+    );
+    queryParameters = getQueryParameter(
+      queryParameters,
+      'per_page',
+      parameters.perPage,
+    );
+  }
+  return queryParameters;
+};
+
+/**
  * Makes a call to /check_handle endpoint.
  * @param {String} handle The user handle to check if it's available
  */
@@ -794,6 +826,16 @@ const getNaicsCategories = () => {
 };
 
 /**
+ * List the document types for KYC supporting documentation
+ * @param {Object} pagination This object includes the optional pagination parameters
+ */
+const getDocumentTypes = (pagination = undefined) => {
+  const body = setHeaders({ header: {} });
+  const queryParameters = getQueryParameters(pagination);
+  return makeRequest(`document_types${queryParameters}`, body);
+};
+
+/**
  * @deprecated Since version 0.2.13-rc. Use getNaicsCategories instead.
  */
 const getNacisCategories = () => {
@@ -984,6 +1026,7 @@ export default {
   getAccountBalance,
   getAccounts,
   getBalance,
+  getDocumentTypes,
   getSilaBalance,
   getTransactions,
   getWallet,

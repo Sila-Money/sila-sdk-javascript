@@ -1263,6 +1263,29 @@ const linkBusinessMemberTests = [
   },
 ];
 
+const getDocumentTypesTests = [
+  {
+    returnedCount: 20,
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    messageRegex: /Document type details returned/,
+    description: 'should retrieve document types without pagination',
+  },
+  {
+    pagination: {
+      page: 1,
+      perPage: 100,
+    },
+    returnedCount: 21,
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    messageRegex: /Document type details returned/,
+    description: 'should retrieve document types with pagination',
+  },
+];
+
 describe('Get Business Types', function () {
   this.timeout(300000);
   it('Successfully retreive business types', async () => {
@@ -1308,6 +1331,27 @@ describe('Get Naics Categories', function () {
     } catch (err) {
       assert.fail(err);
     }
+  });
+});
+
+describe('Get Document Types', function () {
+  this.timeout(300000);
+  getDocumentTypesTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const res = await sila.getDocumentTypes(test.pagination);
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.success, test.expectedResult);
+        assert.equal(res.data.status, test.status);
+        assert.match(res.data.message, test.messageRegex);
+        if (res.statusCode === 200) {
+          assert.isAtLeast(res.data.document_types.length, test.returnedCount);
+          assert.isObject(res.data.pagination);
+        }
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
   });
 });
 
