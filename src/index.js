@@ -139,7 +139,11 @@ const post = (options) => {
       if (err) {
         rej(err);
       }
-      res({ statusCode: response.statusCode, data: body });
+      res({
+        statusCode: response.statusCode,
+        headers: response.headers,
+        data: body,
+      });
     });
   });
   return promise;
@@ -161,7 +165,11 @@ const postFile = (options, file) => {
     };
     request.post(fileOptions, (err, response, body) => {
       if (err) rej(err);
-      res({ statusCode: response.statusCode, data: JSON.parse(body) });
+      res({
+        statusCode: response.statusCode,
+        headers: response.headers,
+        data: JSON.parse(body),
+      });
     });
   });
   return promise;
@@ -908,6 +916,20 @@ const listDocuments = (userHandle, userPrivateKey, filters) => {
 };
 
 /**
+ * Retrieve a previously uploaded supporting documentation for KYC
+ * @param {String} userHandle The user handle
+ * @param {String} userPrivateKey The user's private key
+ * @param {String} documentId The document id to retrieve
+ */
+const getDocument = (userHandle, userPrivateKey, documentId) => {
+  const fullHandle = getFullHandle(userHandle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.document_id = documentId;
+
+  return makeRequest('get_document', body, userPrivateKey);
+};
+
+/**
  * Gets a list of valid business types that can be registered.
  */
 const getBusinessTypes = () => {
@@ -1135,6 +1157,7 @@ export default {
   getAccountBalance,
   getAccounts,
   getBalance,
+  getDocument,
   getDocumentTypes,
   getSilaBalance,
   getTransactions,
