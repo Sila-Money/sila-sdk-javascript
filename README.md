@@ -353,6 +353,25 @@ console.log(res.data.page); // The number of page
 console.log(res.data.transactions); // Transactions array
 ```
 
+### Cancel Transaction
+
+```javascript
+const res = await sila.cancelTransaction(
+  userHandle,
+  userPrivateKey,
+  transactionid,
+);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // true
+console.log(res.data.status); // SUCCESS
+console.log(res.data.message); // Transaction with
+```
+
 ### Get Sila Balance
 
 Gets Sila balance for a given blockchain address. This endpoint replaces [Sila Balance](#Sila-Balance)

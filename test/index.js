@@ -521,6 +521,19 @@ const deleteWalletTests = [
   },
 ];
 
+const cancelTransactionTests = [
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    generateIssueTransaction: true,
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    messageRegex: /has been canceled/,
+    description: `${handles[0]} should cancel transaction`,
+  },
+];
+
 const issueReferences = [];
 
 const issueSilaTests = [
@@ -2006,6 +2019,33 @@ describe('Delete Wallet', function () {
         assert.match(res.data.message, test.messageRegex);
       } catch (err) {
         assert.fail(err);
+      }
+    });
+  });
+});
+
+describe('Cancel Transaction', function () {
+  this.timeout(300000);
+  cancelTransactionTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        let transactionid;
+        if (test.generateIssueTransaction) {
+          const issueRes = await sila.issueSila(100, test.handle, test.key);
+          assert.equal(issueRes.statusCode, 200);
+          transactionid = issueRes.data.transaction_id;
+        }
+        const res = await sila.cancelTransaction(
+          test.handle,
+          test.key,
+          transactionid,
+        );
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.success, test.expectedResult);
+        assert.equal(res.data.status, test.status);
+        assert.match(res.data.message, test.messageRegex);
+      } catch (e) {
+        assert.fail(e);
       }
     });
   });
