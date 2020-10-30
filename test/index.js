@@ -3,6 +3,7 @@ import { assert } from 'chai';
 import regeneratorRuntime from 'regenerator-runtime'; // eslint-disable-line no-unused-vars
 import request from 'request';
 import uuid4 from 'uuid4';
+import moment from 'moment';
 import sila from '../src/index';
 
 const sleep = (ms, description) => {
@@ -1307,6 +1308,49 @@ const uploadDocumentTests = [
     messageRegex: /File uploaded successfully/,
     description: `${handles[0]} should upload file succesfully`,
   },
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    document: {
+      filePath: `${__dirname}/images/logo-geko.png`,
+    },
+    statusCode: 400,
+    expectedResult: false,
+    status: 'FAILURE',
+    messageRegex: /Bad request/,
+    description: `${handles[0]} should fail to upload file`,
+  },
+];
+
+const listDocumentsTests = [
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    documentsLength: 1,
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    description: `${handles[0]} should retrieve uploaded files successfully`,
+  },
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    filters: {
+      page: 1,
+      perPage: 1,
+      order: 'asc',
+      startDate: moment().format('YYYY-MM-DD'),
+      endDate: moment().add(1, 'd').format('YYYY-MM-DD'),
+      docTypes: ['doc_green_card'],
+      search: 'logo',
+      sortBy: 'name',
+    },
+    documentsLength: 1,
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    description: `${handles[0]} should retrieve uploaded files successfully with all filters`,
+  },
 ];
 
 describe('Get Business Types', function () {
@@ -1867,9 +1911,36 @@ describe('Upload Document', function () {
         assert.equal(res.data.success, test.expectedResult);
         assert.equal(res.data.status, test.status);
         assert.match(res.data.message, test.messageRegex);
-        assert.isString(res.data.reference_id);
-        assert.isString(res.data.document_id);
-        documentReferences.push(res.data.document_id);
+        if (res.statusCode === 200) {
+          assert.isString(res.data.reference_id);
+          assert.isString(res.data.document_id);
+          documentReferences.push(res.data.document_id);
+        }
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
+  });
+});
+
+describe('List Documents', function () {
+  this.timeout(300000);
+  listDocumentsTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const res = await sila.listDocuments(
+          test.handle,
+          test.key,
+          test.filters,
+        );
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.success, test.expectedResult);
+        assert.equal(res.data.status, test.status);
+        if (res.data.statusCode === 200) {
+          assert.isArray(res.data.documents);
+          assert.isAtLeast(res.data.documents.length, test.documentsLength);
+          assert.isObject(res.data.pagination);
+        }
       } catch (e) {
         assert.fail(e);
       }

@@ -237,6 +237,11 @@ const getQueryParameters = (parameters) => {
       'per_page',
       parameters.perPage,
     );
+    queryParameters = getQueryParameter(
+      queryParameters,
+      'order',
+      parameters.order,
+    );
   }
   return queryParameters;
 };
@@ -877,6 +882,32 @@ const uploadDocument = async (userHandle, userPrivateKey, document) => {
 };
 
 /**
+ * List previously uploaded supporting documentation for KYC
+ * @param {String} userHandle The user handle
+ * @param {String} userPrivateKey The user's private key
+ * @param {Object} filters A set of filters to send with the request
+ */
+const listDocuments = (userHandle, userPrivateKey, filters) => {
+  const fullHandle = getFullHandle(userHandle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  const queryFilters = {};
+
+  if (filters) {
+    queryFilters.page = filters.page;
+    queryFilters.perPage = filters.perPage;
+    queryFilters.order = filters.order;
+    body.start_date = filters.startDate;
+    body.end_date = filters.endDate;
+    body.doc_types = filters.docTypes;
+    body.search = filters.search;
+    body.sort_by = filters.sortBy;
+  }
+  const queryParameters = getQueryParameters(queryFilters);
+
+  return makeRequest(`list_documents${queryParameters}`, body, userPrivateKey);
+};
+
+/**
  * Gets a list of valid business types that can be registered.
  */
 const getBusinessTypes = () => {
@@ -1112,6 +1143,7 @@ export default {
   issueSila,
   linkAccount,
   linkAccountDirect,
+  listDocuments,
   plaidSamedayAuth,
   redeemSila,
   register,

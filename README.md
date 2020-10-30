@@ -654,6 +654,32 @@ console.log(res.data.reference_id); // some-uuid-code
 console.log(res.data.document_id); // other-uuid-code
 ```
 
+### List Documents
+
+```javascript
+const filters = {
+  page: 1,
+  perPage: 1,
+  order: 'asc',
+  startDate: '2020-10-30'),
+  endDate: '2020-10-30',
+  docTypes: ['doc_green_card'],
+  search: 'logo',
+  sortBy: 'name',
+};
+const res = await sila.listDocuments(userHandle, userPrivateKey, filters);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // true
+console.log(res.data.status); // SUCCESS
+console.log(res.data.documents); // An array of documents
+console.log(res.data.pagination); // Pagination information (returned_count, total_count, current_page, total_pages)
+```
+
 ### Get Entities
 
 ```javascript
