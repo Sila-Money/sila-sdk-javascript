@@ -391,6 +391,20 @@ const transferSila = (
   return makeRequest('transfer_sila', body, privateKey);
 };
 
+/**
+ * Cancel a pending transaction under certain circumstances
+ * @param {String} userHandle The user handle
+ * @param {String} userPrivateKey The user's private key
+ * @param {String} transactionId The transaction id to cancel
+ */
+const cancelTransaction = (userHandle, userPrivateKey, transactionId) => {
+  const fullHandle = getFullHandle(userHandle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.transaction_id = transactionId;
+
+  return makeRequest('cancel_transaction', body, userPrivateKey);
+};
+
 const deleteRegistrationData = (path, handle, privateKey, uuid) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
@@ -943,6 +957,7 @@ const setLogging = (log) => {
 };
 
 export default {
+  cancelTransaction,
   checkHandle,
   checkKYC,
   configure,
