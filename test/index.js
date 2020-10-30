@@ -1297,7 +1297,7 @@ describe('Get Naics Categories', function () {
   this.timeout(300000);
   it('Successfully retreive naics categories', async () => {
     try {
-      const res = await sila.getNacisCategories();
+      const res = await sila.getNaicsCategories();
 
       assert.equal(res.statusCode, 200);
       assert.equal(res.data.success, true);
