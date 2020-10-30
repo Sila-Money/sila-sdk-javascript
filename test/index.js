@@ -1353,6 +1353,26 @@ const listDocumentsTests = [
   },
 ];
 
+const getDocumentTests = [
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    documentIndex: 0,
+    statusCode: 200,
+    contentType: 'image/png',
+    description: `${handles[0]} should retrieve uploaded file successfully`,
+  },
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    statusCode: 400,
+    expectedResult: false,
+    status: 'FAILURE',
+    messageRegex: /Bad request/,
+    description: `${handles[0]} should fail to retrieve uploaded file`,
+  },
+];
+
 describe('Get Business Types', function () {
   this.timeout(300000);
   it('Successfully retreive business types', async () => {
@@ -1940,6 +1960,32 @@ describe('List Documents', function () {
           assert.isArray(res.data.documents);
           assert.isAtLeast(res.data.documents.length, test.documentsLength);
           assert.isObject(res.data.pagination);
+        }
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
+  });
+});
+
+describe('Get Document', function () {
+  this.timeout(300000);
+  getDocumentTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const documentId =
+          test.documentIndex !== undefined && test.documentIndex !== null
+            ? documentReferences[test.documentIndex]
+            : undefined;
+        const res = await sila.getDocument(test.handle, test.key, documentId);
+        assert.equal(res.statusCode, test.statusCode);
+        if (res.statusCode === 200) {
+          assert.isString(res.data);
+          assert.equal(res.headers['content-type'], test.contentType);
+        } else if (res.statusCode === 400) {
+          assert.equal(res.data.success, test.expectedResult);
+          assert.equal(res.data.status, test.status);
+          assert.match(res.data.message, test.messageRegex);
         }
       } catch (e) {
         assert.fail(e);

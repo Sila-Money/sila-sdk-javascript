@@ -680,6 +680,22 @@ console.log(res.data.documents); // An array of documents
 console.log(res.data.pagination); // Pagination information (returned_count, total_count, current_page, total_pages)
 ```
 
+### Get Document
+
+```javascript
+const res = await sila.getDocument(userHandle, userPrivateKey, documentId);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data); // File binary data
+console.log(res.headers['content-type']); // Document MIME type
+console.log(res.headers['content-length']); // Document size in bytes
+console.log(res.headers['content-disposition']); // filename=<Document file name>
+```
+
 ### Get Entities
 
 ```javascript
