@@ -628,6 +628,32 @@ console.log(res.data.document_types[0].identity_type);
 console.log(res.data.pagination); // Pagination information (returned_count, total_count, current_page, total_pages)
 ```
 
+### Upload Document
+
+```javascript
+const document = {
+  filePath: '/path/to/file',
+  filename: 'file-name',
+  mimeType: 'image/png',
+  documentType: 'doc_green_card',
+  identityType: 'other',
+  name: 'file name', // Optional
+  description: 'some file description', // Optional
+};
+const res = await sila.uploadDocument(userHandle, userPrivateKey, document);
+```
+
+#### Success Response Object
+
+```javascript
+console.log(res.statusCode); // 200
+console.log(res.data.success); // true
+console.log(res.data.status); // SUCCESS
+console.log(res.data.message); // File uploaded successfully
+console.log(res.data.reference_id); // some-uuid-code
+console.log(res.data.document_id); // other-uuid-code
+```
+
 ### Get Entities
 
 ```javascript

@@ -2,6 +2,8 @@ import crypto from 'eth-crypto';
 import request from 'request';
 import uuid4 from 'uuid4';
 import Web3 from 'web3';
+import fs from 'fs';
+import crypt from 'crypto';
 
 import TransactionFilters from './models/transactionFilters';
 import User from './models/user';
@@ -86,6 +88,30 @@ const signOpts = (opts, key, businessPrivateKey) => {
 };
 
 /**
+ * Hashes a file
+ * @param {String} filePath The full path to the file
+ * @param {String} algorithm The algorithm of the hash
+ */
+const hashFile = (filePath, algorithm) => {
+  const promise = new Promise((res, rej) => {
+    const hash = crypt.createHash(algorithm);
+    const file = fs.createReadStream(filePath, { autoClose: true });
+    file
+      .on('data', (data) => {
+        hash.update(data);
+      })
+      .on('end', () => {
+        const digest = hash.digest('hex');
+        return res(digest);
+      })
+      .on('error', (error) => {
+        rej(error);
+      });
+  });
+  return promise;
+};
+
+/**
  *
  * @param {Object} msg The header message
  * @param {String} handle The user handle
@@ -119,6 +145,28 @@ const post = (options) => {
   return promise;
 };
 
+const postFile = (options, file) => {
+  const promise = new Promise((res, rej) => {
+    if (logging && env !== 'PROD') {
+      console.log('*** REQUEST ***');
+      console.log(options.body);
+    }
+    const fileOptions = {
+      uri: options.uri,
+      headers: options.headers,
+      formData: {
+        data: JSON.stringify(options.body),
+        file: fs.createReadStream(file),
+      },
+    };
+    request.post(fileOptions, (err, response, body) => {
+      if (err) rej(err);
+      res({ statusCode: response.statusCode, data: JSON.parse(body) });
+    });
+  });
+  return promise;
+};
+
 /**
  *
  * @param {String} path The path of the request
@@ -138,6 +186,15 @@ const makeRequest = (
   };
   opts = signOpts(opts, privateKey, business_private_key);
   return post(opts);
+};
+
+const makeFileRequest = (path, body, file, privateKey) => {
+  let opts = {
+    uri: url(path),
+    body,
+  };
+  opts = signOpts(opts, privateKey);
+  return postFile(opts, file);
 };
 
 /**
@@ -799,6 +856,27 @@ const getBalance = (address) => {
 };
 
 /**
+ * Upload supporting documentation for KYC
+ * @param {String} userHandle The user handle
+ * @param {String} userPrivateKey The user's private key
+ * @param {Object} document
+ */
+const uploadDocument = async (userHandle, userPrivateKey, document) => {
+  const fullHandle = getFullHandle(userHandle);
+  const body = setHeaders({ header: {} }, fullHandle);
+
+  body.name = document.name;
+  body.filename = document.filename;
+  body.hash = await hashFile(document.filePath, 'sha256');
+  body.mime_type = document.mimeType;
+  body.document_type = document.documentType;
+  body.identity_type = document.identityType;
+  body.description = document.description;
+
+  return makeFileRequest('documents', body, document.filePath, userPrivateKey);
+};
+
+/**
  * Gets a list of valid business types that can be registered.
  */
 const getBusinessTypes = () => {
@@ -1044,6 +1122,7 @@ export default {
   TransactionFilters,
   transferSila,
   updateWallet,
+  uploadDocument,
   User,
   WalletFilters,
   getBusinessTypes,

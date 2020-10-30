@@ -1286,6 +1286,29 @@ const getDocumentTypesTests = [
   },
 ];
 
+const documentReferences = [];
+
+const uploadDocumentTests = [
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    document: {
+      filePath: `${__dirname}/images/logo-geko.png`,
+      filename: 'logo-geko',
+      mimeType: 'image/png',
+      documentType: 'doc_green_card',
+      identityType: 'other',
+      name: 'some random name',
+      description: 'some random description',
+    },
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    messageRegex: /File uploaded successfully/,
+    description: `${handles[0]} should upload file succesfully`,
+  },
+];
+
 describe('Get Business Types', function () {
   this.timeout(300000);
   it('Successfully retreive business types', async () => {
@@ -1823,6 +1846,30 @@ describe('Successful Check KYC', function () {
         assert.equal(statusCode, test.statusCode);
         assert.equal(status, test.expectedResult);
         assert.match(message, test.messageRegex);
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
+  });
+});
+
+describe('Upload Document', function () {
+  this.timeout(300000);
+  uploadDocumentTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const res = await sila.uploadDocument(
+          test.handle,
+          test.key,
+          test.document,
+        );
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.success, test.expectedResult);
+        assert.equal(res.data.status, test.status);
+        assert.match(res.data.message, test.messageRegex);
+        assert.isString(res.data.reference_id);
+        assert.isString(res.data.document_id);
+        documentReferences.push(res.data.document_id);
       } catch (e) {
         assert.fail(e);
       }
