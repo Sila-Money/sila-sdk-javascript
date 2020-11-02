@@ -3,6 +3,7 @@ import { assert } from 'chai';
 import regeneratorRuntime from 'regenerator-runtime'; // eslint-disable-line no-unused-vars
 import request from 'request';
 import uuid4 from 'uuid4';
+import moment from 'moment';
 import sila from '../src/index';
 
 const sleep = (ms, description) => {
@@ -250,7 +251,7 @@ const requestKYCTests = [
     key: wallets[5].privateKey,
     expectedResult: 'SUCCESS',
     statusCode: 200,
-    description: `"${handles[3]}.silamoney.eth" should be sent for KYC check.`,
+    description: `"${handles[4]}.silamoney.eth" should be sent for KYC check.`,
   },
 ];
 
@@ -521,6 +522,19 @@ const deleteWalletTests = [
   },
 ];
 
+const cancelTransactionTests = [
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    generateIssueTransaction: true,
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    messageRegex: /has been canceled/,
+    description: `${handles[0]} should cancel transaction`,
+  },
+];
+
 const issueReferences = [];
 
 const issueSilaTests = [
@@ -563,6 +577,16 @@ const issueSilaTests = [
     expectedResult: 'FAILURE',
     description: `${handles[0]} should fail issue sila tokens with invalid business uuid and descriptor`,
     messageRegex: achRegex,
+  },
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    amount: 100,
+    statusCode: 200,
+    processingType: 'SAME_DAY_ACH',
+    expectedResult: 'SUCCESS',
+    description: `${handles[0]} should issue sila tokens successfully with processing type`,
+    messageRegex: /submitted to processing queue/,
   },
 ];
 
@@ -799,6 +823,16 @@ const redeemSilaTests = [
     statusCode: 400,
     expectedResult: 'FAILURE',
     messageRegex: achRegex,
+  },
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    amount: 100,
+    processingType: 'SAME_DAY_ACH',
+    description: `${handles[1]} should redeem sila with processing type`,
+    statusCode: 200,
+    expectedResult: 'SUCCESS',
+    messageRegex: /Transaction submitted to processing queue/,
   },
 ];
 
@@ -1066,6 +1100,40 @@ const updateAddressTests = [
   },
 ];
 
+const updateEntityTests = [
+  {
+    handle: handles[0],
+    privateKey: wallets[0].privateKey,
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    description: `${handles[0]} should update entity`,
+    messageRegex: /Successfully updated entity/,
+    entity: {
+      first_name: 'NewFirst',
+      last_name: 'NewLast',
+      entity_name: 'NewFirst NewLast',
+      birthdate: '1994-01-08',
+    },
+  },
+  {
+    handle: handles[4],
+    privateKey: wallets[5].privateKey,
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    description: `${handles[4]} should update entity`,
+    messageRegex: /Successfully updated entity/,
+    entity: {
+      entity_name: 'New Company',
+      business_type: 'corporation',
+      naics_code: 721,
+      doing_business_as: 'NC Ltc.',
+      business_website: 'https://newdomain.go',
+    },
+  },
+];
+
 const deleteEmailTests = [
   {
     handle: handles[0],
@@ -1196,6 +1264,115 @@ const linkBusinessMemberTests = [
   },
 ];
 
+const getDocumentTypesTests = [
+  {
+    returnedCount: 20,
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    messageRegex: /Document type details returned/,
+    description: 'should retrieve document types without pagination',
+  },
+  {
+    pagination: {
+      page: 1,
+      perPage: 100,
+    },
+    returnedCount: 21,
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    messageRegex: /Document type details returned/,
+    description: 'should retrieve document types with pagination',
+  },
+];
+
+const documentReferences = [];
+
+const uploadDocumentTests = [
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    document: {
+      filePath: `${__dirname}/images/logo-geko.png`,
+      filename: 'logo-geko',
+      mimeType: 'image/png',
+      documentType: 'doc_green_card',
+      identityType: 'other',
+      name: 'some random name',
+      description: 'some random description',
+    },
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    messageRegex: /File uploaded successfully/,
+    description: `${handles[0]} should upload file succesfully`,
+  },
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    document: {
+      filePath: `${__dirname}/images/logo-geko.png`,
+    },
+    statusCode: 400,
+    expectedResult: false,
+    status: 'FAILURE',
+    messageRegex: /Bad request/,
+    description: `${handles[0]} should fail to upload file`,
+  },
+];
+
+const listDocumentsTests = [
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    documentsLength: 1,
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    description: `${handles[0]} should retrieve uploaded files successfully`,
+  },
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    filters: {
+      page: 1,
+      perPage: 1,
+      order: 'asc',
+      startDate: moment().format('YYYY-MM-DD'),
+      endDate: moment().add(1, 'd').format('YYYY-MM-DD'),
+      docTypes: ['doc_green_card'],
+      search: 'logo',
+      sortBy: 'name',
+    },
+    documentsLength: 1,
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    description: `${handles[0]} should retrieve uploaded files successfully with all filters`,
+  },
+];
+
+const getDocumentTests = [
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    documentIndex: 0,
+    statusCode: 200,
+    contentType: 'image/png',
+    description: `${handles[0]} should retrieve uploaded file successfully`,
+  },
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    statusCode: 400,
+    expectedResult: false,
+    status: 'FAILURE',
+    messageRegex: /Bad request/,
+    description: `${handles[0]} should fail to retrieve uploaded file`,
+  },
+];
+
 describe('Get Business Types', function () {
   this.timeout(300000);
   it('Successfully retreive business types', async () => {
@@ -1230,7 +1407,7 @@ describe('Get Naics Categories', function () {
   this.timeout(300000);
   it('Successfully retreive naics categories', async () => {
     try {
-      const res = await sila.getNacisCategories();
+      const res = await sila.getNaicsCategories();
 
       assert.equal(res.statusCode, 200);
       assert.equal(res.data.success, true);
@@ -1241,6 +1418,27 @@ describe('Get Naics Categories', function () {
     } catch (err) {
       assert.fail(err);
     }
+  });
+});
+
+describe('Get Document Types', function () {
+  this.timeout(300000);
+  getDocumentTypesTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const res = await sila.getDocumentTypes(test.pagination);
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.success, test.expectedResult);
+        assert.equal(res.data.status, test.status);
+        assert.match(res.data.message, test.messageRegex);
+        if (res.statusCode === 200) {
+          assert.isAtLeast(res.data.document_types.length, test.returnedCount);
+          assert.isObject(res.data.pagination);
+        }
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
   });
 });
 
@@ -1597,6 +1795,49 @@ describe('Update Address', function () {
   });
 });
 
+describe('Update Entity', function () {
+  this.timeout(300000);
+  updateEntityTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const res = await sila.updateEntity(
+          test.handle,
+          test.privateKey,
+          test.entity,
+        );
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.success, test.expectedResult);
+        assert.equal(res.data.status, test.status);
+        assert.match(res.data.message, test.messageRegex);
+        assert.isTrue(res.data.user_handle.includes(test.handle.toLowerCase()));
+        assert.isNumber(res.data.entity.created_epoch);
+        assert.equal(res.data.entity.entity_name, test.entity.entity_name);
+        if (res.data.entity_type === 'individual') {
+          assert.equal(res.data.entity.birthdate, test.entity.birthdate);
+          assert.equal(res.data.entity.first_name, test.entity.first_name);
+          assert.equal(res.data.entity.last_name, test.entity.last_name);
+        } else if (res.data.entity_type === 'business') {
+          assert.equal(
+            res.data.entity.business_type,
+            test.entity.business_type,
+          );
+          assert.equal(res.data.entity.naics_code, test.entity.naics_code);
+          assert.equal(
+            res.data.entity.doing_business_as,
+            test.entity.doing_business_as,
+          );
+          assert.equal(
+            res.data.entity.business_website,
+            test.entity.business_website,
+          );
+        }
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
+  });
+});
+
 describe('Check Handle taken', function () {
   this.timeout(300000);
   checkHandleTakenTests.forEach((sample) => {
@@ -1669,6 +1910,83 @@ describe('Successful Check KYC', function () {
         assert.equal(statusCode, test.statusCode);
         assert.equal(status, test.expectedResult);
         assert.match(message, test.messageRegex);
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
+  });
+});
+
+describe('Upload Document', function () {
+  this.timeout(300000);
+  uploadDocumentTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const res = await sila.uploadDocument(
+          test.handle,
+          test.key,
+          test.document,
+        );
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.success, test.expectedResult);
+        assert.equal(res.data.status, test.status);
+        assert.match(res.data.message, test.messageRegex);
+        if (res.statusCode === 200) {
+          assert.isString(res.data.reference_id);
+          assert.isString(res.data.document_id);
+          documentReferences.push(res.data.document_id);
+        }
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
+  });
+});
+
+describe('List Documents', function () {
+  this.timeout(300000);
+  listDocumentsTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const res = await sila.listDocuments(
+          test.handle,
+          test.key,
+          test.filters,
+        );
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.success, test.expectedResult);
+        assert.equal(res.data.status, test.status);
+        if (res.data.statusCode === 200) {
+          assert.isArray(res.data.documents);
+          assert.isAtLeast(res.data.documents.length, test.documentsLength);
+          assert.isObject(res.data.pagination);
+        }
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
+  });
+});
+
+describe('Get Document', function () {
+  this.timeout(300000);
+  getDocumentTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const documentId =
+          test.documentIndex !== undefined && test.documentIndex !== null
+            ? documentReferences[test.documentIndex]
+            : undefined;
+        const res = await sila.getDocument(test.handle, test.key, documentId);
+        assert.equal(res.statusCode, test.statusCode);
+        if (res.statusCode === 200) {
+          assert.isString(res.data);
+          assert.equal(res.headers['content-type'], test.contentType);
+        } else if (res.statusCode === 400) {
+          assert.equal(res.data.success, test.expectedResult);
+          assert.equal(res.data.status, test.status);
+          assert.match(res.data.message, test.messageRegex);
+        }
       } catch (e) {
         assert.fail(e);
       }
@@ -1914,6 +2232,33 @@ describe('Delete Wallet', function () {
   });
 });
 
+describe('Cancel Transaction', function () {
+  this.timeout(300000);
+  cancelTransactionTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        let transactionid;
+        if (test.generateIssueTransaction) {
+          const issueRes = await sila.issueSila(100, test.handle, test.key);
+          assert.equal(issueRes.statusCode, 200);
+          transactionid = issueRes.data.transaction_id;
+        }
+        const res = await sila.cancelTransaction(
+          test.handle,
+          test.key,
+          transactionid,
+        );
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.success, test.expectedResult);
+        assert.equal(res.data.status, test.status);
+        assert.match(res.data.message, test.messageRegex);
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
+  });
+});
+
 describe('Issue Sila', function () {
   this.timeout(300000);
   issueSilaTests.forEach((test) => {
@@ -1926,6 +2271,7 @@ describe('Issue Sila', function () {
           undefined,
           test.descriptor,
           test.businessUuid,
+          test.processingType,
         );
         if (res.statusCode === 200) issueReferences.push(res.data.reference);
         assert.equal(res.statusCode, test.statusCode);

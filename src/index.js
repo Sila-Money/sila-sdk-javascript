@@ -2,6 +2,8 @@ import crypto from 'eth-crypto';
 import request from 'request';
 import uuid4 from 'uuid4';
 import Web3 from 'web3';
+import fs from 'fs';
+import crypt from 'crypto';
 
 import TransactionFilters from './models/transactionFilters';
 import User from './models/user';
@@ -86,6 +88,30 @@ const signOpts = (opts, key, businessPrivateKey) => {
 };
 
 /**
+ * Hashes a file
+ * @param {String} filePath The full path to the file
+ * @param {String} algorithm The algorithm of the hash
+ */
+const hashFile = (filePath, algorithm) => {
+  const promise = new Promise((res, rej) => {
+    const hash = crypt.createHash(algorithm);
+    const file = fs.createReadStream(filePath, { autoClose: true });
+    file
+      .on('data', (data) => {
+        hash.update(data);
+      })
+      .on('end', () => {
+        const digest = hash.digest('hex');
+        return res(digest);
+      })
+      .on('error', (error) => {
+        rej(error);
+      });
+  });
+  return promise;
+};
+
+/**
  *
  * @param {Object} msg The header message
  * @param {String} handle The user handle
@@ -113,7 +139,37 @@ const post = (options) => {
       if (err) {
         rej(err);
       }
-      res({ statusCode: response.statusCode, data: body });
+      res({
+        statusCode: response.statusCode,
+        headers: response.headers,
+        data: body,
+      });
+    });
+  });
+  return promise;
+};
+
+const postFile = (options, file) => {
+  const promise = new Promise((res, rej) => {
+    if (logging && env !== 'PROD') {
+      console.log('*** REQUEST ***');
+      console.log(options.body);
+    }
+    const fileOptions = {
+      uri: options.uri,
+      headers: options.headers,
+      formData: {
+        data: JSON.stringify(options.body),
+        file: fs.createReadStream(file),
+      },
+    };
+    request.post(fileOptions, (err, response, body) => {
+      if (err) rej(err);
+      res({
+        statusCode: response.statusCode,
+        headers: response.headers,
+        data: JSON.parse(body),
+      });
     });
   });
   return promise;
@@ -140,6 +196,15 @@ const makeRequest = (
   return post(opts);
 };
 
+const makeFileRequest = (path, body, file, privateKey) => {
+  let opts = {
+    uri: url(path),
+    body,
+  };
+  opts = signOpts(opts, privateKey);
+  return postFile(opts, file);
+};
+
 /**
  * Returns the handle with the .silamoney.eth suffix if not present
  * @param {String} handle The handle
@@ -150,6 +215,43 @@ const getFullHandle = (handle) => {
     fullHandle += '.silamoney.eth';
   }
   return fullHandle;
+};
+
+/**
+ *
+ * @param {String} queryParameters The current query parameters
+ * @param {String} name The name of the query parameter
+ * @param {String} value The value of the query parameter
+ */
+const getQueryParameter = (queryParameters, name, value) => {
+  let newQueryParameters = queryParameters;
+  if (value !== undefined && value !== null) {
+    newQueryParameters += newQueryParameters.length > 0 ? '&' : '?';
+    newQueryParameters += `${name}=${value}`;
+  }
+  return newQueryParameters;
+};
+
+const getQueryParameters = (parameters) => {
+  let queryParameters = '';
+  if (parameters) {
+    queryParameters = getQueryParameter(
+      queryParameters,
+      'page',
+      parameters.page,
+    );
+    queryParameters = getQueryParameter(
+      queryParameters,
+      'per_page',
+      parameters.perPage,
+    );
+    queryParameters = getQueryParameter(
+      queryParameters,
+      'order',
+      parameters.order,
+    );
+  }
+  return queryParameters;
 };
 
 /**
@@ -301,8 +403,9 @@ const linkAccount = (
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
  * @param {String} accountName The nickname of the account to debit from. It defaults to 'default' (optional).
- * @param {String} descriptor The transaction descriptor (optional).
- * @param {String} businessUuid The UUID of the business for the ACH name (optional)
+ * @param {String} descriptor Optional. Max Length 100. Note that only the first 10 characters show on the resulting bank statement.
+ * @param {String} businessUuid Optional. UUID of a business with an approved ACH name. The format should be a UUID string.
+ * @param {String} processingType Optional. Choice field. Examples: STANDARD_ACH or SAME_DAY_ACH
  */
 const issueSila = (
   amount,
@@ -311,6 +414,7 @@ const issueSila = (
   accountName = 'default',
   descriptor = undefined,
   businessUuid = undefined,
+  processingType = undefined,
 ) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
@@ -319,6 +423,7 @@ const issueSila = (
   body.account_name = accountName;
   if (descriptor) body.descriptor = descriptor;
   if (businessUuid) body.business_uuid = businessUuid;
+  body.processing_type = processingType;
 
   return makeRequest('issue_sila', body, privateKey);
 };
@@ -329,8 +434,9 @@ const issueSila = (
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
  * @param {String} accountName The account nickname to credit with the tokens' value.
- * @param {String} descriptor The transaction descriptor (optional)
- * @param {String} businessUuid The UUID of the business for the ACH name (optional)
+ * @param {String} descriptor Optional. Max Length 100
+ * @param {String} businessUuid Optional. UUID of a business with an approved ACH name. The format should be a UUID string.
+ * @param {String} processingType Optional. Choice field. Examples: STANDARD_ACH or SAME_DAY_ACH
  */
 const redeemSila = (
   amount,
@@ -339,6 +445,7 @@ const redeemSila = (
   accountName = 'default',
   descriptor = undefined,
   businessUuid = undefined,
+  processingType = undefined,
 ) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
@@ -347,6 +454,7 @@ const redeemSila = (
   body.account_name = accountName;
   if (descriptor) body.descriptor = descriptor;
   if (businessUuid) body.business_uuid = businessUuid;
+  body.processing_type = processingType;
 
   return makeRequest('redeem_sila', body, privateKey);
 };
@@ -383,6 +491,20 @@ const transferSila = (
   if (businessUuid) body.business_uuid = businessUuid;
 
   return makeRequest('transfer_sila', body, privateKey);
+};
+
+/**
+ * Cancel a pending transaction under certain circumstances
+ * @param {String} userHandle The user handle
+ * @param {String} userPrivateKey The user's private key
+ * @param {String} transactionId The transaction id to cancel
+ */
+const cancelTransaction = (userHandle, userPrivateKey, transactionId) => {
+  const fullHandle = getFullHandle(userHandle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.transaction_id = transactionId;
+
+  return makeRequest('cancel_transaction', body, userPrivateKey);
 };
 
 const deleteRegistrationData = (path, handle, privateKey, uuid) => {
@@ -493,6 +615,27 @@ const updateIdentity = (handle, privateKey, identity) => {
   body.uuid = identity.uuid;
 
   return makeRequest('update/identity', body, privateKey);
+};
+
+/**
+ * Update an existing entity (name, birthdate, or business data).
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's private key
+ * @param {Object} entity The updated entity
+ */
+const updateEntity = (handle, privateKey, entity) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.first_name = entity.first_name;
+  body.last_name = entity.last_name;
+  body.entity_name = entity.entity_name;
+  body.birthdate = entity.birthdate;
+  body.business_type = entity.business_type;
+  body.naics_code = entity.naics_code;
+  body.doing_business_as = entity.doing_business_as;
+  body.business_website = entity.business_website;
+
+  return makeRequest('update/entity', body, privateKey);
 };
 
 /**
@@ -725,22 +868,109 @@ const getBalance = (address) => {
   return post(opts);
 };
 
+/**
+ * Upload supporting documentation for KYC
+ * @param {String} userHandle The user handle
+ * @param {String} userPrivateKey The user's private key
+ * @param {Object} document
+ */
+const uploadDocument = async (userHandle, userPrivateKey, document) => {
+  const fullHandle = getFullHandle(userHandle);
+  const body = setHeaders({ header: {} }, fullHandle);
+
+  body.name = document.name;
+  body.filename = document.filename;
+  body.hash = await hashFile(document.filePath, 'sha256');
+  body.mime_type = document.mimeType;
+  body.document_type = document.documentType;
+  body.identity_type = document.identityType;
+  body.description = document.description;
+
+  return makeFileRequest('documents', body, document.filePath, userPrivateKey);
+};
+
+/**
+ * List previously uploaded supporting documentation for KYC
+ * @param {String} userHandle The user handle
+ * @param {String} userPrivateKey The user's private key
+ * @param {Object} filters A set of filters to send with the request
+ */
+const listDocuments = (userHandle, userPrivateKey, filters) => {
+  const fullHandle = getFullHandle(userHandle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  const queryFilters = {};
+
+  if (filters) {
+    queryFilters.page = filters.page;
+    queryFilters.perPage = filters.perPage;
+    queryFilters.order = filters.order;
+    body.start_date = filters.startDate;
+    body.end_date = filters.endDate;
+    body.doc_types = filters.docTypes;
+    body.search = filters.search;
+    body.sort_by = filters.sortBy;
+  }
+  const queryParameters = getQueryParameters(queryFilters);
+
+  return makeRequest(`list_documents${queryParameters}`, body, userPrivateKey);
+};
+
+/**
+ * Retrieve a previously uploaded supporting documentation for KYC
+ * @param {String} userHandle The user handle
+ * @param {String} userPrivateKey The user's private key
+ * @param {String} documentId The document id to retrieve
+ */
+const getDocument = (userHandle, userPrivateKey, documentId) => {
+  const fullHandle = getFullHandle(userHandle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.document_id = documentId;
+
+  return makeRequest('get_document', body, userPrivateKey);
+};
+
+/**
+ * Gets a list of valid business types that can be registered.
+ */
 const getBusinessTypes = () => {
   const body = setHeaders({ header: {} });
 
   return makeRequest('get_business_types', body);
 };
 
+/**
+ * Gets a list of valid business roles that can be used to link individuals to businesses.
+ */
 const getBusinessRoles = () => {
   const body = setHeaders({ header: {} });
 
   return makeRequest('get_business_roles', body);
 };
 
-const getNacisCategories = () => {
+/**
+ * Gets a list of valid NAICS codes sorted by category and listed with their describing subcategory.
+ */
+const getNaicsCategories = () => {
   const body = setHeaders({ header: {} });
 
   return makeRequest('get_naics_categories', body);
+};
+
+/**
+ * List the document types for KYC supporting documentation
+ * @param {Object} pagination This object includes the optional pagination parameters
+ */
+const getDocumentTypes = (pagination = undefined) => {
+  const body = setHeaders({ header: {} });
+  const queryParameters = getQueryParameters(pagination);
+  return makeRequest(`document_types${queryParameters}`, body);
+};
+
+/**
+ * @deprecated Since version 0.2.13-rc. Use getNaicsCategories instead.
+ */
+const getNacisCategories = () => {
+  return getNaicsCategories();
 };
 
 /**
@@ -916,6 +1146,7 @@ const setLogging = (log) => {
 };
 
 export default {
+  cancelTransaction,
   checkHandle,
   checkKYC,
   configure,
@@ -926,6 +1157,8 @@ export default {
   getAccountBalance,
   getAccounts,
   getBalance,
+  getDocument,
+  getDocumentTypes,
   getSilaBalance,
   getTransactions,
   getWallet,
@@ -933,6 +1166,7 @@ export default {
   issueSila,
   linkAccount,
   linkAccountDirect,
+  listDocuments,
   plaidSamedayAuth,
   redeemSila,
   register,
@@ -943,11 +1177,13 @@ export default {
   TransactionFilters,
   transferSila,
   updateWallet,
+  uploadDocument,
   User,
   WalletFilters,
   getBusinessTypes,
   getBusinessRoles,
   getNacisCategories,
+  getNaicsCategories,
   getEntities,
   linkBusinessMember,
   unlinkBusinessMember,
@@ -962,6 +1198,7 @@ export default {
   updatePhone,
   updateIdentity,
   updateAddress,
+  updateEntity,
   deleteEmail,
   deletePhone,
   deleteIdentity,
