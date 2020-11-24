@@ -3,8 +3,7 @@
     "build": "babel ./src -d ./lib",
     "lint": "eslint ./src",
     "test": "nyc mocha --require @babel/register --reporter mocha-multi-reporters --reporter-options configFile=config.json",
-    "prepublishOnly": "npm run build",
-    "preinstall": "npx npm-force-resolutions"
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "@babel/cli": "^7.12.1",
