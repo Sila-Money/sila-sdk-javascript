@@ -40,7 +40,7 @@
     ]
   },
   "name": "sila-sdk",
-  "version": "0.2.13-rc.0",
+  "version": "0.2.13-rc.1",
   "main": "lib/index.js",
   "directories": {
     "lib": "lib",
