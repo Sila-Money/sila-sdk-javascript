@@ -4,6 +4,7 @@ import uuid4 from 'uuid4';
 import Web3 from 'web3';
 import fs from 'fs';
 import crypt from 'crypto';
+import regeneratorRuntime from 'regenerator-runtime'; // eslint-disable-line no-unused-vars
 
 import TransactionFilters from './models/transactionFilters';
 import User from './models/user';
