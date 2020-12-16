@@ -61,11 +61,12 @@ const sign = (message, key) => {
 };
 
 const configureUrl = () => {
-  const app = sandbox ? 'sandbox' : 'api';
+  let app = sandbox ? 'sandbox' : 'api';
   if (env === 'PROD') {
     baseUrl = `https://${app}.silamoney.com/0.2/`;
   } else {
-    baseUrl = `https://${env.toLowerCase()}.${app}.silamoney.com/0.2/`;
+    if (!sandbox) app = '';
+    baseUrl = `https://${app}${env.toLowerCase()}api.silamoney.com/0.2/`;
   }
 };
 
