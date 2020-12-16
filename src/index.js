@@ -274,41 +274,76 @@ const register = (user) => {
   const message = setHeaders({ header: {} }, handle);
   message.message = 'entity_msg';
 
-  message.address = {};
-  message.address.city = user.city;
-  message.address.postal_code = user.zip;
-  message.address.state = user.state;
-  message.address.street_address_1 = user.address;
-  message.address.address_alias = user.addresAlias;
-  message.address.country = 'US';
+  if (
+    user.city ||
+    user.zip ||
+    user.state ||
+    user.address ||
+    user.addressAlias ||
+    user.addresAlias ||
+    user.address2 ||
+    user.country
+  ) {
+    message.address = {};
+    message.address.city = user.city;
+    message.address.postal_code = user.zip;
+    message.address.state = user.state;
+    message.address.street_address_1 = user.address;
+    message.address.street_address_2 = user.address2;
+    message.address.address_alias = user.addressAlias
+      ? user.addressAlias
+      : user.addresAlias;
+    message.address.country = user.country ? user.country : 'US';
+  }
 
-  message.contact = {};
-  message.contact.contact_alias = user.contactAlias;
-  message.contact.phone = user.phone;
-  message.contact.email = user.email;
+  if (user.contactAlias || user.phone || user.email) {
+    message.contact = {};
+    message.contact.contact_alias = user.contactAlias;
+    message.contact.phone = user.phone;
+    message.contact.email = user.email;
+  }
 
-  message.crypto_entry = {};
-  message.crypto_entry.crypto_address = user.cryptoAddress;
-  message.crypto_entry.crypto_code = 'ETH';
-  message.crypto_entry.crypto_alias = user.cryptoAlias;
+  if (user.cryptoAddress || user.cryptoAlias) {
+    message.crypto_entry = {};
+    message.crypto_entry.crypto_address = user.cryptoAddress;
+    message.crypto_entry.crypto_code = 'ETH';
+    message.crypto_entry.crypto_alias = user.cryptoAlias;
+  }
 
-  message.entity = {};
-  message.entity.birthdate = user.dateOfBirth;
-  message.entity.first_name = user.firstName;
-  message.entity.last_name = user.lastName;
-  message.entity.entity_name = user.entity_name
-    ? user.entity_name
-    : `${user.firstName} ${user.lastName}`;
-  message.entity.relationship = 'user';
-  message.entity.type = user.business_type ? 'business' : 'individual';
-  message.entity.business_type = user.business_type;
-  message.entity.business_website = user.business_website;
-  message.entity.doing_business_as = user.doing_business_as;
-  message.entity.naics_code = user.naics_code;
+  if (
+    user.firstName ||
+    user.lastName ||
+    user.entity_name ||
+    user.business_type ||
+    user.businessTypeUuid ||
+    user.business_website ||
+    user.doing_business_as ||
+    user.naics_code
+  ) {
+    message.entity = {};
+    message.entity.birthdate = user.dateOfBirth;
+    message.entity.first_name = user.firstName;
+    message.entity.last_name = user.lastName;
+    message.entity.entity_name = user.entity_name
+      ? user.entity_name
+      : `${user.firstName} ${user.lastName}`;
+    message.entity.relationship = 'user';
+    if (user.type) message.entity.type = user.type;
+    else
+      message.entity.type =
+        user.business_type || user.businessTypeUuid ? 'business' : 'individual';
+    message.entity.business_type = user.business_type;
+    message.entity.business_website = user.business_website;
+    message.entity.doing_business_as = user.doing_business_as;
+    message.entity.naics_code = user.naics_code;
+    message.entity.business_type_uuid = user.businessTypeUuid;
+  }
 
-  message.identity = {};
-  message.identity.identity_value = user.ssn ? user.ssn : user.ein;
-  message.identity.identity_alias = user.ssn ? 'SSN' : 'EIN';
+  if (user.ssn || user.ein) {
+    message.identity = {};
+    message.identity.identity_value = user.ssn ? user.ssn : user.ein;
+    message.identity.identity_alias = user.ssn ? 'SSN' : 'EIN';
+  }
 
   return makeRequest('register', message);
 };
