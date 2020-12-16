@@ -13,8 +13,11 @@ const sleep = (ms, description) => {
 
 sila.configure({
   key: process.env.SILA_PRIVATE_KEY, // Add your private key here. USE ENV VARIABLE
-  handle: 'digital_geko_e2e.silamoney.eth', // Add your app handle here
+  handle: 'end2end', // Add your app handle here
 });
+
+sila.disableSandbox();
+sila.setEnvironment('stage');
 
 const invalidWallet = sila.generateWallet();
 invalidWallet.privateKey = process.env.SILA_PRIVATE_KEY;
