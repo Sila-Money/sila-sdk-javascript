@@ -1,7 +1,6 @@
 import crypto from 'eth-crypto';
 import request from 'request';
 import uuid4 from 'uuid4';
-import Web3 from 'web3';
 import fs from 'fs';
 import crypt from 'crypto';
 import regeneratorRuntime from 'regenerator-runtime'; // eslint-disable-line no-unused-vars
@@ -17,8 +16,6 @@ let sandbox = true;
 let env = 'PROD';
 let baseUrl = 'https://sandbox.silamoney.com/0.2/';
 let logging = false;
-
-const web3 = new Web3('http://52.13.246.239:8080/');
 
 const url = (path) => baseUrl + path;
 
@@ -1139,7 +1136,7 @@ const disableSandbox = () => {
  * @returns {Wallet} A new ETH wallet
  */
 const generateWallet = () => {
-  const wallet = web3.eth.accounts.create();
+  const wallet = crypto.createIdentity();
   return new Wallet(wallet.address, wallet.privateKey);
 };
 
