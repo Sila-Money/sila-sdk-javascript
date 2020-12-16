@@ -13,16 +13,14 @@ const sleep = (ms, description) => {
 
 sila.configure({
   key: process.env.SILA_PRIVATE_KEY, // Add your private key here. USE ENV VARIABLE
-  handle: 'end2end', // Add your app handle here
+  handle: 'digital_geko_e2e.silamoney.eth', // Add your app handle here
 });
-
-sila.disableSandbox();
-sila.setEnvironment('stage');
 
 const invalidWallet = sila.generateWallet();
 invalidWallet.privateKey = process.env.SILA_PRIVATE_KEY;
 
 const wallets = [
+  sila.generateWallet(),
   sila.generateWallet(),
   sila.generateWallet(),
   sila.generateWallet(),
@@ -39,7 +37,17 @@ const handles = [
   `nodeSDK-${uuid4()}`,
   `nodeSDK-${uuid4()}`,
   `nodeSDK-${uuid4()}`,
+  `nodeSDK-${uuid4()}`,
 ];
+
+const [
+  firstHandle,
+  secondHandle,
+  thirdHandle,
+  fourthHandle,
+  businessHandle,
+  basicHandle,
+] = handles;
 
 const firstUser = new sila.User();
 firstUser.firstName = 'First';
@@ -53,21 +61,25 @@ firstUser.email = 'test_1@silamoney.com';
 firstUser.dateOfBirth = '1990-01-01';
 firstUser.ssn = '123456222';
 firstUser.cryptoAddress = wallets[0].address;
+firstUser.handle = firstHandle;
 
 const secondUser = Object.assign({}, firstUser);
 secondUser.firstName = 'Second';
 secondUser.email = 'test_2@silamoney.com';
 secondUser.cryptoAddress = wallets[1].address;
+secondUser.handle = secondHandle;
 
 const thirdUser = Object.assign({}, firstUser);
 thirdUser.firstName = 'Fail';
 thirdUser.email = 'fail@silamoney.com';
 thirdUser.cryptoAddress = wallets[2].address;
+thirdUser.handle = thirdHandle;
 
 const fourthUser = Object.assign({}, firstUser);
 fourthUser.firstName = 'Fourth';
 fourthUser.email = 'test_3@silamoney.com';
 fourthUser.cryptoAddress = wallets[4].address;
+fourthUser.handle = fourthHandle;
 
 const businessUser = Object.assign({}, firstUser);
 businessUser.entity_name = 'test business';
@@ -79,14 +91,13 @@ businessUser.business_type = 'corporation';
 businessUser.business_website = 'https://www.yourbusinesscustomer.com';
 businessUser.doing_business_as = 'doing business co';
 businessUser.naics_code = 721;
+businessUser.handle = businessHandle;
 
-[
-  firstUser.handle,
-  secondUser.handle,
-  thirdUser.handle,
-  fourthUser.handle,
-  businessUser.handle,
-] = handles;
+const basicUser = new sila.User();
+basicUser.firstName = 'Basic';
+basicUser.lastName = 'User';
+basicUser.cryptoAddress = wallets[6].address;
+basicUser.handle = basicHandle;
 
 const plaidToken = () => {
   const promise = new Promise((resolve) => {
@@ -190,6 +201,12 @@ const createEntityTests = [
     expectedResult: 'SUCCESS',
     statusCode: 200,
     description: `Valid registration test for ${handles[4]}.silamoney.eth`,
+  },
+  {
+    input: basicUser,
+    expectedResult: 'SUCCESS',
+    statusCode: 200,
+    description: `Valid registration test for ${basicUser.handle}.silamoney.eth`,
   },
 ];
 
@@ -762,15 +779,6 @@ const pollTransferTests = [
     expectedResult: true,
     status: 'success',
     description: `${handles[0]} should transfer sila tokens`,
-  },
-];
-
-const silaBalanceTests = [
-  {
-    address: wallets[1].address,
-    description: `${wallets[1].address} should have at least 100 tokens in sila balance`,
-    statusCode: 200,
-    balance: 100,
   },
 ];
 
@@ -1378,7 +1386,7 @@ const getDocumentTests = [
 
 describe('Get Business Types', function () {
   this.timeout(300000);
-  it('Successfully retreive business types', async () => {
+  it('Successfully retrieve business types', async () => {
     try {
       const res = await sila.getBusinessTypes();
 
@@ -1393,7 +1401,7 @@ describe('Get Business Types', function () {
 
 describe('Get Business Roles', function () {
   this.timeout(300000);
-  it('Successfully retreive business roles', async () => {
+  it('Successfully retrieve business roles', async () => {
     try {
       const res = await sila.getBusinessRoles();
 
@@ -1408,7 +1416,7 @@ describe('Get Business Roles', function () {
 
 describe('Get Naics Categories', function () {
   this.timeout(300000);
-  it('Successfully retreive naics categories', async () => {
+  it('Successfully retrieve naics categories', async () => {
     try {
       const res = await sila.getNaicsCategories();
 
@@ -1447,7 +1455,7 @@ describe('Get Document Types', function () {
 
 describe('Get Entities', function () {
   this.timeout(300000);
-  it('Successfully retreive entities', async () => {
+  it('Successfully retrieve entities', async () => {
     try {
       const res = await sila.getEntities('individual');
 

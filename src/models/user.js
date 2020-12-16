@@ -22,6 +22,7 @@ class User {
     this.address = undefined;
     /**
      * @type {String}
+     * @deprecated This property has been deprecated in favor of addressAlias
      */
     this.addresAlias = '';
     /**
@@ -85,6 +86,26 @@ class User {
      * @type {String}
      */
     this.ein = undefined;
+    /**
+     * @type {String}
+     */
+    this.country = undefined;
+    /**
+     * @type {String}
+     */
+    this.businessTypeUuid = undefined;
+    /**
+     * @type {String}
+     */
+    this.type = undefined;
+    /**
+     * @type {String}
+     */
+    this.address2 = undefined;
+    /**
+     * @type {String}
+     */
+    this.addressAlias = undefined;
   }
 }
 
