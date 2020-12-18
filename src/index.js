@@ -425,7 +425,7 @@ const linkAccount = (
   const message = setHeaders({ header: {} }, fullHandle);
   message.message = 'link_account_msg';
   message.public_token = publicToken;
-  if (accountId) message.account_id = accountId;
+  if (accountId) message.selected_account_id = accountId;
   if (accountName) message.account_name = accountName;
 
   return makeRequest('link_account', message, privateKey);
