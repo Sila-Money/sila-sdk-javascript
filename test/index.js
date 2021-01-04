@@ -1298,6 +1298,39 @@ const getDocumentTypesTests = [
   },
 ];
 
+const getEntitiesTests = [
+  {
+    entityType: 'individual',
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    individualAmount: 1,
+    businessAmount: 0,
+    description: 'get_entities with entity_type equals "individual"',
+  },
+  {
+    entityType: 'business',
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    individualAmount: 0,
+    businessAmount: 1,
+    description: 'get_entities with entity_type equals "business"',
+  },
+  {
+    options: {
+      perPage: 1,
+      page: 1,
+    },
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    individualAmount: 0,
+    businessAmount: 0,
+    description: 'get_entities with pagination',
+  },
+];
+
 const documentReferences = [];
 
 const uploadDocumentTests = [
@@ -1455,24 +1488,32 @@ describe('Get Document Types', function () {
 
 describe('Get Entities', function () {
   this.timeout(300000);
-  it('Successfully retrieve entities', async () => {
-    try {
-      const res = await sila.getEntities('individual');
+  getEntitiesTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const res = await sila.getEntities(test.entityType, test.options);
 
-      assert.equal(res.statusCode, 200);
-      assert.equal(res.data.success, true);
-      assert(res.data.entities.individuals.length > 0);
-      assert(res.data.entities.businesses.length === 0);
-
-      const res2 = await sila.getEntities('business');
-
-      assert.equal(res2.statusCode, 200);
-      assert.equal(res2.data.success, true);
-      assert(res2.data.entities.individuals.length === 0);
-      assert(res2.data.entities.businesses.length > 0);
-    } catch (err) {
-      assert.fail(err);
-    }
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.success, test.expectedResult);
+        assert.isAtLeast(
+          res.data.entities.individuals.length,
+          test.individualAmount,
+        );
+        assert.isAtLeast(
+          res.data.entities.businesses.length,
+          test.businessAmount,
+        );
+        if (test.options) {
+          assert.equal(res.data.pagination.current_page, test.options.page);
+          assert.equal(
+            res.data.pagination.returned_count,
+            test.options.perPage,
+          );
+        }
+      } catch (err) {
+        assert.fail(err);
+      }
+    });
   });
 });
 
