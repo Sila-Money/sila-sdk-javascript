@@ -1008,14 +1008,20 @@ const getNacisCategories = () => {
 };
 
 /**
- * @param {String} entityType optional entity type filter.
+ * @param {String|undefined} entityType optional entity type filter.
+ * @param {object|undefined} pagination optional pagination control variables
  */
-const getEntities = (entityType) => {
+const getEntities = (
+  entityType = undefined,
+  { page = undefined, perPage = undefined } = {},
+) => {
   const body = setHeaders({ header: {} });
-
-  body.entity_type = entityType;
-
-  return makeRequest('get_entities', body);
+  const queryFilters = {};
+  if (page) queryFilters.page = page;
+  if (perPage) queryFilters.perPage = perPage;
+  if (entityType) body.entity_type = entityType;
+  const queryParameters = getQueryParameters(queryFilters);
+  return makeRequest(`get_entities${queryParameters}`, body);
 };
 
 /**
