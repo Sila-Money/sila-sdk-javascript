@@ -13,13 +13,17 @@ const sleep = (ms, description) => {
 
 sila.configure({
   key: process.env.SILA_PRIVATE_KEY, // Add your private key here. USE ENV VARIABLE
-  handle: 'digital_geko_e2e.silamoney.eth', // Add your app handle here
+  handle: 'end2end.silamoney.eth', // Add your app handle here
 });
+
+sila.disableSandbox();
+sila.setEnvironment('stage');
 
 const invalidWallet = sila.generateWallet();
 invalidWallet.privateKey = process.env.SILA_PRIVATE_KEY;
 
 const wallets = [
+  sila.generateWallet(),
   sila.generateWallet(),
   sila.generateWallet(),
   sila.generateWallet(),
@@ -38,6 +42,7 @@ const handles = [
   `nodeSDK-${uuid4()}`,
   `nodeSDK-${uuid4()}`,
   `nodeSDK-${uuid4()}`,
+  `nodeSDK-${uuid4()}`,
 ];
 
 const [
@@ -47,6 +52,7 @@ const [
   fourthHandle,
   businessHandle,
   basicHandle,
+  instantHandle,
 ] = handles;
 
 const firstUser = new sila.User();
@@ -98,6 +104,15 @@ basicUser.firstName = 'Basic';
 basicUser.lastName = 'User';
 basicUser.cryptoAddress = wallets[6].address;
 basicUser.handle = basicHandle;
+
+const instantUser = new sila.User();
+instantUser.firstName = 'Intant';
+instantUser.lastName = 'User';
+instantUser.cryptoAddress = wallets[7].address;
+instantUser.handle = instantHandle;
+instantUser.phone = '1234567890';
+instantUser.smsOptIn = true;
+instantUser.deviceFingerprint = uuid4();
 
 const plaidToken = () => {
   const promise = new Promise((resolve) => {
@@ -207,6 +222,12 @@ const createEntityTests = [
     expectedResult: 'SUCCESS',
     statusCode: 200,
     description: `Valid registration test for ${basicUser.handle}.silamoney.eth`,
+  },
+  {
+    input: instantUser,
+    expectedResult: 'SUCCESS',
+    statusCode: 200,
+    description: `Valid registration test for ${instantUser.handle}.silamoney.eth`,
   },
 ];
 

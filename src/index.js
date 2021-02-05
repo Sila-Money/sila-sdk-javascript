@@ -136,7 +136,15 @@ const post = (options) => {
     }
     request.post(options, (err, response, body) => {
       if (err) {
+        if (logging && env !== 'PROD') {
+          console.log('*** RESPONSE ***');
+          console.log(err);
+        }
         rej(err);
+      }
+      if (logging && env !== 'PROD') {
+        console.log('*** RESPONSE ***');
+        console.log(body);
       }
       res({
         statusCode: response.statusCode,
@@ -296,11 +304,12 @@ const register = (user) => {
     message.address.country = user.country ? user.country : 'US';
   }
 
-  if (user.contactAlias || user.phone || user.email) {
+  if (user.contactAlias || user.phone || user.email || user.smsOptIn) {
     message.contact = {};
     message.contact.contact_alias = user.contactAlias;
     message.contact.phone = user.phone;
     message.contact.email = user.email;
+    message.contact.sms_opt_in = user.smsOptIn;
   }
 
   if (user.cryptoAddress || user.cryptoAlias) {
@@ -343,6 +352,11 @@ const register = (user) => {
     message.identity = {};
     message.identity.identity_value = user.ssn ? user.ssn : user.ein;
     message.identity.identity_alias = user.ssn ? 'SSN' : 'EIN';
+  }
+
+  if (user.deviceFingerprint) {
+    message.device = {};
+    message.device.device_fingerprint = user.deviceFingerprint;
   }
 
   return makeRequest('register', message);
@@ -1152,9 +1166,9 @@ const certifyBusiness = (
  *
  * @param {*} params The configuration parameters
  */
-const configure = (params) => {
-  appKey = params.key;
-  appHandle = params.handle;
+const configure = ({ key, handle } = {}) => {
+  appKey = key;
+  appHandle = handle;
 };
 
 const setEnvironment = (envString) => {
