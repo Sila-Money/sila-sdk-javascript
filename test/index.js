@@ -1069,6 +1069,20 @@ const updatePhoneTests = [
     description: `${handles[1]} should fail to update phone`,
     messageRegex: /Bad request/,
   },
+  {
+    handle: instantUser.handle,
+    key: wallets[7].privateKey,
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    phone: {
+      phone: '1234567890',
+      uuid: 6,
+      smsOptIn: false,
+    },
+    description: `${instantUser.handle} should update phone`,
+    messageRegex: /Successfully updated phone/,
+  },
 ];
 
 const updateIdentityTests = [
@@ -1081,7 +1095,7 @@ const updateIdentityTests = [
     identity: {
       alias: 'SSN',
       value: '543212222',
-      uuid: 6,
+      uuid: 7,
     },
     description: `${handles[1]} should update identity`,
     messageRegex: /Successfully updated identity/,
@@ -1117,7 +1131,7 @@ const updateAddressTests = [
       state: 'VA',
       postal_code: '12345',
       country: 'US',
-      uuid: 7,
+      uuid: 8,
     },
     description: `${handles[1]} should update address`,
     messageRegex: /Successfully updated address/,
@@ -1747,7 +1761,14 @@ describe('Add Phone', function () {
         assert.equal(res.data.success, test.expectedResult);
         assert.equal(res.data.status, test.status);
         assert.match(res.data.message, test.messageRegex);
-        if (res.statusCode === 200) registrationData.push(res.data.phone.uuid);
+        if (res.statusCode === 200) {
+          registrationData.push(res.data.phone.uuid);
+          assert.equal(res.data.phone.phone, test.phone);
+          assert.equal(
+            res.data.phone.sms_confirmation_requested,
+            test.smsOptIn ? test.smsOptIn : false,
+          );
+        }
       } catch (e) {
         assert.fail(e);
       }
@@ -1832,6 +1853,9 @@ describe('Update Phone', function () {
         assert.equal(res.data.success, test.expectedResult);
         assert.equal(res.data.status, test.status);
         assert.match(res.data.message, test.messageRegex);
+        if (res.statusCode === 200) {
+          assert.equal(res.data.phone.phone, test.phone.phone);
+        }
       } catch (e) {
         assert.fail(e);
       }

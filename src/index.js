@@ -617,13 +617,21 @@ const updateEmail = (handle, privateKey, email) => {
  * Makes a call to /update/phone endpoint.
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
- * @param {Object} phone The updated phone
+ * @param {Object} optional The updated phone
+ * @param {String} optional.phone
+ * @param {String} optional.uuid
+ * @param {Boolean} optional.smsOptIn
  */
-const updatePhone = (handle, privateKey, phone) => {
+const updatePhone = (
+  handle,
+  privateKey,
+  { phone = undefined, uuid = undefined, smsOptIn = undefined } = {},
+) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
-  body.phone = phone.phone;
-  body.uuid = phone.uuid;
+  body.phone = phone;
+  body.uuid = uuid;
+  body.sms_opt_in = smsOptIn;
 
   return makeRequest('update/phone', body, privateKey);
 };
@@ -705,7 +713,8 @@ const addEmail = (handle, privateKey, email) => {
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
  * @param {String} phone The user's new phone
- * @param {*} optionalParameters
+ * @param {Object} optional
+ * @param {Boolean} optional.smsOptIn
  */
 const addPhone = (handle, privateKey, phone, { smsOptIn = undefined } = {}) => {
   const fullHandle = getFullHandle(handle);
@@ -1166,7 +1175,9 @@ const certifyBusiness = (
 
 /**
  *
- * @param {*} params The configuration parameters
+ * @param {Object} params The configuration parameters
+ * @param {String} params.key
+ * @param {String} params.handle
  */
 const configure = ({ key = undefined, handle = undefined } = {}) => {
   appKey = key;
