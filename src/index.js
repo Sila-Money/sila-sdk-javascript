@@ -705,11 +705,13 @@ const addEmail = (handle, privateKey, email) => {
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
  * @param {String} phone The user's new phone
+ * @param {*} optionalParameters
  */
-const addPhone = (handle, privateKey, phone) => {
+const addPhone = (handle, privateKey, phone, { smsOptIn = undefined } = {}) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
   body.phone = phone;
+  body.sms_opt_in = smsOptIn;
 
   return makeRequest('add/phone', body, privateKey);
 };
@@ -1166,7 +1168,7 @@ const certifyBusiness = (
  *
  * @param {*} params The configuration parameters
  */
-const configure = ({ key, handle } = {}) => {
+const configure = ({ key = undefined, handle = undefined } = {}) => {
   appKey = key;
   appHandle = handle;
 };

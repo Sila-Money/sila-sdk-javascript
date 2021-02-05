@@ -934,9 +934,20 @@ const addPhoneTests = [
     statusCode: 400,
     expectedResult: false,
     status: 'FAILURE',
-    email: '',
+    phone: '',
     description: `${handles[1]} should fail to add phone`,
     messageRegex: /Bad request/,
+  },
+  {
+    handle: instantUser.handle,
+    key: wallets[7].privateKey,
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    phone: '1234567890',
+    smsOptIn: true,
+    description: `${instantUser.handle} should add phone`,
+    messageRegex: /Successfully added phone/,
   },
 ];
 
@@ -1729,7 +1740,9 @@ describe('Add Phone', function () {
   addPhoneTests.forEach((test) => {
     it(test.description, async () => {
       try {
-        const res = await sila.addPhone(test.handle, test.key, test.phone);
+        const res = await sila.addPhone(test.handle, test.key, test.phone, {
+          smsOptIn: test.smsOptIn,
+        });
         assert.equal(res.statusCode, test.statusCode);
         assert.equal(res.data.success, test.expectedResult);
         assert.equal(res.data.status, test.status);
