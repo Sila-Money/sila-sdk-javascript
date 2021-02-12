@@ -113,6 +113,13 @@ instantUser.handle = instantHandle;
 instantUser.phone = '1234567890';
 instantUser.smsOptIn = true;
 instantUser.deviceFingerprint = uuid4();
+instantUser.address = '123 Main St';
+instantUser.city = 'Anytown';
+instantUser.state = 'NY';
+instantUser.zip = '12345';
+instantUser.email = 'instant@silamoney.com';
+instantUser.dateOfBirth = '1990-01-01';
+instantUser.ssn = '123456222';
 
 const plaidToken = () => {
   const promise = new Promise((resolve) => {
@@ -145,12 +152,12 @@ const plaidToken = () => {
   return promise;
 };
 
-const validBusinessUuid = '9f280665-629f-45bf-a694-133c86bffd5e';
+const validBusinessUuid = 'ec5d1366-b56c-4442-b6c3-c919d548fcb5';
 const invalidBusinessUuid = '6d933c10-fa89-41ab-b443-2e78a7cc8cac';
 const issueTransactionDescriptor = 'Issue Trans';
 const transferDescriptor = 'Transfer Trans';
 const redeemDescriptor = 'Redeem Trans';
-const achRegexString = `${invalidBusinessUuid} does not have an approved ACH display name`;
+const achRegexString = `${invalidBusinessUuid} could not be found`;
 const achRegex = new RegExp(achRegexString);
 
 const checkHandleTests = [
@@ -274,13 +281,6 @@ const requestKYCTests = [
     description: `"${handles[1]}.silamoney.eth" should be sent for KYC check.`,
   },
   {
-    handle: handles[2],
-    key: wallets[2].privateKey,
-    expectedResult: 'SUCCESS',
-    statusCode: 200,
-    description: `"${handles[2]}.silamoney.eth" should be sent for KYC check.`,
-  },
-  {
     handle: handles[3],
     key: wallets[4].privateKey,
     expectedResult: 'SUCCESS',
@@ -293,6 +293,27 @@ const requestKYCTests = [
     expectedResult: 'SUCCESS',
     statusCode: 200,
     description: `"${handles[4]}.silamoney.eth" should be sent for KYC check.`,
+  },
+];
+
+const requestKYCLevelTests = [
+  {
+    handle: instantUser.handle,
+    key: wallets[7].privateKey,
+    kyc_level: 'INSTANT-ACH',
+    expectedResult: 'SUCCESS',
+    statusCode: 200,
+    description: `${instantUser.handle} should be sent for KYC check`,
+    messageRegex: /submitted for KYC review/,
+  },
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    expectedResult: 'FAILURE',
+    kyc_level: uuid4(),
+    statusCode: 403,
+    messageRegex: /\bKYC flow/,
+    description: 'Random kyc_level should fail requestKYC',
   },
 ];
 
@@ -314,14 +335,6 @@ const checkKYCTests = [
     description: `"${handles[1]}.silamoney.eth" should pass KYC check.`,
   },
   {
-    handle: handles[2],
-    key: wallets[2].privateKey,
-    statusCode: 200,
-    expectedResult: 'FAILURE',
-    messageRegex: /\bfailed\b/,
-    description: `"${handles[2]}.silamoney.eth" should fail KYC check.`,
-  },
-  {
     handle: handles[3],
     key: wallets[4].privateKey,
     statusCode: 200,
@@ -337,17 +350,13 @@ const checkKYCTests = [
     messageRegex: /\bpassed\b/,
     description: `"${handles[4]}.silamoney.eth" should pass KYC check.`,
   },
-];
-
-const requestKYCLevelTests = [
   {
-    handle: handles[0],
-    key: wallets[0].privateKey,
-    expectedResult: 'FAILURE',
-    kyc_level: uuid4(),
-    statusCode: 403,
-    messageRegex: /\bKYC flow/,
-    description: 'Random kyc_level should fail requestKYC',
+    handle: instantHandle,
+    key: wallets[7].privateKey,
+    statusCode: 200,
+    expectedResult: 'SUCCESS',
+    messageRegex: /\bpassed\b/,
+    description: `"${instantHandle}.silamoney.eth" should pass KYC check.`,
   },
 ];
 
@@ -412,6 +421,15 @@ const linkAccountTests = [
     messageRegex: /successfully linked/,
     description: `"${handles[3]}" should link account through plaid token`,
     withAccountId: false,
+  },
+  {
+    handle: instantHandle,
+    key: wallets[7].privateKey,
+    token: 'sandbox',
+    expectedResult: 'SUCCESS',
+    statusCode: 200,
+    messageRegex: /successfully linked/,
+    description: `"${instantHandle}" should link account through plaid token`,
   },
 ];
 
@@ -627,6 +645,17 @@ const issueSilaTests = [
     processingType: 'SAME_DAY_ACH',
     expectedResult: 'SUCCESS',
     description: `${handles[0]} should issue sila tokens successfully with processing type`,
+    messageRegex: /submitted to processing queue/,
+  },
+  {
+    handle: instantUser.handle,
+    key: wallets[7].privateKey,
+    amount: 100,
+    statusCode: 200,
+    processingType: 'INSTANT_ACH',
+    businessUuid: validBusinessUuid,
+    expectedResult: 'SUCCESS',
+    description: `${instantUser.handle} should issue sila tokens successfully with INSTANT_ACH processing type`,
     messageRegex: /submitted to processing queue/,
   },
 ];

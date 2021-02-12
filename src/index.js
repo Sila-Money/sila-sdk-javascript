@@ -454,7 +454,7 @@ const linkAccount = (
  * @param {String} accountName The nickname of the account to debit from. It defaults to 'default' (optional).
  * @param {String} descriptor Optional. Max Length 100. Note that only the first 10 characters show on the resulting bank statement.
  * @param {String} businessUuid Optional. UUID of a business with an approved ACH name. The format should be a UUID string.
- * @param {String} processingType Optional. Choice field. Examples: STANDARD_ACH or SAME_DAY_ACH
+ * @param {String} processingType Optional. Choice field. Examples: STANDARD_ACH, SAME_DAY_ACH or INSTANT_ACH
  */
 const issueSila = (
   amount,
@@ -472,7 +472,7 @@ const issueSila = (
   body.account_name = accountName;
   if (descriptor) body.descriptor = descriptor;
   if (businessUuid) body.business_uuid = businessUuid;
-  body.processing_type = processingType;
+  if (processingType) body.processing_type = processingType;
 
   return makeRequest('issue_sila', body, privateKey);
 };
