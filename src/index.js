@@ -909,7 +909,7 @@ const deleteWallet = (handle, privateKey) => {
  * @param {String} privateKey The user's wallet private key
  * @param {TransactionFilters} filters The filters used to narrow the search results
  */
-const getTransactions = (handle, privateKey, filters = {}) => {
+const getTransactions = (handle, privateKey = undefined, filters = {}) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
 

@@ -660,6 +660,24 @@ const issueSilaTests = [
   },
 ];
 
+const getTransactionsTests = [
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    description: `${handles[0]} should retrieve transactions with user private key signature`,
+  },
+  {
+    handle: handles[0],
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    description: `${handles[0]} should retrieve transactions without user private key signature`,
+  },
+];
+
 /**
  * Gets and specific index position out of an array
  * @param {Number} index The index position in the array
@@ -1663,6 +1681,22 @@ describe('Register', function () {
         assert.equal(res.data.status, sample.expectedResult);
       } catch (err) {
         assert.fail(err);
+      }
+    });
+  });
+});
+
+describe('Get Transactions', function () {
+  this.timeout(300000);
+  getTransactionsTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const res = await sila.getTransactions(test.handle, test.key);
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.success, test.expectedResult);
+        assert.equal(res.data.status, test.status);
+      } catch (e) {
+        assert.fail(e);
       }
     });
   });
