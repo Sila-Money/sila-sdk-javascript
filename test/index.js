@@ -944,7 +944,7 @@ const addPhoneTests = [
     statusCode: 200,
     expectedResult: true,
     status: 'SUCCESS',
-    phone: '1234567890',
+    phone: '1234567891',
     smsOptIn: true,
     description: `${instantUser.handle} should add phone`,
     messageRegex: /Successfully added phone/,
@@ -1009,6 +1009,30 @@ const addAddressTests = [
       street_address_2: undefined,
     },
     description: `${handles[1]} should fail to add address`,
+    messageRegex: /Bad request/,
+  },
+];
+
+const addDeviceTests = [
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    device: {
+      deviceFingerprint: uuid4(),
+    },
+    description: `${handles[0]} should add device`,
+    messageRegex: /Device successfully registered/,
+  },
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    statusCode: 400,
+    expectedResult: false,
+    status: 'FAILURE',
+    description: `${handles[0]} should fail add device without fingerprint`,
     messageRegex: /Bad request/,
   },
 ];
@@ -1811,6 +1835,23 @@ describe('Add Address', function () {
         assert.match(res.data.message, test.messageRegex);
         if (res.statusCode === 200)
           registrationData.push(res.data.address.uuid);
+      } catch (e) {
+        assert.fail(e);
+      }
+    });
+  });
+});
+
+describe('Add Device', function () {
+  this.timeout(300000);
+  addDeviceTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const res = await sila.addDevice(test.handle, test.key, test.device);
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.success, test.expectedResult);
+        assert.equal(res.data.status, test.status);
+        assert.match(res.data.message, test.messageRegex);
       } catch (e) {
         assert.fail(e);
       }

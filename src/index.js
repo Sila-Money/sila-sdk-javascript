@@ -762,6 +762,25 @@ const addAddress = (handle, privateKey, address) => {
 };
 
 /**
+ *
+ * @param {string} handle The user handle
+ * @param {string} privateKey The user's private key
+ * @param {Object} device Options for device registration
+ * @param {string} device.deviceFingerprint Required key containing the Iovation device token to be used in verification
+ */
+const addDevice = (
+  handle,
+  privateKey,
+  { deviceFingerprint = undefined } = {},
+) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.device_fingerprint = deviceFingerprint;
+
+  return makeRequest('add/device', body, privateKey);
+};
+
+/**
  * Makes a call to /get_accounts endpoint.
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
@@ -1261,6 +1280,7 @@ export default {
   addPhone,
   addIdentity,
   addAddress,
+  addDevice,
   updateEmail,
   updatePhone,
   updateIdentity,
