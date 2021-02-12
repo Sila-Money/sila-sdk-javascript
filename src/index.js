@@ -3,6 +3,7 @@ import request from 'request';
 import uuid4 from 'uuid4';
 import fs from 'fs';
 import crypt from 'crypto';
+import lodash from 'lodash';
 import regeneratorRuntime from 'regenerator-runtime'; // eslint-disable-line no-unused-vars
 
 import TransactionFilters from './models/transactionFilters';
@@ -74,7 +75,7 @@ const configureUrl = () => {
  * @param {String} businessPrivateKey
  */
 const signOpts = (opts, key, businessPrivateKey) => {
-  const options = opts;
+  const options = lodash.cloneDeep(opts);
   if (opts.body.header) {
     options.headers = {};
     const bodyString = JSON.stringify(options.body);
