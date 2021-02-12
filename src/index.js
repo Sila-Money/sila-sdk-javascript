@@ -1071,13 +1071,19 @@ const getEntities = (
 /**
  * @param {String} userHandle
  * @param {String} userPrivateKey
+ * @param {Object} options Optional properties to send in the request
+ * @param {Boolean} options.prettyDates
  */
-const getEntity = (userHandle, userPrivateKey) => {
+const getEntity = (
+  userHandle,
+  userPrivateKey,
+  { prettyDates = undefined } = {},
+) => {
   const body = setHeaders({ header: {} }, userHandle);
-
+  const queryParameters = getQueryParameter('', 'pretty_dates', prettyDates);
   body.user_handle = userHandle;
 
-  return makeRequest('get_entity', body, userPrivateKey);
+  return makeRequest(`get_entity${queryParameters}`, body, userPrivateKey);
 };
 
 /**

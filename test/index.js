@@ -1345,6 +1345,27 @@ const linkBusinessMemberTests = [
   },
 ];
 
+const getEntityTests = [
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    saveReference: true,
+    description: `${handles[0]} should retrieve entity`,
+  },
+  {
+    handle: handles[0],
+    key: wallets[0].privateKey,
+    options: { prettyDates: true },
+    statusCode: 200,
+    expectedResult: true,
+    status: 'SUCCESS',
+    description: `${handles[0]} should retrieve entity with pretty dates`,
+  },
+];
+
 const getDocumentTypesTests = [
   {
     returnedCount: 20,
@@ -1665,24 +1686,43 @@ describe('Unlink business member', function () {
 
 describe('Get Entity', function () {
   this.timeout(300000);
-  it(`Get first user entity`, async () => {
-    try {
-      const res = await sila.getEntity(handles[0], wallets[0].privateKey);
+  getEntityTests.forEach((test) => {
+    it(test.description, async () => {
+      try {
+        const res = await sila.getEntity(test.handle, test.key, test.options);
 
-      assert.equal(res.statusCode, 200);
-      assert.equal(res.data.success, true);
-      assert.equal(res.data.status, 'SUCCESS');
-      assert.equal(
-        res.data.user_handle.toLowerCase(),
-        handles[0].toLowerCase(),
-      );
-      registrationData.push(res.data.emails[0].uuid);
-      registrationData.push(res.data.phones[0].uuid);
-      registrationData.push(res.data.identities[0].uuid);
-      registrationData.push(res.data.addresses[0].uuid);
-    } catch (err) {
-      assert.fail(err);
-    }
+        assert.equal(res.statusCode, test.statusCode);
+        assert.equal(res.data.success, test.expectedResult);
+        assert.equal(res.data.status, test.status);
+        assert.equal(
+          res.data.user_handle.toLowerCase(),
+          test.handle.toLowerCase(),
+        );
+        if (
+          test.options &&
+          test.options.prettyDates &&
+          test.statusCode === 200
+        ) {
+          assert.isString(res.data.entity.created);
+          assert.isString(res.data.emails[0].added);
+          assert.isString(res.data.emails[0].modified);
+          assert.isString(res.data.phones[0].added);
+          assert.isString(res.data.phones[0].modified);
+          assert.isString(res.data.identities[0].added);
+          assert.isString(res.data.identities[0].modified);
+          assert.isString(res.data.addresses[0].added);
+          assert.isString(res.data.addresses[0].modified);
+        }
+        if (test.saveReference) {
+          registrationData.push(res.data.emails[0].uuid);
+          registrationData.push(res.data.phones[0].uuid);
+          registrationData.push(res.data.identities[0].uuid);
+          registrationData.push(res.data.addresses[0].uuid);
+        }
+      } catch (err) {
+        assert.fail(err);
+      }
+    });
   });
 });
 
