@@ -12,15 +12,14 @@ const sleep = (ms, description) => {
 };
 
 sila.configure({
-    key: process.env.SILA_PRIVATE_KEY, // Add your private key here. USE ENV VARIABLE
-    handle: 'end2end.silamoney.eth', // Add your app handle here
+    key: 'e60a5c57130f4e82782cbdb498943f31fe8f92ab96daac2cc13cbbbf9c0b4d9e', // Add your private key here. USE ENV VARIABLE
+    handle: 'digital_geko_e2e', // Add your app handle here
 });
 
-sila.disableSandbox();
-sila.setEnvironment('stage');
+sila.setEnvironment('sandboc');
 
 const invalidWallet = sila.generateWallet();
-invalidWallet.privateKey = process.env.SILA_PRIVATE_KEY;
+invalidWallet.privateKey = 'e60a5c57130f4e82782cbdb498943f31fe8f92ab96daac2cc13cbbbf9c0b4d9d';
 
 const wallets = [
     sila.generateWallet(),
@@ -360,6 +359,16 @@ const checkKYCTests = [
     },
 ];
 
+const checkPartnerKYCTests = [
+    {
+        query_app_handle: 'digital_geko_e2e_new',
+        query_user_handle: 'cross_app_check partner',
+        statusCode: 200,
+        expectedResult: 'SUCCESS',
+        description: `Checking cross app check handle`,
+    },
+]
+
 const linkAccountDirectTests = [
     {
         handle: handles[0],
@@ -377,6 +386,16 @@ const linkAccountDirectTests = [
         accountNumber: '123456789013',
         routingNumber: '123456780',
         accountName: 'delete',
+        expectedResult: 'SUCCESS',
+        statusCode: 200,
+        description: 'Direct bank account link should be successful',
+    },
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        accountNumber: '123456789013',
+        routingNumber: '123456780',
+        accountName: 'forupdate',
         expectedResult: 'SUCCESS',
         statusCode: 200,
         description: 'Direct bank account link should be successful',
@@ -2154,6 +2173,23 @@ describe('Successful Check KYC', function () {
     });
 });
 
+describe('Successful Check Partner KYC', function () {
+    this.timeout(300000);
+    checkPartnerKYCTests.forEach((test) => {
+        it(test.description, async () => {
+            try {
+                let res = await sila.checkPartnerKyc({
+                    query_app_handle: test.query_app_handle,
+                    query_user_handle: test.query_user_handle
+                });
+                assert.isTrue(res.data.success);
+            } catch (e) {
+                assert.fail(e);
+            }
+        });
+    });
+});
+
 describe('Upload Document', function () {
     this.timeout(300000);
     uploadDocumentTests.forEach((test) => {
@@ -2312,6 +2348,23 @@ describe('Delete Account', function () {
             const res = await sila.deleteAccount(handles[0], "delete", wallets[0].privateKey);
 
             assert.equal(res.data.account_nickname, "delete")
+        } catch (error) {
+            assert.fail(error);
+        }
+    });
+})
+
+describe('Update Account', function () {
+    this.timeout(300000);
+    it('Successfully update account', async () => {
+        try {
+            const res = await sila.updateAccount({
+                account_name: 'forupdate',
+                new_account_name: 'updated',
+            },handles[0], wallets[0].privateKey);
+
+            assert.isTrue(res.data.success);
+            assert.equal(res.data.account.account_name, "updated");
         } catch (error) {
             assert.fail(error);
         }
