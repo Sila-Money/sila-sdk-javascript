@@ -418,6 +418,17 @@ const linkAccountTests = [
     {
         handle: handles[0],
         key: wallets[0].privateKey,
+        accountName: 'defaultpt',
+        expectedResult: 'SUCCESS',
+        statusCode: 200,
+        messageRegex: /successfully linked/,
+        description: `"${handles[0]}" should link account through plaid token`,
+        withAccountId: false,
+        plaidTokenType: 'legacy'
+    },
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
         token: `public-sandbox-${uuid4()}`,
         expectedResult: 'FAILURE',
         statusCode: 400,
@@ -469,7 +480,7 @@ const getAccountsTests = [
         handle: handles[0],
         key: wallets[0].privateKey,
         statusCode: 200,
-        accounts: 4,
+        accounts: 5,
         description: `"${handles[0]}" should retrieve all accounts`,
     },
 ];
@@ -2383,6 +2394,7 @@ describe('Link Account - Token tests', function () {
                     token,
                     test.accountName,
                     accountId,
+                    test.plaidTokenType
                 );
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.status, test.expectedResult);
@@ -2392,6 +2404,22 @@ describe('Link Account - Token tests', function () {
         });
     });
 });
+
+describe('Plaid Update Link Token', function () {
+    this.timeout(300000);
+    it("Successfully update plaid token.", async () => {
+        try {
+            const res = await sila.plaidUpdateLinkToken({account_name: 'defaultpt' }, handles[0]);
+
+            assert.isTrue(res.data.success);
+            assert.isDefined(res.data.link_token);
+            assert.isDefined(res.data.status);
+            assert.isDefined(res.data.message);
+        } catch (error) {
+            assert.fail(error);
+        }
+    })
+})
 
 describe('Get Accounts', function () {
     this.timeout(300000);

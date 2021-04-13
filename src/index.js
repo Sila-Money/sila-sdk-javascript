@@ -82,7 +82,7 @@ const signOpts = (opts, key, businessPrivateKey) => {
   const options = lodash.cloneDeep(opts);
   if (opts.body.header) {
     options.headers = {};
-    options.headers['User-Agent'] = 'SilaSDK-node/0.2.21';
+    options.headers['User-Agent'] = 'SilaSDK-node/0.2.22';
     const bodyString = JSON.stringify(options.body);
     options.headers.authsignature = sign(bodyString, appKey);
     if (key) options.headers.usersignature = sign(bodyString, key);
@@ -433,24 +433,26 @@ const linkAccountDirect = (
  * @param {String} publicToken Plaid's public token
  * @param {String} accountName The account nickname
  * @param {String} accountId The account id
+ * 
  */
 const linkAccount = (
   handle,
   privateKey,
-  publicToken,
+  plaidToken,
   accountName = undefined,
   accountId = undefined,
+  plaidTokenType = undefined
 ) => {
   const fullHandle = getFullHandle(handle);
   const message = setHeaders({ header: {} }, fullHandle);
   message.message = 'link_account_msg';
-  message.public_token = publicToken;
+  message.plaid_token = plaidToken;
+  message.plaid_token_type = plaidTokenType;
   if (accountId) message.selected_account_id = accountId;
   if (accountName) message.account_name = accountName;
 
   return makeRequest('link_account', message, privateKey);
 };
-
 /**
  * Makes a call to /issue_sila endpoint.
  * @param {Number} amount The amount of sila tokens to issue
@@ -1242,11 +1244,11 @@ const checkPartnerKyc = ({ query_app_handle, query_user_handle }) => {
 };
 
 /**
- * 
- * @param {*} payload 
- * @param {*} user_handle 
- * @param {*} user_private_key 
- * @returns 
+ *
+ * @param {*} payload
+ * @param {*} user_handle
+ * @param {*} user_private_key
+ * @returns
  */
 const updateAccount = (
   { account_name, new_account_name },
@@ -1258,6 +1260,22 @@ const updateAccount = (
   body.new_account_name = new_account_name;
 
   return makeRequest('update_account', body, user_private_key);
+};
+
+/**
+ *
+ * @param {*} payload
+ * @param {String} user_handle
+ * @returns
+ */
+const plaidUpdateLinkToken = (
+  { account_name },
+  user_handle,
+) => {
+  const body = setHeaders({ header: {} }, user_handle);
+  body.account_name = account_name;
+
+  return makeRequest('plaid_update_link_token', body);
 };
 
 /**
@@ -1361,5 +1379,6 @@ export default {
   plaidLinkToken,
   deleteAccount,
   checkPartnerKyc,
-  updateAccount
+  updateAccount,
+  plaidUpdateLinkToken,
 };
