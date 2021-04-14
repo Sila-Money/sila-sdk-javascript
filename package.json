@@ -37,7 +37,7 @@
     ]
   },
   "name": "sila-sdk",
-  "version": "0.2.13-rc.5",
+  "version": "0.2.21",
   "main": "lib/index.js",
   "directories": {
     "lib": "lib",
@@ -45,6 +45,7 @@
   },
   "dependencies": {
     "eth-crypto": "^1.8.0",
+    "lodash": "^4.17.20",
     "regenerator-runtime": "^0.13.7",
     "request": "^2.88.0",
     "uuid4": "^1.1.4"

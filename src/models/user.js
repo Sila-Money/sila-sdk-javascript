@@ -106,6 +106,14 @@ class User {
      * @type {String}
      */
     this.addressAlias = undefined;
+    /**
+     * @type {String}
+     */
+    this.deviceFingerprint = undefined;
+    /**
+     * @type {Boolean}
+     */
+    this.smsOptIn = undefined;
   }
 }
 
