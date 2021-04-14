@@ -48,7 +48,8 @@
     "lodash": "^4.17.21",
     "regenerator-runtime": "^0.13.7",
     "request": "^2.88.2",
-    "uuid4": "^1.1.4"
+    "uuid4": "^1.1.4",
+    "y18n": "^5.0.8"
   },
   "resolutions": {
     "elliptic": "6.5.3"
