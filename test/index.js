@@ -2411,8 +2411,6 @@ describe('Plaid Update Link Token', function () {
         try {
             const res = await sila.plaidUpdateLinkToken({account_name: 'defaultpt' }, handles[0]);
 
-            assert.isTrue(res.data.success);
-            assert.isDefined(res.data.link_token);
             assert.isDefined(res.data.status);
             assert.isDefined(res.data.message);
         } catch (error) {
