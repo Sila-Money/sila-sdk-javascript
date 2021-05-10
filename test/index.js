@@ -467,12 +467,22 @@ const linkAccountTests = [
     {
         handle: instantHandle,
         key: wallets[7].privateKey,
+        accountName: 'instantValidation',
         token: 'sandbox',
         expectedResult: 'SUCCESS',
         statusCode: 200,
         messageRegex: /successfully linked/,
         description: `"${instantHandle}" should link account through plaid token`,
     },
+];
+
+const checkInstantAchTests = [
+    {
+        handle: instantHandle,
+        key: wallets[7].privateKey,
+        accountName: 'instantValidation',
+        description: `"${instantHandle}" should check instant ach.`,
+    }
 ];
 
 const getAccountsTests = [
@@ -1171,20 +1181,6 @@ const updatePhoneTests = [
         },
         description: `${handles[1]} should fail to update phone`,
         messageRegex: /Bad request/,
-    },
-    {
-        handle: instantUser.handle,
-        key: wallets[7].privateKey,
-        statusCode: 200,
-        expectedResult: true,
-        status: 'SUCCESS',
-        phone: {
-            phone: '1234567890',
-            uuid: 6,
-            smsOptIn: false,
-        },
-        description: `${instantUser.handle} should update phone`,
-        messageRegex: /Successfully updated phone/,
     },
 ];
 
@@ -2399,6 +2395,28 @@ describe('Link Account - Token tests', function () {
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.status, test.expectedResult);
             } catch (e) {
+                assert.fail(e);
+            }
+        });
+    });
+});
+
+describe('Check Instant ACH', function () {
+    this.timeout(300000);
+    checkInstantAchTests.forEach((test) => {
+        it(test.description, async () => {
+            try {
+                const res = await sila.checkInstantAch(
+                    { account_name: test.accountName },
+                    test.handle,
+                    test.key
+                );
+
+                console.log(res);
+                assert.isNotNull(res.statusCode);
+                assert.isNotNull(res.data.status);
+            } catch (e) {
+                console.log(e);
                 assert.fail(e);
             }
         });

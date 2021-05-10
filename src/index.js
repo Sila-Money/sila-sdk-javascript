@@ -82,7 +82,7 @@ const signOpts = (opts, key, businessPrivateKey) => {
   const options = lodash.cloneDeep(opts);
   if (opts.body.header) {
     options.headers = {};
-    options.headers['User-Agent'] = 'SilaSDK-node/0.2.22';
+    options.headers['User-Agent'] = 'SilaSDK-node/0.2.23';
     const bodyString = JSON.stringify(options.body);
     options.headers.authsignature = sign(bodyString, appKey);
     if (key) options.headers.usersignature = sign(bodyString, key);
@@ -433,7 +433,7 @@ const linkAccountDirect = (
  * @param {String} publicToken Plaid's public token
  * @param {String} accountName The account nickname
  * @param {String} accountId The account id
- * 
+ *
  */
 const linkAccount = (
   handle,
@@ -441,7 +441,7 @@ const linkAccount = (
   plaidToken,
   accountName = undefined,
   accountId = undefined,
-  plaidTokenType = undefined
+  plaidTokenType = undefined,
 ) => {
   const fullHandle = getFullHandle(handle);
   const message = setHeaders({ header: {} }, fullHandle);
@@ -1268,14 +1268,25 @@ const updateAccount = (
  * @param {String} user_handle
  * @returns
  */
-const plaidUpdateLinkToken = (
-  { account_name },
-  user_handle,
-) => {
+const plaidUpdateLinkToken = ({ account_name }, user_handle) => {
   const body = setHeaders({ header: {} }, user_handle);
   body.account_name = account_name;
 
   return makeRequest('plaid_update_link_token', body);
+};
+
+/**
+ * 
+ * @param {*} payload 
+ * @param {String} user_handle 
+ * @param {String} user_private_key 
+ * @returns 
+ */
+const checkInstantAch = ({ account_name }, user_handle, user_private_key) => {
+  const body = setHeaders({ header: {} }, user_handle);
+  body.account_name = account_name;
+
+  return makeRequest('check_instant_ach', body, user_private_key);
 };
 
 /**
@@ -1381,4 +1392,5 @@ export default {
   checkPartnerKyc,
   updateAccount,
   plaidUpdateLinkToken,
+  checkInstantAch
 };
