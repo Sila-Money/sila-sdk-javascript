@@ -693,17 +693,6 @@ const issueSilaTests = [
         messageRegex: /submitted to processing queue/,
     },
     {
-        handle: instantUser.handle,
-        key: wallets[7].privateKey,
-        amount: 100,
-        statusCode: 200,
-        processingType: 'INSTANT_ACH',
-        businessUuid: validBusinessUuid,
-        expectedResult: 'SUCCESS',
-        description: `${instantUser.handle} should issue sila tokens successfully with INSTANT_ACH processing type`,
-        messageRegex: /submitted to processing queue/,
-    },
-    {
         handle: handles[0],
         key: wallets[0].privateKey,
         amount: 420,
@@ -2412,7 +2401,6 @@ describe('Check Instant ACH', function () {
                     test.key
                 );
 
-                console.log(res);
                 assert.isNotNull(res.statusCode);
                 assert.isNotNull(res.data.status);
             } catch (e) {
