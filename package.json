@@ -6,27 +6,27 @@
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
-    "@babel/cli": "^7.12.1",
-    "@babel/core": "^7.12.3",
-    "@babel/plugin-transform-regenerator": "^7.12.1",
-    "@babel/preset-env": "^7.12.1",
-    "@babel/register": "^7.12.1",
-    "chai": "^4.2.0",
+    "@babel/cli": "^7.13.14",
+    "@babel/core": "^7.13.15",
+    "@babel/plugin-transform-regenerator": "^7.13.15",
+    "@babel/preset-env": "^7.13.15",
+    "@babel/register": "^7.13.14",
+    "chai": "^4.3.4",
     "cors": "^2.8.5",
     "eslint": "^5.16.0",
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-config-prettier": "^6.15.0",
     "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-prettier": "^3.1.4",
+    "eslint-plugin-prettier": "^3.3.1",
     "jshint": "^2.12.0",
     "mocha": "^7.1.2",
     "mocha-junit-reporter": "^2.0.0",
-    "mocha-multi-reporters": "^1.1.7",
+    "mocha-multi-reporters": "^1.5.1",
     "moment": "^2.29.1",
     "node-fetch": "^2.6.1",
     "nyc": "^15.1.0",
     "plaid": "^2.10.0",
-    "prettier": "^2.1.2",
+    "prettier": "^2.2.1",
     "request-promise": "^4.2.6"
   },
   "nyc": {
@@ -37,18 +37,19 @@
     ]
   },
   "name": "sila-sdk",
-  "version": "0.2.21",
+  "version": "0.2.23",
   "main": "lib/index.js",
   "directories": {
     "lib": "lib",
     "test": "test"
   },
   "dependencies": {
-    "eth-crypto": "^1.8.0",
-    "lodash": "^4.17.20",
+    "eth-crypto": "^1.9.0",
+    "lodash": "^4.17.21",
     "regenerator-runtime": "^0.13.7",
-    "request": "^2.88.0",
-    "uuid4": "^1.1.4"
+    "request": "^2.88.2",
+    "uuid4": "^1.1.4",
+    "y18n": "^5.0.8"
   },
   "resolutions": {
     "elliptic": "6.5.3"
