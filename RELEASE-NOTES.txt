@@ -1,0 +1,5 @@
+v0.2.24
+Adding support for /get_institutions endpoint.
+
+v0.2.23
+Adding support for /check_instant_ach endpoint.

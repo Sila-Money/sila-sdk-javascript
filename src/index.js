@@ -77,6 +77,7 @@ const signOpts = (opts, key, businessPrivateKey) => {
   const options = opts;
   if (opts.body.header) {
     options.headers = {};
+    options.headers['User-Agent'] = 'SilaSDK-node/0.2.24';
     const bodyString = JSON.stringify(options.body);
     options.headers.authsignature = sign(bodyString, appKey);
     if (key) options.headers.usersignature = sign(bodyString, key);
@@ -1150,11 +1151,128 @@ const certifyBusiness = (
 
 /**
  *
- * @param {*} params The configuration parameters
+ * @param {String} userHandle
+ * @param {String} userPrivateKey
  */
-const configure = (params) => {
-  appKey = params.key;
-  appHandle = params.handle;
+const plaidLinkToken = (user_handle, user_private_key) => {
+  const body = setHeaders({ header: {} }, user_handle);
+
+  return makeRequest('plaid_link_token', body, user_private_key);
+};
+
+/**
+ *
+ * @param {String} user_handle
+ * @param {String} account_name
+ * @param {String} user_private_key
+ */
+const deleteAccount = (user_handle, account_name, user_private_key) => {
+  const body = setHeaders({ header: {} }, user_handle);
+  body.account_name = account_name;
+
+  return makeRequest('delete_account', body, user_private_key);
+};
+
+/**
+ *
+ * @param {*} payload
+ * @returns
+ */
+const checkPartnerKyc = ({ query_app_handle, query_user_handle }) => {
+  const body = setHeaders({ header: {} });
+  body.query_app_handle = query_app_handle;
+  body.query_user_handle = query_user_handle;
+
+  return makeRequest('check_partner_kyc', body);
+};
+
+/**
+ *
+ * @param {*} payload
+ * @param {*} user_handle
+ * @param {*} user_private_key
+ * @returns
+ */
+const updateAccount = (
+  { account_name, new_account_name },
+  user_handle,
+  user_private_key,
+) => {
+  const body = setHeaders({ header: {} }, user_handle);
+  body.account_name = account_name;
+  body.new_account_name = new_account_name;
+
+  return makeRequest('update_account', body, user_private_key);
+};
+
+/**
+ *
+ * @param {*} payload
+ * @param {String} user_handle
+ * @returns
+ */
+const plaidUpdateLinkToken = ({ account_name }, user_handle) => {
+  const body = setHeaders({ header: {} }, user_handle);
+  body.account_name = account_name;
+
+  return makeRequest('plaid_update_link_token', body);
+};
+
+/**
+ *
+ * @param {*} payload
+ * @param {String} user_handle
+ * @param {String} user_private_key
+ * @returns
+ */
+const checkInstantAch = ({ account_name }, user_handle, user_private_key) => {
+  const body = setHeaders({ header: {} }, user_handle);
+  body.account_name = account_name;
+
+  return makeRequest('check_instant_ach', body, user_private_key);
+};
+
+/**
+ *
+ * @param {*} payload
+ * @param {*} user_private_key
+ * @returns
+ */
+const getInstitutions = (
+  payload = {
+    institution_name: undefined,
+    routing_number: undefined,
+    page: undefined,
+    per_page: undefined,
+  }
+) => {
+  const body = setHeaders({ header: {} });
+  body.message = 'header_msg';
+  body.search_filters = payload;
+
+  return makeRequest('get_institutions', body);
+};
+
+/**
+ *
+ * @param {Object} params The configuration parameters
+ * @param {String} params.key
+ * @param {String} params.handle
+ */
+const configure = ({
+  key = undefined,
+  handle = undefined,
+  environment = undefined,
+} = {}) => {
+  appKey = key;
+  appHandle = handle;
+  if (environment) {
+    env = environment.toUpperCase();
+    configureUrl();
+    console.log(
+      `Setting environment to ${environment.toUpperCase()}: ${baseUrl}`,
+    );
+  }
 };
 
 const setEnvironment = (envString) => {
@@ -1243,4 +1361,11 @@ export default {
   deletePhone,
   deleteIdentity,
   deleteAddress,
+  plaidLinkToken,
+  deleteAccount,
+  checkPartnerKyc,
+  updateAccount,
+  plaidUpdateLinkToken,
+  checkInstantAch,
+  getInstitutions,
 };
