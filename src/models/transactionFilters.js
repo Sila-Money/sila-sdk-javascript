@@ -48,6 +48,10 @@ class TransactionFilters {
      * @type {Array<String>}
      */
     this.transaction_types = undefined;
+    /**
+     * @type {String}
+     */
+     this.blockchain_address = undefined;
   }
 }
 

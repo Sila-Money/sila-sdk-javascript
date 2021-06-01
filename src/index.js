@@ -3,6 +3,7 @@ import request from 'request';
 import uuid4 from 'uuid4';
 import fs from 'fs';
 import crypt from 'crypto';
+import lodash from 'lodash';
 import regeneratorRuntime from 'regenerator-runtime'; // eslint-disable-line no-unused-vars
 
 import TransactionFilters from './models/transactionFilters';
@@ -13,7 +14,7 @@ import WalletFilters from './models/walletFilters';
 let appKey = null;
 let appHandle = null;
 let sandbox = true;
-let env = 'PROD';
+let env = 'SANDBOX';
 let baseUrl = 'https://sandbox.silamoney.com/0.2/';
 let logging = false;
 
@@ -58,12 +59,16 @@ const sign = (message, key) => {
 };
 
 const configureUrl = () => {
-  let app = sandbox ? 'sandbox' : 'api';
-  if (env === 'PROD') {
-    baseUrl = `https://${app}.silamoney.com/0.2/`;
-  } else {
-    if (!sandbox) app = '';
-    baseUrl = `https://${app}${env.toLowerCase()}api.silamoney.com/0.2/`;
+  switch (env) {
+    case 'PROD':
+      baseUrl = 'https://api.silamoney.com/0.2/';
+      break;
+    case 'STAGE':
+      baseUrl = 'https://stageapi.silamoney.com/0.2/';
+      break;
+    default:
+      baseUrl = 'https://sandbox.silamoney.com/0.2/';
+      break;
   }
 };
 
@@ -74,7 +79,7 @@ const configureUrl = () => {
  * @param {String} businessPrivateKey
  */
 const signOpts = (opts, key, businessPrivateKey) => {
-  const options = opts;
+  const options = lodash.cloneDeep(opts);
   if (opts.body.header) {
     options.headers = {};
     options.headers['User-Agent'] = 'SilaSDK-node/0.2.24';
@@ -121,7 +126,7 @@ const setHeaders = (msg, handle, businessHandle) => {
   const message = msg;
   message.header.user_handle = handle;
   message.header.business_handle = businessHandle;
-  message.header.auth_handle = appHandle;
+  message.header.app_handle = appHandle;
   message.header.reference = uuid4();
   message.header.created = Math.floor(Date.now() / 1000);
   message.header.crypto = 'ETH';
@@ -137,7 +142,15 @@ const post = (options) => {
     }
     request.post(options, (err, response, body) => {
       if (err) {
+        if (logging && env !== 'PROD') {
+          console.log('*** RESPONSE ***');
+          console.log(err);
+        }
         rej(err);
+      }
+      if (logging && env !== 'PROD') {
+        console.log('*** RESPONSE ***');
+        console.log(body);
       }
       res({
         statusCode: response.statusCode,
@@ -297,11 +310,12 @@ const register = (user) => {
     message.address.country = user.country ? user.country : 'US';
   }
 
-  if (user.contactAlias || user.phone || user.email) {
+  if (user.contactAlias || user.phone || user.email || user.smsOptIn) {
     message.contact = {};
     message.contact.contact_alias = user.contactAlias;
     message.contact.phone = user.phone;
     message.contact.email = user.email;
+    message.contact.sms_opt_in = user.smsOptIn;
   }
 
   if (user.cryptoAddress || user.cryptoAlias) {
@@ -344,6 +358,11 @@ const register = (user) => {
     message.identity = {};
     message.identity.identity_value = user.ssn ? user.ssn : user.ein;
     message.identity.identity_alias = user.ssn ? 'SSN' : 'EIN';
+  }
+
+  if (user.deviceFingerprint) {
+    message.device = {};
+    message.device.device_fingerprint = user.deviceFingerprint;
   }
 
   return makeRequest('register', message);
@@ -414,24 +433,26 @@ const linkAccountDirect = (
  * @param {String} publicToken Plaid's public token
  * @param {String} accountName The account nickname
  * @param {String} accountId The account id
+ *
  */
 const linkAccount = (
   handle,
   privateKey,
-  publicToken,
+  plaidToken,
   accountName = undefined,
   accountId = undefined,
+  plaidTokenType = undefined,
 ) => {
   const fullHandle = getFullHandle(handle);
   const message = setHeaders({ header: {} }, fullHandle);
   message.message = 'link_account_msg';
-  message.public_token = publicToken;
+  message.plaid_token = plaidToken;
+  message.plaid_token_type = plaidTokenType;
   if (accountId) message.selected_account_id = accountId;
   if (accountName) message.account_name = accountName;
 
   return makeRequest('link_account', message, privateKey);
 };
-
 /**
  * Makes a call to /issue_sila endpoint.
  * @param {Number} amount The amount of sila tokens to issue
@@ -440,7 +461,7 @@ const linkAccount = (
  * @param {String} accountName The nickname of the account to debit from. It defaults to 'default' (optional).
  * @param {String} descriptor Optional. Max Length 100. Note that only the first 10 characters show on the resulting bank statement.
  * @param {String} businessUuid Optional. UUID of a business with an approved ACH name. The format should be a UUID string.
- * @param {String} processingType Optional. Choice field. Examples: STANDARD_ACH or SAME_DAY_ACH
+ * @param {String} processingType Optional. Choice field. Examples: STANDARD_ACH, SAME_DAY_ACH or INSTANT_ACH
  */
 const issueSila = (
   amount,
@@ -458,7 +479,7 @@ const issueSila = (
   body.account_name = accountName;
   if (descriptor) body.descriptor = descriptor;
   if (businessUuid) body.business_uuid = businessUuid;
-  body.processing_type = processingType;
+  if (processingType) body.processing_type = processingType;
 
   return makeRequest('issue_sila', body, privateKey);
 };
@@ -604,13 +625,21 @@ const updateEmail = (handle, privateKey, email) => {
  * Makes a call to /update/phone endpoint.
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
- * @param {Object} phone The updated phone
+ * @param {Object} optional The updated phone
+ * @param {String} optional.phone
+ * @param {String} optional.uuid
+ * @param {Boolean} optional.smsOptIn
  */
-const updatePhone = (handle, privateKey, phone) => {
+const updatePhone = (
+  handle,
+  privateKey,
+  { phone = undefined, uuid = undefined, smsOptIn = undefined } = {},
+) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
-  body.phone = phone.phone;
-  body.uuid = phone.uuid;
+  body.phone = phone;
+  body.uuid = uuid;
+  body.sms_opt_in = smsOptIn;
 
   return makeRequest('update/phone', body, privateKey);
 };
@@ -692,11 +721,14 @@ const addEmail = (handle, privateKey, email) => {
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
  * @param {String} phone The user's new phone
+ * @param {Object} optional
+ * @param {Boolean} optional.smsOptIn
  */
-const addPhone = (handle, privateKey, phone) => {
+const addPhone = (handle, privateKey, phone, { smsOptIn = undefined } = {}) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
   body.phone = phone;
+  body.sms_opt_in = smsOptIn;
 
   return makeRequest('add/phone', body, privateKey);
 };
@@ -735,6 +767,25 @@ const addAddress = (handle, privateKey, address) => {
   body.country = address.country;
 
   return makeRequest('add/address', body, privateKey);
+};
+
+/**
+ *
+ * @param {string} handle The user handle
+ * @param {string} privateKey The user's private key
+ * @param {Object} device Options for device registration
+ * @param {string} device.deviceFingerprint Required key containing the Iovation device token to be used in verification
+ */
+const addDevice = (
+  handle,
+  privateKey,
+  { deviceFingerprint = undefined } = {},
+) => {
+  const fullHandle = getFullHandle(handle);
+  const body = setHeaders({ header: {} }, fullHandle);
+  body.device_fingerprint = deviceFingerprint;
+
+  return makeRequest('add/device', body, privateKey);
 };
 
 /**
@@ -865,7 +916,7 @@ const deleteWallet = (handle, privateKey) => {
  * @param {String} privateKey The user's wallet private key
  * @param {TransactionFilters} filters The filters used to narrow the search results
  */
-const getTransactions = (handle, privateKey, filters = {}) => {
+const getTransactions = (handle, privateKey = undefined, filters = {}) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
 
@@ -1028,13 +1079,19 @@ const getEntities = (
 /**
  * @param {String} userHandle
  * @param {String} userPrivateKey
+ * @param {Object} options Optional properties to send in the request
+ * @param {Boolean} options.prettyDates
  */
-const getEntity = (userHandle, userPrivateKey) => {
+const getEntity = (
+  userHandle,
+  userPrivateKey,
+  { prettyDates = undefined } = {},
+) => {
   const body = setHeaders({ header: {} }, userHandle);
-
+  const queryParameters = getQueryParameter('', 'pretty_dates', prettyDates);
   body.user_handle = userHandle;
 
-  return makeRequest('get_entity', body, userPrivateKey);
+  return makeRequest(`get_entity${queryParameters}`, body, userPrivateKey);
 };
 
 /**
@@ -1352,6 +1409,7 @@ export default {
   addPhone,
   addIdentity,
   addAddress,
+  addDevice,
   updateEmail,
   updatePhone,
   updateIdentity,
