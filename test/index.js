@@ -1557,6 +1557,26 @@ const getDocumentTests = [
     },
 ];
 
+describe('Get Insitutions', function () {
+    this.timeout(300000);
+    it('Successfully retrieve institutions', async () => {
+        try {
+            const res = await sila.getInstitutions({
+                institution_name: '1st advantage bank'
+            });
+
+            assert.equal(res.statusCode, 200);
+            assert.equal(res.data.success, true);
+            assert(res.data.institutions);
+            assert(
+                res.data.institutions[0].name,
+            );
+        } catch (err) {
+            assert.fail(err);
+        }
+    });
+});
+
 describe('Get Business Types', function () {
     this.timeout(300000);
     it('Successfully retrieve business types', async () => {
