@@ -520,6 +520,7 @@ const registerWalletTests = [
         key: wallets[0].privateKey,
         wallet: wallets[3],
         nickname: 'new_wallet',
+        default: true,
         statusCode: 200,
         expectedResult: true,
         description: `${handles[0]} should register new wallet`,
@@ -529,6 +530,7 @@ const registerWalletTests = [
         key: wallets[0].privateKey,
         wallet: invalidWallet,
         nickname: 'fail_wallet',
+        default: false,
         statusCode: 403,
         expectedResult: false,
         description: `${handles[0]} should fail register new wallet with invalid signature`,
@@ -2489,6 +2491,7 @@ describe('Register Wallet', function () {
                     test.key,
                     test.wallet,
                     test.nickname,
+                    test.default,
                 );
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.success, test.expectedResult);

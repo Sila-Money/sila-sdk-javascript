@@ -82,7 +82,7 @@ const signOpts = (opts, key, businessPrivateKey) => {
   const options = lodash.cloneDeep(opts);
   if (opts.body.header) {
     options.headers = {};
-    options.headers['User-Agent'] = 'SilaSDK-node/0.2.24';
+    options.headers['User-Agent'] = 'SilaSDK-node/0.2.26';
     const bodyString = JSON.stringify(options.body);
     options.headers.authsignature = sign(bodyString, appKey);
     if (key) options.headers.usersignature = sign(bodyString, key);
@@ -224,7 +224,7 @@ const makeFileRequest = (path, body, file, privateKey) => {
  */
 const getFullHandle = (handle) => {
   let fullHandle = String(handle);
-  if (!fullHandle.endsWith('.silamoney.eth')) {
+  if (fullHandle && !fullHandle.endsWith('.silamoney.eth')) {
     fullHandle += '.silamoney.eth';
   }
   return fullHandle;
@@ -341,7 +341,7 @@ const register = (user) => {
     message.entity.last_name = user.lastName;
     message.entity.entity_name = user.entity_name
       ? user.entity_name
-      : `${user.firstName} ${user.lastName}`;
+      : '';
     message.entity.relationship = 'user';
     if (user.type) message.entity.type = user.type;
     else
@@ -836,7 +836,7 @@ const plaidSamedayAuth = (handle, privateKey, accountName) => {
  * @param {String} privateKey An already registered user's wallet private key
  * @param {Wallet} wallet The new wallet
  */
-const registerWallet = (handle, privateKey, wallet, nickname) => {
+const registerWallet = (handle, privateKey, wallet, nickname, defaultVal) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
 
@@ -846,6 +846,7 @@ const registerWallet = (handle, privateKey, wallet, nickname) => {
   body.wallet.blockchain_address = wallet.address;
   body.wallet.blockchain_network = 'ETH';
   if (nickname) body.wallet.nickname = nickname;
+  if (defaultVal) body.wallet.default = defaultVal;
 
   return makeRequest('register_wallet', body, privateKey);
 };
@@ -1211,9 +1212,10 @@ const certifyBusiness = (
  * @param {String} userHandle
  * @param {String} userPrivateKey
  */
-const plaidLinkToken = (user_handle, user_private_key) => {
+const plaidLinkToken = (user_handle, user_private_key, link_token_type, android_package_name) => {
   const body = setHeaders({ header: {} }, user_handle);
-
+  if (link_token_type) body.link_token_type = link_token_type;
+  if (android_package_name) body.android_package_name = android_package_name;
   return makeRequest('plaid_link_token', body, user_private_key);
 };
 
