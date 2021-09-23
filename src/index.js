@@ -82,7 +82,7 @@ const signOpts = (opts, key, businessPrivateKey) => {
   const options = lodash.cloneDeep(opts);
   if (opts.body.header) {
     options.headers = {};
-    options.headers['User-Agent'] = 'SilaSDK-node/0.2.26';
+    options.headers['User-Agent'] = 'SilaSDK-node/0.2.28';
     const bodyString = JSON.stringify(options.body);
     options.headers.authsignature = sign(bodyString, appKey);
     if (key) options.headers.usersignature = sign(bodyString, key);
@@ -1212,10 +1212,10 @@ const certifyBusiness = (
  * @param {String} userHandle
  * @param {String} userPrivateKey
  */
-const plaidLinkToken = (user_handle, user_private_key, link_token_type, android_package_name) => {
+const plaidLinkToken = (user_handle, user_private_key, link_token_type=undefined, android_package_name=undefined) => {
   const body = setHeaders({ header: {} }, user_handle);
-  if (link_token_type) body.link_token_type = link_token_type;
-  if (android_package_name) body.android_package_name = android_package_name;
+  body.link_token_type = link_token_type;
+  body.android_package_name = android_package_name;
   return makeRequest('plaid_link_token', body, user_private_key);
 };
 
@@ -1253,17 +1253,17 @@ const checkPartnerKyc = ({ query_app_handle, query_user_handle }) => {
  * @returns
  */
 const updateAccount = (
-  { account_name, new_account_name },
+  { account_name, new_account_name, active=undefined},
   user_handle,
   user_private_key,
 ) => {
   const body = setHeaders({ header: {} }, user_handle);
   body.account_name = account_name;
   body.new_account_name = new_account_name;
+  body.active = active;
 
   return makeRequest('update_account', body, user_private_key);
 };
-
 /**
  *
  * @param {*} payload
