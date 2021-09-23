@@ -1,4 +1,4 @@
-v0.2.26
+v0.2.28
 	-Added active a new optional input in /update_account endpoint.
 
 v0.2.26
