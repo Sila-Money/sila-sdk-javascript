@@ -1,3 +1,6 @@
+v0.2.28
+	-Added active a new optional input in /update_account endpoint.
+
 v0.2.26
 	-Added default a new optional input in /register_wallet endpoint.
 	-Added link_token_type and android_package_name new optional input in /plaid_link_token endpoint.

@@ -377,7 +377,7 @@ const linkAccountDirectTests = [
         handle: handles[0],
         key: wallets[0].privateKey,
         accountNumber: '123456789012',
-        routingNumber: '123456789',
+        routingNumber: '123456780',
         accountName: 'sync_direct',
         expectedResult: 'SUCCESS',
         statusCode: 200,
@@ -2373,6 +2373,44 @@ describe('Update Account', function () {
 
             assert.isTrue(res.data.success);
             assert.equal(res.data.account.account_name, "updated");
+        } catch (error) {
+            assert.fail(error);
+        }
+    });
+})
+
+describe('Update Account:Freeze Account', function () {
+    this.timeout(300000);
+    it('Successfully update account', async () => {
+        try {
+            const res = await sila.updateAccount({
+                account_name: 'updated',
+                active: false,
+            },handles[0], wallets[0].privateKey);
+
+            assert.isTrue(res.data.success);
+            assert.equal(res.data.account.account_name, "updated");
+            assert.equal(res.data.account.active, false);
+
+        } catch (error) {
+            assert.fail(error);
+        }
+    });
+})
+
+describe('Update Account: Unfreeze the freeze account', function () {
+    this.timeout(300000);
+    it('Successfully update account', async () => {
+        try {
+            const res = await sila.updateAccount({
+                account_name: 'updated',
+                active: true,
+            },handles[0], wallets[0].privateKey);
+
+            assert.isTrue(res.data.success);
+            assert.equal(res.data.account.account_name, "updated");
+            assert.equal(res.data.account.active, true);
+
         } catch (error) {
             assert.fail(error);
         }
