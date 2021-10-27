@@ -478,13 +478,16 @@ const issueSila = (
   const body = setHeaders({ header: {} }, fullHandle);
   body.amount = amount;
   body.message = 'issue_msg';
-  if (!cardName && !accountName) {
+  if (cardName == undefined && accountName == undefined) {
     accountName = 'default';
+  }
+  if (accountName) {
+    body.account_name = accountName;
   }
   if (cardName) {
     body.card_name = cardName;  
-  }
-  if (accountName) {
+  } else if (!accountName) {
+    accountName = 'default';
     body.account_name = accountName;
   }
 
@@ -521,13 +524,16 @@ const redeemSila = (
   body.amount = amount;
   body.message = 'redeem_msg';
   
-  if (!cardName && !accountName) {
+  if (cardName == undefined && accountName == undefined) {
     accountName = 'default';
+  }
+  if (accountName) {
+    body.account_name = accountName;
   }
   if (cardName) {
     body.card_name = cardName;  
-  }
-  if (accountName) {
+  } else if (!accountName) {
+    accountName = 'default';
     body.account_name = accountName;
   }
 
