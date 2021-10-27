@@ -2914,42 +2914,6 @@ describe('Issue Sila', function () {
     });
 });
 
-describe('Delete Card', function () {
-    this.timeout(300000);
-    it("Successfully Deleted the Card.", async () => {
-        try {
-            let cardName = 'visa';
-            const res = await sila.deleteCard(
-                handles[0], 
-                wallets[0].privateKey,
-                cardName,
-            );
-            
-            assert.equal(res.statusCode, 200);
-            assert.isTrue(res.data.success);
-            assert.equal(res.data.status, 'SUCCESS');
-
-        } catch (err) {
-            assert.fail(err);
-        }
-    });
-});
-
-describe('Get Webhooks', function () {
-    this.timeout(300000);
-    getWebhooksTests.forEach((test) => {
-        it(test.description, async () => {
-            try {
-                const res = await sila.getWebhooks(test.handle, test.key, test.filters);
-                assert.equal(res.statusCode, test.statusCode);
-                assert.equal(res.data.success, test.expectedResult);
-            } catch (err) {
-                assert.fail(err);
-            }
-        });
-    });
-});
-
 describe('Poll Issue Sila', function () {
     this.timeout(300000);
     pollIssueTests.forEach((test) => {
@@ -3053,6 +3017,43 @@ describe('Redeem Sila', function () {
         });
     });
 });
+
+describe('Delete Card', function () {
+    this.timeout(300000);
+    it("Successfully Deleted the Card.", async () => {
+        try {
+            let cardName = 'visa';
+            const res = await sila.deleteCard(
+                handles[0], 
+                wallets[0].privateKey,
+                cardName,
+            );
+            
+            assert.equal(res.statusCode, 200);
+            assert.isTrue(res.data.success);
+            assert.equal(res.data.status, 'SUCCESS');
+
+        } catch (err) {
+            assert.fail(err);
+        }
+    });
+});
+
+describe('Get Webhooks', function () {
+    this.timeout(300000);
+    getWebhooksTests.forEach((test) => {
+        it(test.description, async () => {
+            try {
+                const res = await sila.getWebhooks(test.handle, test.key, test.filters);
+                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.data.success, test.expectedResult);
+            } catch (err) {
+                assert.fail(err);
+            }
+        });
+    });
+});
+
 
 describe('Poll Redeem Sila', function () {
     this.timeout(480000);
