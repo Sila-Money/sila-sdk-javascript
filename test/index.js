@@ -151,6 +151,31 @@ const plaidToken = () => {
     return promise;
 };
 
+
+const linkCardToken = () => {
+    const promise = new Promise((resolve) => {
+        const bodyParams = "cBm0RU8eASGfSxLYJjsG73Q\tn9010111999999992\te202205\ts2545";
+        const headersObj = {'Content-Type': 'application/tabapay-compact'}
+
+        const options = {
+            uri: 'https://sso.sandbox.tabapay.com:8443/v2/SSOEncrypt',
+            json: false,
+            headers: headersObj,
+            body: bodyParams,
+        };
+
+        request.post(options, (err, response, body) => {
+            if (err) {
+                resolve({});
+            }
+            const token = body.slice(3);
+
+            resolve(token);
+        });
+    });
+    return promise;
+};
+
 //STAGING
 //const validBusinessUuid = 'ec5d1366-b56c-4442-b6c3-c919d548fcb5';
 //SANDBOX
@@ -641,6 +666,37 @@ const cancelTransactionTests = [
     },
 ];
 
+const reverseIssueSilaTransactionTests = [
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        actionType: 'issueSila',
+        statusCode: 200,
+        expectedResult: true,
+        status: 'SUCCESS',
+        description: `${handles[0]} should issue sila tokens successfully with card`,
+    },
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        actionType: 'getTransactions',
+        statusCode: 200,
+        expectedResult: true,
+        status: 'SUCCESS',
+        description: `${handles[0]} should get card transactions`,
+    },
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        actionType: 'reverseTransaction',
+        statusCode: 202,
+        expectedResult: true,
+        status: 'SUCCESS',
+        description: `${handles[0]} should issue sila transaction reverse successfully`,
+    },
+];
+
+
 const issueReferences = [];
 
 const issueSilaTests = [
@@ -701,6 +757,15 @@ const issueSilaTests = [
         statusCode: 200,
         expectedResult: 'SUCCESS',
         description: `${handles[0]} should not issue sila tokens`,
+    },
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        amount: 100,
+        cardName: 'visa',
+        statusCode: 200,
+        expectedResult: 'SUCCESS',
+        description: `${handles[0]} should issue sila tokens successfully with card name`,
     },
 ];
 
@@ -952,6 +1017,15 @@ const redeemSilaTests = [
         amount: 100,
         processingType: 'SAME_DAY_ACH',
         description: `${handles[1]} should redeem sila with processing type`,
+        statusCode: 200,
+        expectedResult: 'SUCCESS',
+    },
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        amount: 100,
+        cardName: 'visa',
+        description: `${handles[1]} should redeem sila with card name`,
         statusCode: 200,
         expectedResult: 'SUCCESS',
     },
@@ -1556,6 +1630,58 @@ const getDocumentTests = [
         expectedResult: false,
         status: 'FAILURE',
         description: `${handles[0]} should fail to retrieve uploaded file`,
+    },
+];
+
+const getWebhooksTests = [
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        filters: {},
+        statusCode: 200,
+        expectedResult: true,
+        status: 'SUCCESS',
+        description: `${handles[0]} should retrieve webhooks successfully with no filters`,
+    },
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        filters: {
+            uuid: undefined,
+            delivered: undefined,
+            sort_ascending: undefined,
+            event_type: 'account_status',
+            endpoint_name: undefined,
+            user_handle: undefined,
+            start_epoch: undefined,
+            end_epoch: undefined,
+            page: 1,
+            per_page: undefined
+        },
+        statusCode: 200,
+        expectedResult: true,
+        status: 'SUCCESS',
+        description: `${handles[0]} should retrieve webhooks successfully with event_type:account_status filters`,
+    },
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        filters: {
+            uuid: undefined,
+            delivered: undefined,
+            sort_ascending: undefined,
+            event_type: undefined,
+            endpoint_name: 'account status',
+            user_handle: undefined,
+            start_epoch: undefined,
+            end_epoch: undefined,
+            page: 1,
+            per_page: undefined
+        },
+        statusCode: 200,
+        expectedResult: true,
+        status: 'SUCCESS',
+        description: `${handles[0]} should retrieve webhooks successfully with endpoint_name:account status filters`,
     },
 ];
 
@@ -2651,19 +2777,128 @@ describe('Cancel Transaction', function () {
     });
 });
 
+describe('Link Card', function () {
+    this.timeout(300000);
+    it("Successfully linked the Card.", async () => {
+        try {
+            const resToken = await linkCardToken();
+
+            const cardObj = {
+                "card_name":"visa",
+                "account_postal_code":"12345",
+                "token":resToken
+            } 
+            const res = await sila.linkCard(
+                handles[0], 
+                wallets[0].privateKey,
+                cardObj,
+            );
+            
+            assert.equal(res.statusCode, 200);
+            assert.isTrue(res.data.success);
+            assert.equal(res.data.status, 'SUCCESS');
+
+        } catch (err) {
+            assert.fail(err);
+        }
+    });
+});
+
+describe('Get Cards', function () {
+    this.timeout(300000);
+    it("Successfully Get Card List.", async () => {
+        try {
+            const res = await sila.getCards(handles[0], wallets[0].privateKey);
+            assert.equal(res.statusCode, 200);
+            assert.isTrue(res.data.success);
+            assert.equal(res.data.status, 'SUCCESS');
+            assert(res.data.cards.length > 0);
+
+        } catch (err) {
+            assert.fail(err);
+        }
+    });
+});
+
+describe('Reverse Transaction', function () {
+    this.timeout(300000);
+    let transactionid;
+    reverseIssueSilaTransactionTests.forEach((test) => {
+        it(test.description, async () => {
+            try {
+                if (test.actionType == "issueSila") {
+
+                    let res = await sila.issueSila(100, test.handle, test.key, '','','','','visa');
+                    assert.equal(res.statusCode, 200);
+                    transactionid = res.data.transaction_id;
+
+                    assert.equal(res.data.success, test.expectedResult);
+                    assert.equal(res.data.status, test.status);
+
+                } else if (test.actionType == "getTransactions") {
+
+                    let filters = {'card_account_name': "visa"};
+                    let res = await sila.getTransactions(test.handle, test.key, filters);
+                    let { statusCode } = res;
+                    let { success } = res.data;
+
+                    let {
+                        status
+                    } = res.data.transactions[0];
+
+                    while (
+                        statusCode === 200 &&
+                        success &&
+                        (status === 'pending' || status === 'queued')
+                    ) {
+                        /* eslint-disable no-await-in-loop */
+                        await sleep(30000, test.description);
+                        res = await sila.getTransactions(test.handle, test.key, filters);
+                        /* eslint-enable no-await-in-loop */
+                        ({ statusCode } = res);
+                        ({ success } = res.data);
+                        [{ status}] = res.data.transactions;
+                    }
+
+                } else if (test.actionType == "reverseTransaction") {
+                    let res = await sila.reverseTransaction(
+                        test.handle,
+                        test.key,
+                        transactionid,
+                    );
+                    assert.equal(res.data.success, test.expectedResult);
+                    assert.equal(res.data.status, test.status);
+                }
+                
+            } catch (e) {
+                assert.fail(e);
+            }
+        });
+    });
+});
+
 describe('Issue Sila', function () {
     this.timeout(300000);
     issueSilaTests.forEach((test) => {
         it(test.description, async () => {
             try {
+                let accountName = undefined;
+                let cardName = undefined;
+                if(test.accountName) {
+                    accountName = test.accountName;
+                }
+                if(test.cardName) {
+                    cardName = test.cardName;
+                }
                 const res = await sila.issueSila(
                     test.amount,
                     test.handle,
                     test.key,
-                    undefined,
+                    accountName,
                     test.descriptor,
                     test.businessUuid,
                     test.processingType,
+                    cardName,
                 );
                 if (res.statusCode === 200) issueReferences.push(res.data.reference);
                 assert.equal(res.statusCode, test.statusCode);
@@ -2672,6 +2907,42 @@ describe('Issue Sila', function () {
                     assert.isString(res.data.transaction_id);
                 if (test.descriptor && res.data.descriptor)
                     assert.equal(res.data.descriptor, test.descriptor);
+            } catch (err) {
+                assert.fail(err);
+            }
+        });
+    });
+});
+
+describe('Delete Card', function () {
+    this.timeout(300000);
+    it("Successfully Deleted the Card.", async () => {
+        try {
+            let cardName = 'visa';
+            const res = await sila.deleteCard(
+                handles[0], 
+                wallets[0].privateKey,
+                cardName,
+            );
+            
+            assert.equal(res.statusCode, 200);
+            assert.isTrue(res.data.success);
+            assert.equal(res.data.status, 'SUCCESS');
+
+        } catch (err) {
+            assert.fail(err);
+        }
+    });
+});
+
+describe('Get Webhooks', function () {
+    this.timeout(300000);
+    getWebhooksTests.forEach((test) => {
+        it(test.description, async () => {
+            try {
+                const res = await sila.getWebhooks(test.handle, test.key, test.filters);
+                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.data.success, test.expectedResult);
             } catch (err) {
                 assert.fail(err);
             }
@@ -2750,13 +3021,23 @@ describe('Redeem Sila', function () {
     redeemSilaTests.forEach((test) => {
         it(test.description, async () => {
             try {
+                let accountName = undefined;
+                let cardName = undefined;
+                if(test.accountName) {
+                    accountName = test.accountName;
+                }
+                if(test.cardName) {
+                    cardName = test.cardName;
+                }
                 const res = await sila.redeemSila(
                     test.amount,
                     test.handle,
                     test.key,
-                    undefined,
+                    accountName,
                     test.descriptor,
                     test.businessUuid,
+                    test.processingType,
+                    cardName,
                 );
                 if (res.statusCode === 200) redeemReferences.push(res.data.reference);
                 assert.equal(res.statusCode, test.statusCode);
