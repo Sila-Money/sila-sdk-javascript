@@ -1025,7 +1025,7 @@ const redeemSilaTests = [
         key: wallets[0].privateKey,
         amount: 100,
         cardName: 'visa',
-        description: `${handles[1]} should redeem sila with card name`,
+        description: `${handles[0]} should redeem sila with card name`,
         statusCode: 200,
         expectedResult: 'SUCCESS',
     },
@@ -3039,6 +3039,7 @@ describe('Redeem Sila', function () {
                     test.processingType,
                     cardName,
                 );
+                console.log("Redeem Sila res =>", res)
                 if (res.statusCode === 200) redeemReferences.push(res.data.reference);
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.status, test.expectedResult);
