@@ -1404,19 +1404,23 @@ const getWebhooks = (userHandle, userPrivateKey, searchFilters) => {
     header: {}
   }, userHandle);
   body.message   = 'header_msg';
-  let payload = payload = {
-    uuid: undefined,
-    delivered: undefined,
-    sort_ascending: undefined,
-    event_type: undefined,
-    endpoint_name: undefined,
-    user_handle: undefined,
-    start_epoch: undefined,
-    end_epoch: undefined,
-    page: undefined,
-    per_page: undefined
-  };  
-  if (searchFilters) {
+
+  var payload = {};
+
+  if (!searchFilters) {
+    payload = {
+      uuid: undefined,
+      delivered: undefined,
+      sort_ascending: undefined,
+      event_type: undefined,
+      endpoint_name: undefined,
+      user_handle: undefined,
+      start_epoch: undefined,
+      end_epoch: undefined,
+      page: undefined,
+      per_page: undefined
+    };  
+  } else {
     payload = searchFilters;
   }
   
