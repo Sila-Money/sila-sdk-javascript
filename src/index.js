@@ -481,14 +481,9 @@ const issueSila = (
   if (cardName == undefined && accountName == undefined) {
     accountName = 'default';
   }
-  if (accountName) {
-    body.account_name = accountName;
-  }
-  if (cardName) {
+  body.account_name = accountName;
+  if (cardName !== undefined) {
     body.card_name = cardName;  
-  } else if (!accountName) {
-    accountName = 'default';
-    body.account_name = accountName;
   }
 
   if (descriptor) body.descriptor = descriptor;
@@ -527,14 +522,9 @@ const redeemSila = (
   if (cardName == undefined && accountName == undefined) {
     accountName = 'default';
   }
-  if (accountName) {
-    body.account_name = accountName;
-  }
-  if (cardName) {
+  body.account_name = accountName;
+  if (cardName !== undefined) {
     body.card_name = cardName;  
-  } else if (!accountName) {
-    accountName = 'default';
-    body.account_name = accountName;
   }
 
   if (descriptor) body.descriptor = descriptor;
