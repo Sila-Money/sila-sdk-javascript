@@ -671,6 +671,10 @@ const reverseIssueSilaTransactionTests = [
         handle: handles[0],
         key: wallets[0].privateKey,
         actionType: 'issueSila',
+        accountName:undefined,
+        descriptor:undefined,
+        businessUuid:undefined,
+        processingType:undefined,
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
@@ -2828,7 +2832,7 @@ describe('Reverse Transaction', function () {
             try {
                 if (test.actionType == "issueSila") {
 
-                    let res = await sila.issueSila(100, test.handle, test.key, '','','','','visa');
+                    let res = await sila.issueSila(100, test.handle, test.key, test.accountName, test.descriptor,test.businessUuid,test.processingType,'visa');
                     assert.equal(res.statusCode, 200);
                     transactionid = res.data.transaction_id;
 
