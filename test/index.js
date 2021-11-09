@@ -2841,7 +2841,7 @@ describe('Reverse Transaction', function () {
 
                 } else if (test.actionType == "getTransactions") {
 
-                    let filters = {'card_account_name': "visa"};
+                    let filters = {'transaction_id': transactionid};
                     let res = await sila.getTransactions(test.handle, test.key, filters);
                     let { statusCode } = res;
                     let { success } = res.data;
