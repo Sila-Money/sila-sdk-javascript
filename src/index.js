@@ -82,7 +82,7 @@ const signOpts = (opts, key, businessPrivateKey) => {
   const options = lodash.cloneDeep(opts);
   if (opts.body.header) {
     options.headers = {};
-    options.headers['User-Agent'] = 'SilaSDK-node/0.2.28';
+    options.headers['User-Agent'] = 'SilaSDK-node/0.2.30';
     const bodyString = JSON.stringify(options.body);
     options.headers.authsignature = sign(bodyString, appKey);
     if (key) options.headers.usersignature = sign(bodyString, key);
@@ -458,25 +458,34 @@ const linkAccount = (
  * @param {Number} amount The amount of sila tokens to issue
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
- * @param {String} accountName The nickname of the account to debit from. It defaults to 'default' (optional).
+ * @param {String} accountName The nickname of the account to debit from. It defaults to 'default' // Optional, OR "card_name": "default", never both.
  * @param {String} descriptor Optional. Max Length 100. Note that only the first 10 characters show on the resulting bank statement.
  * @param {String} businessUuid Optional. UUID of a business with an approved ACH name. The format should be a UUID string.
  * @param {String} processingType Optional. Choice field. Examples: STANDARD_ACH, SAME_DAY_ACH or INSTANT_ACH
+ * @param {String} cardName  The nickname of the card to debit from. It defaults to 'default' // Optional, OR "account_name": "default", never both.
  */
 const issueSila = (
   amount,
   handle,
   privateKey,
-  accountName = 'default',
+  accountName = undefined,
   descriptor = undefined,
   businessUuid = undefined,
   processingType = undefined,
+  cardName = undefined,
 ) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
   body.amount = amount;
   body.message = 'issue_msg';
+  if (cardName == undefined && accountName == undefined) {
+    accountName = 'default';
+  }
   body.account_name = accountName;
+  if (cardName !== undefined) {
+    body.card_name = cardName;  
+  }
+
   if (descriptor) body.descriptor = descriptor;
   if (businessUuid) body.business_uuid = businessUuid;
   if (processingType) body.processing_type = processingType;
@@ -493,21 +502,31 @@ const issueSila = (
  * @param {String} descriptor Optional. Max Length 100
  * @param {String} businessUuid Optional. UUID of a business with an approved ACH name. The format should be a UUID string.
  * @param {String} processingType Optional. Choice field. Examples: STANDARD_ACH or SAME_DAY_ACH
+ * @param {String} cardName  The nickname of the card to debit from. Optional, OR "account_name": "default", never both.
  */
 const redeemSila = (
   amount,
   handle,
   privateKey,
-  accountName = 'default',
+  accountName = undefined,
   descriptor = undefined,
   businessUuid = undefined,
   processingType = undefined,
+  cardName = undefined,
 ) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
   body.amount = amount;
   body.message = 'redeem_msg';
+  
+  if (cardName == undefined && accountName == undefined) {
+    accountName = 'default';
+  }
   body.account_name = accountName;
+  if (cardName !== undefined) {
+    body.card_name = cardName;  
+  }
+
   if (descriptor) body.descriptor = descriptor;
   if (businessUuid) body.business_uuid = businessUuid;
   body.processing_type = processingType;
@@ -1312,6 +1331,99 @@ const getInstitutions = (
   return makeRequest('get_institutions', body);
 };
 
+
+/**
+ * @param {String} userHandle
+ * @param {String} userPrivateKey
+ * @param {Object} cardObject properties to send in the request
+ * @returns
+ */
+ const linkCard = (userHandle, userPrivateKey, cardObject) => {
+  const body = setHeaders({
+    header: {}
+  }, userHandle);
+  body.message   = 'header_msg';
+  body.card_name = cardObject['card_name'];
+  body.account_postal_code = cardObject['account_postal_code'];
+  body.token = cardObject['token'];
+  return makeRequest('link_card', body, userPrivateKey);
+};
+
+/**
+ * @param {String} userHandle
+ * @param {String} userPrivateKey
+ * @returns
+ */
+const getCards = (userHandle, userPrivateKey) => {
+  const body = setHeaders({
+    header: {}
+  }, userHandle);
+  return makeRequest('get_cards', body, userPrivateKey);
+};
+
+/**
+ * @param {String} userHandle
+ * @param {String} userPrivateKey
+ * @param {String} cardName
+ * @returns
+ */
+const deleteCard = (userHandle, userPrivateKey, cardName) => {
+  const body = setHeaders({
+    header: {}
+  }, userHandle);
+  body.card_name = cardName;
+  return makeRequest('delete_card', body, userPrivateKey);
+};
+
+/**
+ * @param {String} userHandle
+ * @param {String} userPrivateKey
+ * @param {String} transactionId
+ * @returns
+ */
+ const reverseTransaction = (userHandle, userPrivateKey, transactionId) => {
+  const body = setHeaders({
+    header: {}
+  }, userHandle);
+  body.transaction_id = transactionId;
+  return makeRequest('reverse_transaction', body, userPrivateKey);
+};
+
+/**
+ * @param {String} userHandle
+ * @param {String} userPrivateKey
+ * @param {Object} searchFilters properties to send in the request
+ * @returns
+ */
+const getWebhooks = (userHandle, userPrivateKey, searchFilters) => {
+  const body = setHeaders({
+    header: {}
+  }, userHandle);
+  body.message   = 'header_msg';
+
+  var payload = {};
+
+  if (!searchFilters) {
+    payload = {
+      uuid: undefined,
+      delivered: undefined,
+      sort_ascending: undefined,
+      event_type: undefined,
+      endpoint_name: undefined,
+      user_handle: undefined,
+      start_epoch: undefined,
+      end_epoch: undefined,
+      page: undefined,
+      per_page: undefined
+    };  
+  } else {
+    payload = searchFilters;
+  }
+  
+  body.search_filters = payload;
+  return makeRequest('get_webhooks', body, userPrivateKey);
+};
+
 /**
  *
  * @param {Object} params The configuration parameters
@@ -1428,4 +1540,9 @@ export default {
   plaidUpdateLinkToken,
   checkInstantAch,
   getInstitutions,
+  linkCard: linkCard,
+  getCards: getCards,
+  deleteCard: deleteCard,
+  reverseTransaction:reverseTransaction,
+  getWebhooks: getWebhooks,
 };

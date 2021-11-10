@@ -36,8 +36,8 @@
       "cobertura"
     ]
   },
-  "name": "sila-sdk",
-  "version": "0.2.28",
+  "name": "sila-sdk-javascript",
+  "version": "0.2.30",
   "main": "lib/index.js",
   "directories": {
     "lib": "lib",
