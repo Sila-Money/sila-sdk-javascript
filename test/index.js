@@ -771,6 +771,17 @@ const issueSilaTests = [
         expectedResult: 'SUCCESS',
         description: `${handles[0]} should issue sila tokens successfully with card name`,
     },
+    {
+        handle: instantHandle,
+        key: wallets[7].privateKey,
+        amount: 5000,
+        accountName: 'instantValidation',
+        processingType:'INSTANT_ACH',
+        businessUuid: validBusinessUuid,
+        statusCode: 403,
+        expectedResult: 'FAILURE',
+        description: `${instantHandle} should not issue sila tokens, error_code:INSTANT_ACH_MAX_AMOUNT`,
+    },
 ];
 
 const getTransactionsTests = [
@@ -1029,6 +1040,7 @@ const redeemSilaTests = [
         key: wallets[0].privateKey,
         amount: 100,
         cardName: 'visa',
+        processingType: 'CARD',
         description: `${handles[0]} should redeem sila with card name`,
         statusCode: 200,
         expectedResult: 'SUCCESS',
@@ -2904,11 +2916,14 @@ describe('Issue Sila', function () {
                     test.processingType,
                     cardName,
                 );
+                console.log("Issue Sila res =>", res)
                 if (res.statusCode === 200) issueReferences.push(res.data.reference);
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.status, test.expectedResult);
                 if (res.data.status === 'SUCCESS')
                     assert.isString(res.data.transaction_id);
+                if (res.statusCode === 403)
+                    assert.equal(res.data.error_code, 'INSTANT_ACH_MAX_AMOUNT');
                 if (test.descriptor && res.data.descriptor)
                     assert.equal(res.data.descriptor, test.descriptor);
             } catch (err) {
@@ -3007,7 +3022,7 @@ describe('Redeem Sila', function () {
                     test.processingType,
                     cardName,
                 );
-                console.log("Redeem Sila res =>", res)
+                
                 if (res.statusCode === 200) redeemReferences.push(res.data.reference);
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.status, test.expectedResult);
