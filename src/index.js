@@ -82,7 +82,7 @@ const signOpts = (opts, key, businessPrivateKey) => {
   const options = lodash.cloneDeep(opts);
   if (opts.body.header) {
     options.headers = {};
-    options.headers['User-Agent'] = 'SilaSDK-node/0.2.30';
+    options.headers['User-Agent'] = 'SilaSDK-node/0.2.36';
     const bodyString = JSON.stringify(options.body);
     options.headers.authsignature = sign(bodyString, appKey);
     if (key) options.headers.usersignature = sign(bodyString, key);
@@ -501,7 +501,7 @@ const issueSila = (
  * @param {String} accountName The account nickname to credit with the tokens' value.
  * @param {String} descriptor Optional. Max Length 100
  * @param {String} businessUuid Optional. UUID of a business with an approved ACH name. The format should be a UUID string.
- * @param {String} processingType Optional. Choice field. Examples: STANDARD_ACH or SAME_DAY_ACH
+ * @param {String} processingType Optional. Choice field. Examples: STANDARD_ACH or SAME_DAY_ACH or CARD
  * @param {String} cardName  The nickname of the card to debit from. Optional, OR "account_name": "default", never both.
  */
 const redeemSila = (

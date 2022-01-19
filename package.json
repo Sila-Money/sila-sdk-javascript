@@ -37,7 +37,7 @@
     ]
   },
   "name": "sila-sdk-javascript",
-  "version": "0.2.30",
+  "version": "0.2.36",
   "main": "lib/index.js",
   "directories": {
     "lib": "lib",
