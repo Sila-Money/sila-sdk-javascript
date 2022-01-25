@@ -97,10 +97,9 @@ const signOpts = (opts, key, businessPrivateKey) => {
  * @param {String} filePath The full path to the file
  * @param {String} algorithm The algorithm of the hash
  */
-const hashFile = (filePath, algorithm) => {
+const hashFile = (file, algorithm) => {
   const promise = new Promise((res, rej) => {
     const hash = crypt.createHash(algorithm);
-    const file = fs.createReadStream(filePath, { autoClose: true });
     file
       .on('data', (data) => {
         hash.update(data);
@@ -173,7 +172,7 @@ const postFile = (options, file) => {
       headers: options.headers,
       formData: {
         data: JSON.stringify(options.body),
-        file: fs.createReadStream(file),
+        file: file,
       },
     };
     request.post(fileOptions, (err, response, body) => {
@@ -984,15 +983,19 @@ const uploadDocument = async (userHandle, userPrivateKey, document) => {
   const fullHandle = getFullHandle(userHandle);
   const body = setHeaders({ header: {} }, fullHandle);
 
+  if (!document.fileObject) {
+    document.fileObject = fs.createReadStream(document.filePath, { autoClose: true });
+  }
+
   body.name = document.name;
   body.filename = document.filename;
-  body.hash = await hashFile(document.filePath, 'sha256');
+  body.hash = await hashFile(document.fileObject, 'sha256');
   body.mime_type = document.mimeType;
   body.document_type = document.documentType;
   body.identity_type = document.identityType;
   body.description = document.description;
 
-  return makeFileRequest('documents', body, document.filePath, userPrivateKey);
+  return makeFileRequest('documents', body, document.fileObject, userPrivateKey);
 };
 
 /**
