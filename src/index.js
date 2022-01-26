@@ -93,29 +93,6 @@ const signOpts = (opts, key, businessPrivateKey) => {
 };
 
 /**
- * Hashes a file
- * @param {String} filePath The full path to the file
- * @param {String} algorithm The algorithm of the hash
- */
-const hashFile = (file, algorithm) => {
-  const promise = new Promise((res, rej) => {
-    const hash = crypt.createHash(algorithm);
-    file
-      .on('data', (data) => {
-        hash.update(data);
-      })
-      .on('end', () => {
-        const digest = hash.digest('hex');
-        return res(digest);
-      })
-      .on('error', (error) => {
-        rej(error);
-      });
-  });
-  return promise;
-};
-
-/**
  *
  * @param {Object} msg The header message
  * @param {String} handle The user handle
@@ -984,12 +961,12 @@ const uploadDocument = async (userHandle, userPrivateKey, document) => {
   const body = setHeaders({ header: {} }, fullHandle);
 
   if (!document.fileObject) {
-    document.fileObject = fs.createReadStream(document.filePath, { autoClose: true });
+    document.fileObject = fs.createReadStream(document.filePath);
   }
 
   body.name = document.name;
   body.filename = document.filename;
-  body.hash = await hashFile(document.fileObject, 'sha256');
+  body.hash = crypt.createHash('sha256').update(document.fileObject).digest('hex');
   body.mime_type = document.mimeType;
   body.document_type = document.documentType;
   body.identity_type = document.identityType;
