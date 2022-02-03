@@ -82,7 +82,7 @@ const signOpts = (opts, key, businessPrivateKey) => {
   const options = lodash.cloneDeep(opts);
   if (opts.body.header) {
     options.headers = {};
-    options.headers['User-Agent'] = 'SilaSDK-node/0.2.36';
+    options.headers['User-Agent'] = 'SilaSDK-node/0.2.37';
     const bodyString = JSON.stringify(options.body);
     options.headers.authsignature = sign(bodyString, appKey);
     if (key) options.headers.usersignature = sign(bodyString, key);
@@ -262,6 +262,11 @@ const getQueryParameters = (parameters) => {
       queryParameters,
       'order',
       parameters.order,
+    );
+    queryParameters = getQueryParameter(
+      queryParameters,
+      'sort_ascending',
+      parameters.sortAscending,
     );
   }
   return queryParameters;
@@ -463,6 +468,8 @@ const linkAccount = (
  * @param {String} businessUuid Optional. UUID of a business with an approved ACH name. The format should be a UUID string.
  * @param {String} processingType Optional. Choice field. Examples: STANDARD_ACH, SAME_DAY_ACH or INSTANT_ACH
  * @param {String} cardName  The nickname of the card to debit from. It defaults to 'default' // Optional, OR "account_name": "default", never both.
+ * @param {String} sourceId source account id to debit from (optional)
+ * @param {String} destinationId destination account id for credit (optional)
  */
 const issueSila = (
   amount,
@@ -473,17 +480,25 @@ const issueSila = (
   businessUuid = undefined,
   processingType = undefined,
   cardName = undefined,
+  sourceId = undefined,
+  destinationId = undefined,
 ) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
   body.amount = amount;
   body.message = 'issue_msg';
-  if (cardName == undefined && accountName == undefined) {
+  if (cardName == undefined && accountName == undefined && sourceId == undefined) {
     accountName = 'default';
   }
   body.account_name = accountName;
   if (cardName !== undefined) {
     body.card_name = cardName;  
+  }
+  if (sourceId !== undefined) {
+    body.source_id = sourceId;
+  }
+  if (destinationId !== undefined) {
+    body.destination_id = destinationId;
   }
 
   if (descriptor) body.descriptor = descriptor;
@@ -503,6 +518,8 @@ const issueSila = (
  * @param {String} businessUuid Optional. UUID of a business with an approved ACH name. The format should be a UUID string.
  * @param {String} processingType Optional. Choice field. Examples: STANDARD_ACH or SAME_DAY_ACH or CARD
  * @param {String} cardName  The nickname of the card to debit from. Optional, OR "account_name": "default", never both.
+ * @param {String} sourceId source account id to debit from (optional)
+ * @param {String} destinationId destination account id for credit (optional)
  */
 const redeemSila = (
   amount,
@@ -513,18 +530,26 @@ const redeemSila = (
   businessUuid = undefined,
   processingType = undefined,
   cardName = undefined,
+  sourceId = undefined,
+  destinationId = undefined,
 ) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
   body.amount = amount;
   body.message = 'redeem_msg';
   
-  if (cardName == undefined && accountName == undefined) {
+  if (cardName == undefined && accountName == undefined && sourceId == undefined) {
     accountName = 'default';
   }
   body.account_name = accountName;
   if (cardName !== undefined) {
     body.card_name = cardName;  
+  }
+  if (sourceId !== undefined) {
+    body.source_id = sourceId;
+  }
+  if (destinationId !== undefined) {
+    body.destination_id = destinationId;
   }
 
   if (descriptor) body.descriptor = descriptor;
@@ -544,6 +569,8 @@ const redeemSila = (
  * @param {String} walletAddress The destination user's wallet address (optional)
  * @param {String} descriptor The transaction descriptor (optional)
  * @param {String} businessUuid The UUID of the business for the ACH name (optional)
+ * @param {String} sourceId source account id to debit from (optional)
+ * @param {String} destinationId destination account id for credit (optional)
  */
 const transferSila = (
   amount,
@@ -554,6 +581,8 @@ const transferSila = (
   walletAddress = undefined,
   descriptor = undefined,
   businessUuid = undefined,
+  sourceId = undefined,
+  destinationId = undefined,
 ) => {
   const fullHandle = getFullHandle(handle);
   const fullDestination = getFullHandle(destinationHandle);
@@ -564,6 +593,8 @@ const transferSila = (
   if (walletAddress) body.destination_address = walletAddress;
   if (descriptor) body.descriptor = descriptor;
   if (businessUuid) body.business_uuid = businessUuid;
+  if (sourceId) body.source_id = sourceId;
+  if (destinationId) body.destination_id = destinationId;
 
   return makeRequest('transfer_sila', body, privateKey);
 };
@@ -1424,6 +1455,89 @@ const getWebhooks = (userHandle, userPrivateKey, searchFilters) => {
   return makeRequest('get_webhooks', body, userPrivateKey);
 };
 
+
+/**
+ * @param {String} userHandle
+ * @param {String} userPrivateKey
+ * @returns
+ */
+const getPaymentMethods = (userHandle, userPrivateKey, filters={}) => {
+  const body = setHeaders({
+    header: {}
+  }, userHandle);
+  body.search_filters = filters;
+  return makeRequest('get_payment_methods', body, userPrivateKey);
+};
+
+/**
+ * @param {String} userHandle
+ * @param {String} userPrivateKey
+ * @param {String} virtualAccountName
+ * @returns
+ */
+const openVirtualAccount = (userHandle, userPrivateKey, virtualAccountName) => {
+  const body = setHeaders({
+    header: {}
+  }, userHandle);
+  if (virtualAccountName) {
+    body.virtual_account_name = virtualAccountName;
+  }
+  return makeRequest('open_virtual_account', body, userPrivateKey);
+};
+
+/**
+ * @param {String} userHandle
+ * @param {String} userPrivateKey
+ * @param {String} virtualAccountId
+ * @param {String} virtualAccountName
+ * @param {Boolean} active
+ * @returns
+ */
+const updateVirtualAccount = (userHandle, userPrivateKey, virtualAccountId, virtualAccountName, active=undefined) => {
+  const body = setHeaders({
+    header: {}
+  }, userHandle);
+  body.virtual_account_id = virtualAccountId;
+  body.virtual_account_name = virtualAccountName;
+  body.active = active;
+  
+  return makeRequest('update_virtual_account', body, userPrivateKey);
+};
+
+/**
+ * @param {String} userHandle
+ * @param {String} userPrivateKey
+ * @param {String} virtualAccountId
+ * @returns
+ */
+const getVirtualAccount = (userHandle, userPrivateKey, virtualAccountId) => {
+  const body = setHeaders({
+    header: {}
+  }, userHandle);
+  body.virtual_account_id = virtualAccountId;
+  
+  return makeRequest('get_virtual_account', body, userPrivateKey);
+};
+
+/**
+ * @param {String} userHandle
+ * @param {String} userPrivateKey
+ * @returns
+ */
+const getVirtualAccounts = (userHandle, userPrivateKey, filters={}) => {
+  const body = setHeaders({
+    header: {}
+  }, userHandle);
+
+  const queryFilters = {};
+  if (filters) {
+    queryFilters.page = filters.page;
+    queryFilters.perPage = filters.perPage;
+  }
+  const queryParameters = getQueryParameters(queryFilters);
+  return makeRequest(`get_virtual_accounts${queryParameters}`, body, userPrivateKey);
+};
+
 /**
  *
  * @param {Object} params The configuration parameters
@@ -1545,4 +1659,9 @@ export default {
   deleteCard: deleteCard,
   reverseTransaction:reverseTransaction,
   getWebhooks: getWebhooks,
+  getPaymentMethods,getPaymentMethods,
+  openVirtualAccount:openVirtualAccount,
+  updateVirtualAccount:updateVirtualAccount,
+  getVirtualAccount:getVirtualAccount,
+  getVirtualAccounts:getVirtualAccounts,
 };
