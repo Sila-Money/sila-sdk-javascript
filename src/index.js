@@ -621,6 +621,7 @@ const redeemSila = (
  * @param {String} sourceId source account id to debit from (optional)
  * @param {String} destinationId destination account id for credit (optional)
  */
+
 const transferSila = (
   amount,
   handle,
