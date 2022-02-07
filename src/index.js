@@ -6,6 +6,9 @@ import crypt from 'crypto';
 import lodash from 'lodash';
 import regeneratorRuntime from 'regenerator-runtime'; // eslint-disable-line no-unused-vars
 
+import axios from 'axios';
+import FormData from 'form-data';
+
 import TransactionFilters from './models/transactionFilters';
 import User from './models/user';
 import Wallet from './models/wallet';
@@ -117,6 +120,20 @@ const hashFile = (filePath, algorithm) => {
 };
 
 /**
+ * Hashes a fileBuffer
+ * @param {Unit-8 Array} fileBuffer of the file
+ * @param {String} algorithm The algorithm of the hash
+ */
+var hashFileObject = function hashFileObject(fileBuffer, algorithm) {
+  var promise = new Promise(function (res, rej) {
+    var digest = crypt.createHash(algorithm).update(fileBuffer).digest('hex');
+    return res(digest);
+  });
+  return promise;
+};
+
+
+/**
  *
  * @param {Object} msg The header message
  * @param {String} handle The user handle
@@ -162,28 +179,60 @@ const post = (options) => {
   return promise;
 };
 
-const postFile = (options, file) => {
+const postFile = (options, filePath, fileObject) => {
   const promise = new Promise((res, rej) => {
     if (logging && env !== 'PROD') {
       console.log('*** REQUEST ***');
       console.log(options.body);
     }
-    const fileOptions = {
-      uri: options.uri,
-      headers: options.headers,
-      formData: {
-        data: JSON.stringify(options.body),
-        file: fs.createReadStream(file),
-      },
-    };
-    request.post(fileOptions, (err, response, body) => {
-      if (err) rej(err);
-      res({
-        statusCode: response.statusCode,
-        headers: response.headers,
-        data: JSON.parse(body),
+    
+    if (fileObject) {
+      var data = new FormData();
+      data.append('data', JSON.stringify(options.body));
+      data.append('file', fileObject);
+
+      var config = {
+        method: 'post',
+        url: options.uri,
+        headers: options.headers,
+        data : data
+      };
+
+      axios(config)
+      .then(function (response) {
+        res({
+           statusCode: (response.status)?response.status:response.statusCode,
+          headers: response.headers,
+          data: response.data
+        });
+      })
+      .catch(function (error) {
+        res({
+          statusCode: (error.response.status)?error.response.status:error.response.statusCode,
+          headers: error.response.headers,
+          data: error.response.data
+        });
       });
-    });
+
+    } else {
+
+      const fileOptions = {
+        uri: options.uri,
+        headers: options.headers,
+        formData: {
+          data: JSON.stringify(options.body),
+          file: fs.createReadStream(filePath),
+        },
+      };
+      request.post(fileOptions, (err, response, body) => {
+        if (err) rej(err);
+        res({
+          statusCode: (response.status)?response.status:response.statusCode,
+          headers: response.headers,
+          data: JSON.parse(body),
+        });
+      });
+    }
   });
   return promise;
 };
@@ -209,13 +258,13 @@ const makeRequest = (
   return post(opts);
 };
 
-const makeFileRequest = (path, body, file, privateKey) => {
+const makeFileRequest = (path, body, filePath, fileObject, privateKey) => {
   let opts = {
     uri: url(path),
     body,
   };
   opts = signOpts(opts, privateKey);
-  return postFile(opts, file);
+  return postFile(opts, filePath, fileObject);
 };
 
 /**
@@ -1017,13 +1066,20 @@ const uploadDocument = async (userHandle, userPrivateKey, document) => {
 
   body.name = document.name;
   body.filename = document.filename;
-  body.hash = await hashFile(document.filePath, 'sha256');
+  
+  if(document.fileBuffer) {
+    body.hash = await hashFileObject(document.fileBuffer, 'sha256');
+  } else {
+    body.hash = await hashFile(document.filePath, 'sha256');
+  }
+
+  
   body.mime_type = document.mimeType;
   body.document_type = document.documentType;
   body.identity_type = document.identityType;
   body.description = document.description;
 
-  return makeFileRequest('documents', body, document.filePath, userPrivateKey);
+  return makeFileRequest('documents', body, document.filePath, document.fileObject, userPrivateKey);
 };
 
 /**
