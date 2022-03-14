@@ -9,6 +9,7 @@ v0.2.39
 		- Added session_identifier new optional input field in ./add register-data for add device.
 		- Added kyc_level a new optional input in /check_kyc.
 		- Added kyc_level a new optional input field in /check_instant_ach.
+		- Added binary support for /get_documents end-point for preview uploaded document.
 		
 v0.2.37
 	New endpoints:
