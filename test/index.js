@@ -15,13 +15,28 @@ sila.configure({
     key: 'e60a5c57130f4e82782cbdb498943f31fe8f92ab96daac2cc13cbbbf9c0b4d9e', // Add your private key here. USE ENV VARIABLE
     handle: 'digital_geko_e2e', // Add your app handle here
 });
-
 sila.setEnvironment('sandbox');
 
+/*
+sila.configure({
+    key: '197f4d0f41fa98a67b2bdcf931b3076e64005264b59f3d5c1658a6a9aba7e471', // Add your private key here. USE ENV VARIABLE
+    handle: 'arcgate_stage_app01', // Add your app handle here
+});
+sila.setEnvironment('stage');
+*/
+
+//instant settlement APP
+/*sila.configure({
+    key: 'eaf42ff2c0016fcb0a996d0ce1e692559e19b38f58056a87492683cdf6e9a7cc', // Add your private key here. USE ENV VARIABLE
+    handle: 'is_sandbox_test_app004', // Add your app handle here
+});
+sila.setEnvironment('sandbox');
+*/
 const invalidWallet = sila.generateWallet();
 invalidWallet.privateKey = 'e60a5c57130f4e82782cbdb498943f31fe8f92ab96daac2cc13cbbbf9c0b4d9d';
 
 const wallets = [
+    sila.generateWallet(),
     sila.generateWallet(),
     sila.generateWallet(),
     sila.generateWallet(),
@@ -42,6 +57,7 @@ const handles = [
     `nodeSDK-${uuid4()}`,
     `nodeSDK-${uuid4()}`,
     `nodeSDK-${uuid4()}`,
+    `nodeSDK-${uuid4()}`,
 ];
 
 const [
@@ -52,6 +68,7 @@ const [
     businessHandle,
     basicHandle,
     instantHandle,
+    sardineHandle,
 ] = handles;
 
 const firstUser = new sila.User();
@@ -67,6 +84,7 @@ firstUser.dateOfBirth = '1990-01-01';
 firstUser.ssn = '123456222';
 firstUser.cryptoAddress = wallets[0].address;
 firstUser.handle = firstHandle;
+
 
 const secondUser = Object.assign({}, firstUser);
 secondUser.firstName = 'Second';
@@ -119,6 +137,24 @@ instantUser.zip = '12345';
 instantUser.email = 'instant@silamoney.com';
 instantUser.dateOfBirth = '1990-01-01';
 instantUser.ssn = '123456222';
+
+
+const sardineUser = new sila.User();
+sardineUser.firstName = 'Sardine';
+sardineUser.lastName = 'User';
+sardineUser.cryptoAddress = wallets[8].address;
+sardineUser.handle = sardineHandle;
+sardineUser.phone = '1234567890';
+sardineUser.smsOptIn = true;
+sardineUser.deviceFingerprint = uuid4();
+sardineUser.address = '123 Main St';
+sardineUser.city = 'Anytown';
+sardineUser.state = 'NY';
+sardineUser.zip = '12345';
+sardineUser.email = 'instant@silamoney.com';
+sardineUser.dateOfBirth = '1990-01-01';
+sardineUser.ssn = '123456222';
+sardineUser.sessionIdentifier = "c096f601-f927-44bc-9215-7fc7fa97c6d7";
 
 const plaidToken = () => {
     const promise = new Promise((resolve) => {
@@ -177,15 +213,18 @@ const linkCardToken = () => {
 };
 
 //STAGING
-//const validBusinessUuid = 'ec5d1366-b56c-4442-b6c3-c919d548fcb5';
+//const validBusinessUuid = 'dbe721f6-1140-41e3-bdc4-baa632b37405';
 //SANDBOX
 const validBusinessUuid = '9f280665-629f-45bf-a694-133c86bffd5e';
+
 const invalidBusinessUuid = '6d933c10-fa89-41ab-b443-2e78a7cc8cac';
 const issueTransactionDescriptor = 'Issue Trans';
 const transferDescriptor = 'Transfer Trans';
 const redeemDescriptor = 'Redeem Trans';
 const achRegexString = `${invalidBusinessUuid} could not be found`;
 const achRegex = new RegExp(achRegexString);
+
+let eventUuid = '';
 
 const checkHandleTests = [
     {
@@ -262,6 +301,12 @@ const createEntityTests = [
         expectedResult: 'SUCCESS',
         statusCode: 200,
         description: `Valid registration test for ${instantUser.handle}.silamoney.eth`,
+    },
+    {
+        input: sardineUser,
+        expectedResult: 'SUCCESS',
+        statusCode: 200,
+        description: `Valid registration test for ${sardineUser.handle}.silamoney.eth`,
     },
 ];
 
@@ -342,9 +387,27 @@ const requestKYCLevelTests = [
         messageRegex: /\bKYC flow/,
         description: 'Random kyc_level should fail requestKYC',
     },
+    {
+        handle: sardineUser.handle,
+        key: wallets[8].privateKey,
+        kyc_level: 'INSTANT-ACHV2',
+        expectedResult: 'SUCCESS',
+        statusCode: 200,
+        description: `${sardineUser.handle} should be sent for INSTANT-ACHV2 KYC check`,
+        messageRegex: /submitted for KYC review/,
+    },
 ];
 
 const checkKYCTests = [
+    {
+        handle: sardineHandle,
+        key: wallets[8].privateKey,
+        statusCode: 200,
+        kycLevel: 'INSTANT-ACHV2',
+        expectedResult: 'SUCCESS',
+        messageRegex: /\bpassed\b/,
+        description: `"${sardineHandle}.silamoney.eth" should pass KYC check.`,
+    },
     {
         handle: handles[0],
         key: wallets[0].privateKey,
@@ -499,6 +562,16 @@ const linkAccountTests = [
         messageRegex: /successfully linked/,
         description: `"${instantHandle}" should link account through plaid token`,
     },
+    {
+        handle: sardineHandle,
+        key: wallets[8].privateKey,
+        accountName: 'instantValidation',
+        token: 'sandbox',
+        expectedResult: 'SUCCESS',
+        statusCode: 200,
+        messageRegex: /successfully linked/,
+        description: `"${sardineHandle}" should link account through plaid token`,
+    },
 ];
 
 const checkInstantAchTests = [
@@ -507,7 +580,14 @@ const checkInstantAchTests = [
         key: wallets[7].privateKey,
         accountName: 'instantValidation',
         description: `"${instantHandle}" should check instant ach.`,
-    }
+    },
+    {
+        handle: sardineHandle,
+        key: wallets[8].privateKey,
+        accountName: 'instantValidation',
+        kycLevel: 'INSTANT-ACHV2',
+        description: `"${handles[0]}" should check instant ach v2.`,
+    },    
 ];
 
 const getAccountsTests = [
@@ -1238,6 +1318,19 @@ const addDeviceTests = [
         description: `${handles[0]} should fail add device without fingerprint`,
         messageRegex: /Bad request/,
     },
+    {
+        handle: sardineHandle,
+        key: wallets[8].privateKey,
+        statusCode: 200,
+        expectedResult: true,
+        status: 'SUCCESS',
+        device: {
+            deviceFingerprint: uuid4(),
+            sessionIdentifier:"c096f601-f927-44bc-9215-7fc7fa97c6d7",
+        },
+        description: `${sardineHandle} should add device session_identifier`,
+        messageRegex: /Device successfully registered/,
+    },
 ];
 
 const updateEmailTests = [
@@ -1305,7 +1398,7 @@ const updateIdentityTests = [
         status: 'SUCCESS',
         identity: {
             alias: 'SSN',
-            value: '543212222',
+            value: '123455898',
             uuid: 7,
         },
         description: `${handles[1]} should update identity`,
@@ -2331,7 +2424,7 @@ describe('Successful Check KYC', function () {
     checkKYCTests.forEach((test) => {
         it(test.description, async () => {
             try {
-                let res = await sila.checkKYC(test.handle, test.key);
+                let res = await sila.checkKYC(test.handle, test.key, test.kycLevel);
                 let { statusCode } = res;
                 let { status, message } = res.data;
                 while (
@@ -2341,7 +2434,7 @@ describe('Successful Check KYC', function () {
                     !message.includes('passed')
                 ) {
                     await sleep(30000, test.description); // eslint-disable-line no-await-in-loop
-                    res = await sila.checkKYC(test.handle, test.key); // eslint-disable-line no-await-in-loop
+                    res = await sila.checkKYC(test.handle, test.key, test.kycLevel); // eslint-disable-line no-await-in-loop
                     ({ statusCode } = res);
                     ({ status, message } = res.data);
                 }
@@ -2629,7 +2722,7 @@ describe('Check Instant ACH', function () {
         it(test.description, async () => {
             try {
                 const res = await sila.checkInstantAch(
-                    { account_name: test.accountName },
+                    { account_name: test.accountName, kyc_level: test.kycLevel },
                     test.handle,
                     test.key
                 );
@@ -2808,6 +2901,7 @@ describe('Cancel Transaction', function () {
                     const issueRes = await sila.issueSila(100, test.handle, test.key);
                     assert.equal(issueRes.statusCode, 200);
                     transactionid = issueRes.data.transaction_id;
+                    await sleep(3000, test.description);
                 }
                 const res = await sila.cancelTransaction(
                     test.handle,
@@ -2898,10 +2992,8 @@ describe('Reverse Transaction', function () {
                         success &&
                         (status === 'pending' || status === 'queued')
                     ) {
-                        /* eslint-disable no-await-in-loop */
                         await sleep(30000, test.description);
                         res = await sila.getTransactions(test.handle, test.key, filters);
-                        /* eslint-enable no-await-in-loop */
                         ({ statusCode } = res);
                         ({ success } = res.data);
                         [{ status}] = res.data.transactions;
@@ -2947,7 +3039,7 @@ describe('Issue Sila', function () {
                     test.processingType,
                     cardName,
                 );
-
+                
                 if (res.statusCode === 200) issueReferences.push(res.data.reference);
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.status, test.expectedResult);
@@ -2965,7 +3057,7 @@ describe('Issue Sila', function () {
 });
 
 describe('Poll Issue Sila', function () {
-    this.timeout(300000);
+    this.timeout(400000);
     pollIssueTests.forEach((test) => {
         it(test.description, async () => {
             await pollGetTransactionsTest(test, issueReferences);
@@ -3156,7 +3248,6 @@ describe('Get Payment Methods', function () {
     });
 });
 
-
 describe('Issue Sila From Bank To Virtual Account And Verifiy Transaction', function () {
     this.timeout(300000);
     it('Successfully issueSila to virtual account-1', async () => {
@@ -3216,10 +3307,8 @@ describe('Issue Sila From Bank To Virtual Account And Verifiy Transaction', func
                 success &&
                 (status === 'pending' || status === 'queued')
             ) {
-                /* eslint-disable no-await-in-loop */
                 await sleep(30000, 'Get IssueSila Transaction to Validate source and destination id');
                 res = await sila.getTransactions(handles[0], wallets[0].privateKey, filters);
-                /* eslint-enable no-await-in-loop */
                 ({ statusCode } = res);
                 ({ success } = res.data);
                 ({ status} = res.data.transactions[0]);
@@ -3236,8 +3325,6 @@ describe('Issue Sila From Bank To Virtual Account And Verifiy Transaction', func
         }
     });
 });
-
-
 
 describe('Redeem Sila From Virtual Account to card And Verifiy Transaction', function () {
     this.timeout(300000);
@@ -3411,7 +3498,6 @@ describe('Transfer Sila Using Source And Destination ID', function () {
     });
 });
 
-
 describe('Delete Card', function () {
     this.timeout(300000);
     it("Successfully Deleted the Card.", async () => {
@@ -3439,12 +3525,162 @@ describe('Get Webhooks', function () {
         it(test.description, async () => {
             try {
                 const res = await sila.getWebhooks(test.handle, test.key, test.filters);
+                if (res.data.webhooks[0]) {
+                    eventUuid = res.data.webhooks[0]['uuid']
+                }
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.success, test.expectedResult);
             } catch (err) {
                 assert.fail(err);
             }
         });
+    });
+});
+
+describe('Retry Webhooks', function () {
+    this.timeout(300000);
+    it("Successfully Retry Webhooks.", async () => {
+        try {
+            if (eventUuid) {
+                const res = await sila.retryWebhook(
+                    handles[0], 
+                    wallets[0].privateKey,
+                    eventUuid,
+                );
+                
+                assert.equal(res.statusCode, 200);
+                assert.isTrue(res.data.success);
+                assert.equal(res.data.status, 'SUCCESS');
+            } else {
+                console.log("Retry Webhooks: Not found any event-uuid in getWebhooks.")
+            }
+        } catch (err) {
+            assert.fail(err);
+        }
+    });
+});
+
+
+describe('Cancel Transaction For Support INSTANT_SETTLEMENT Product', function () {
+    this.timeout(300000);
+    cancelTransactionTests.forEach((test) => {
+        it(test.description, async () => {
+            try {
+                let transactionid;
+                if (test.generateIssueTransaction) {
+                    const issueRes = await sila.issueSila(100, test.handle, test.key, 'default','','','INSTANT_SETTLEMENT');
+                    assert.equal(issueRes.statusCode, 200);
+                    transactionid = issueRes.data.transaction_id;
+                }
+                await sleep(3000);
+                const res = await sila.cancelTransaction(
+                    test.handle,
+                    test.key,
+                    transactionid,
+                );
+                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.data.success, test.expectedResult);
+                assert.equal(res.data.status, test.status);
+            } catch (e) {
+                assert.fail(e);
+            }
+        });
+    });
+});
+
+describe('Issue Sila For Support INSTANT_SETTLEMENT Product', function () {
+    this.timeout(300000);
+    it("Successfully Issue Sila For Support INSTANT_SETTLEMENT.", async () => {
+        try {
+            const res = await sila.issueSila(
+                100,
+                handles[0], 
+                wallets[0].privateKey,
+                'default',
+                '',
+                '',
+                'INSTANT_SETTLEMENT'
+            );
+            
+            assert.equal(res.statusCode, 200);
+            assert.isTrue(res.data.success);
+            assert.equal(res.data.status, 'SUCCESS');
+
+        } catch (err) {
+            assert.fail(err);
+        }
+    });
+});
+
+describe('TransferSila For Support INSTANT_SETTLEMENT Product', function () {
+    this.timeout(300000);
+    it("Successfully TransferSila For Support INSTANT_SETTLEMENT.", async () => {
+        try {
+            const res = await sila.transferSila(
+                100,
+                handles[0], 
+                wallets[0].privateKey,
+                handles[1],
+                '',
+                '',
+                ''
+            );
+            
+            assert.equal(res.statusCode, 200);
+            assert.isTrue(res.data.success);
+            assert.equal(res.data.status, 'SUCCESS');
+
+        } catch (err) {
+            assert.fail(err);
+        }
+    });
+});
+
+describe('RedeemSila For Support INSTANT_SETTLEMENT Product', function () {
+    this.timeout(300000);
+    it("Successfully RedeemSila For Support INSTANT_SETTLEMENT.", async () => {
+        try {
+            const res = await sila.redeemSila(
+                100,
+                handles[0], 
+                wallets[0].privateKey,
+                'default',
+                '',
+                ''
+            );
+            assert.equal(res.statusCode, 200);
+            assert.isTrue(res.data.success);
+            assert.equal(res.data.status, 'SUCCESS');
+
+        } catch (err) {
+            assert.fail(err);
+        }
+    });
+});
+
+describe('Get Transactions Using Serach Filter INSTANT_SETTLEMENT', function () {
+    this.timeout(300000);
+    it("Successfully Get Transactions INSTANT_SETTLEMENT.", async () => {
+        try {
+            let search_filters = {
+                "processing_type":"INSTANT_SETTLEMENT"
+            };
+
+            const res = await sila.getTransactions(
+                handles[0], 
+                wallets[0].privateKey,
+                search_filters
+            );
+            
+            assert.equal(res.statusCode, 200);
+            assert.isTrue(res.data.success);
+            assert.equal(res.data.status, 'SUCCESS');
+            assert.isArray(res.data.transactions[0]['child_transactions']);
+            assert.equal(res.data.transactions[0]['processing_type'], 'INSTANT_SETTLEMENT');            
+
+        } catch (err) {
+            assert.fail(err);
+        }
     });
 });
 
@@ -3476,3 +3712,4 @@ describe('Plaid Sameday Auth', function () {
         });
     });
 });
+

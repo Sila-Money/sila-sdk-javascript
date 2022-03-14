@@ -85,7 +85,7 @@ const signOpts = (opts, key, businessPrivateKey) => {
   const options = lodash.cloneDeep(opts);
   if (opts.body.header) {
     options.headers = {};
-    options.headers['User-Agent'] = 'SilaSDK-node/0.2.37';
+    options.headers['User-Agent'] = 'SilaSDK-node/0.2.39';
     const bodyString = JSON.stringify(options.body);
     options.headers.authsignature = sign(bodyString, appKey);
     if (key) options.headers.usersignature = sign(bodyString, key);
@@ -254,6 +254,9 @@ const makeRequest = (
     json: true,
     body,
   };
+  if (path == 'get_document') {
+    opts['encoding'] = 'binary';
+  }
   opts = signOpts(opts, privateKey, business_private_key);
   return post(opts);
 };
@@ -417,6 +420,9 @@ const register = (user) => {
   if (user.deviceFingerprint) {
     message.device = {};
     message.device.device_fingerprint = user.deviceFingerprint;
+    if (user.sessionIdentifier){
+      message.device.session_identifier = user.sessionIdentifier;
+    }
   }
 
   return makeRequest('register', message);
@@ -441,11 +447,13 @@ const requestKYC = (handle, privateKey, kycLevel = undefined) => {
  * Makes a call to /check_kyc endpoint.
  * @param {String} handle The user handle
  * @param {String} privateKey The user's wallet private key
+ * @param {String} kycLevel The custom kyc level
  */
-const checkKYC = (handle, privateKey) => {
+const checkKYC = (handle, privateKey, kycLevel = undefined) => {
   const fullHandle = getFullHandle(handle);
   const message = setHeaders({ header: {} }, fullHandle);
   message.message = 'header_msg';
+  if (kycLevel) message.kyc_level = kycLevel;
 
   return makeRequest('check_kyc', message, privateKey);
 };
@@ -879,11 +887,12 @@ const addAddress = (handle, privateKey, address) => {
 const addDevice = (
   handle,
   privateKey,
-  { deviceFingerprint = undefined } = {},
+  { deviceFingerprint = undefined, sessionIdentifier = undefined } = {},
 ) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
   body.device_fingerprint = deviceFingerprint;
+  body.session_identifier = sessionIdentifier;
 
   return makeRequest('add/device', body, privateKey);
 };
@@ -1391,10 +1400,11 @@ const plaidUpdateLinkToken = ({ account_name }, user_handle) => {
  * @param {String} user_private_key
  * @returns
  */
-const checkInstantAch = ({ account_name }, user_handle, user_private_key) => {
+const checkInstantAch = ({ account_name, kyc_level }, user_handle, user_private_key) => {
   const body = setHeaders({ header: {} }, user_handle);
   body.account_name = account_name;
-
+  if (kyc_level) body.kyc_level = kyc_level;
+  
   return makeRequest('check_instant_ach', body, user_private_key);
 };
 
@@ -1596,6 +1606,20 @@ const getVirtualAccounts = (userHandle, userPrivateKey, filters={}) => {
 };
 
 /**
+ * @param {String} userHandle
+ * @param {String} userPrivateKey
+ * @param {String} eventUuid A valid Webhook Event ID,The format should be a UUID string
+ * @returns
+ */
+const retryWebhook = (userHandle, userPrivateKey, eventUuid) => {
+  var body = setHeaders({
+    header: {}
+  }, userHandle);
+  body.event_uuid = eventUuid;
+  return makeRequest("retry_webhook", body, userPrivateKey);
+};
+
+/**
  *
  * @param {Object} params The configuration parameters
  * @param {String} params.key
@@ -1711,14 +1735,15 @@ export default {
   plaidUpdateLinkToken,
   checkInstantAch,
   getInstitutions,
-  linkCard: linkCard,
-  getCards: getCards,
-  deleteCard: deleteCard,
-  reverseTransaction:reverseTransaction,
-  getWebhooks: getWebhooks,
-  getPaymentMethods,getPaymentMethods,
-  openVirtualAccount:openVirtualAccount,
-  updateVirtualAccount:updateVirtualAccount,
-  getVirtualAccount:getVirtualAccount,
-  getVirtualAccounts:getVirtualAccounts,
+  linkCard,
+  getCards,
+  deleteCard,
+  reverseTransaction,
+  getWebhooks,
+  getPaymentMethods,
+  openVirtualAccount,
+  updateVirtualAccount,
+  getVirtualAccount,
+  getVirtualAccounts,
+  retryWebhook,
 };
