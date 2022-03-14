@@ -2901,6 +2901,7 @@ describe('Cancel Transaction', function () {
                     const issueRes = await sila.issueSila(100, test.handle, test.key);
                     assert.equal(issueRes.statusCode, 200);
                     transactionid = issueRes.data.transaction_id;
+                    await sleep(3000, test.description);
                 }
                 const res = await sila.cancelTransaction(
                     test.handle,
