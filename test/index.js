@@ -3057,7 +3057,7 @@ describe('Issue Sila', function () {
 });
 
 describe('Poll Issue Sila', function () {
-    this.timeout(300000);
+    this.timeout(400000);
     pollIssueTests.forEach((test) => {
         it(test.description, async () => {
             await pollGetTransactionsTest(test, issueReferences);
