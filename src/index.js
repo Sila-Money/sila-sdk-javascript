@@ -85,7 +85,7 @@ const signOpts = (opts, key, businessPrivateKey) => {
   const options = lodash.cloneDeep(opts);
   if (opts.body.header) {
     options.headers = {};
-    options.headers['User-Agent'] = 'SilaSDK-node/0.2.39';
+    options.headers['User-Agent'] = 'SilaSDK-node/0.2.41';
     const bodyString = JSON.stringify(options.body);
     options.headers.authsignature = sign(bodyString, appKey);
     if (key) options.headers.usersignature = sign(bodyString, key);
@@ -969,7 +969,9 @@ const registerWallet = (handle, privateKey, wallet, nickname, defaultVal) => {
 const getWallets = (handle, privateKey, filters = undefined) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
-
+  if (filters && filters.uuid) {
+    filters.wallet_id = filters.uuid;
+  }
   if (filters) body.search_filters = filters;
 
   return makeRequest('get_wallets', body, privateKey);
@@ -1086,7 +1088,6 @@ const uploadDocument = async (userHandle, userPrivateKey, document) => {
   
   body.mime_type = document.mimeType;
   body.document_type = document.documentType;
-  body.identity_type = document.identityType;
   body.description = document.description;
 
   return makeFileRequest('documents', body, document.filePath, document.fileObject, userPrivateKey);
@@ -1539,34 +1540,51 @@ const getPaymentMethods = (userHandle, userPrivateKey, filters={}) => {
 /**
  * @param {String} userHandle
  * @param {String} userPrivateKey
- * @param {String} virtualAccountName
+ * @param {Object} payload
  * @returns
  */
-const openVirtualAccount = (userHandle, userPrivateKey, virtualAccountName) => {
+const openVirtualAccount = (userHandle, userPrivateKey, payload={}) => {
   const body = setHeaders({
     header: {}
   }, userHandle);
-  if (virtualAccountName) {
-    body.virtual_account_name = virtualAccountName;
+  if (payload.virtual_account_name) {
+    body.virtual_account_name = payload.virtual_account_name;
   }
+  if (payload.ach_credit_enabled !== undefined) {
+    body.ach_credit_enabled = payload.ach_credit_enabled;
+  }
+  if (payload.ach_debit_enabled !== undefined) {
+    body.ach_debit_enabled = payload.ach_debit_enabled;
+  }
+
   return makeRequest('open_virtual_account', body, userPrivateKey);
 };
 
 /**
  * @param {String} userHandle
  * @param {String} userPrivateKey
- * @param {String} virtualAccountId
- * @param {String} virtualAccountName
- * @param {Boolean} active
+ * @param {Object} payload
  * @returns
  */
-const updateVirtualAccount = (userHandle, userPrivateKey, virtualAccountId, virtualAccountName, active=undefined) => {
+const updateVirtualAccount = (userHandle, userPrivateKey, payload={}) => {
   const body = setHeaders({
     header: {}
   }, userHandle);
-  body.virtual_account_id = virtualAccountId;
-  body.virtual_account_name = virtualAccountName;
-  body.active = active;
+  if (payload.active) {
+    body.active = payload.active;
+  }
+  if (payload.virtual_account_id) {
+    body.virtual_account_id = payload.virtual_account_id;
+  }
+  if (payload.virtual_account_name) {
+    body.virtual_account_name = payload.virtual_account_name;
+  }
+  if (payload.ach_credit_enabled !== undefined) {
+    body.ach_credit_enabled = payload.ach_credit_enabled;
+  }
+  if (payload.ach_debit_enabled !== undefined) {
+    body.ach_debit_enabled = payload.ach_debit_enabled;
+  }
   
   return makeRequest('update_virtual_account', body, userPrivateKey);
 };
@@ -1617,6 +1635,57 @@ const retryWebhook = (userHandle, userPrivateKey, eventUuid) => {
   }, userHandle);
   body.event_uuid = eventUuid;
   return makeRequest("retry_webhook", body, userPrivateKey);
+};
+
+/**
+ * @param {String} userHandle
+ * @param {String} userPrivateKey
+ * @param {String} virtualAccountId
+ * @param {String} accountNumber
+ * @returns
+ */
+const closeVirtualAccount = (userHandle, userPrivateKey, virtualAccountId, accountNumber) => {
+  var body = setHeaders({
+    header: {}
+  }, userHandle);
+  body.virtual_account_id = virtualAccountId;
+  body.account_number = accountNumber;
+  return makeRequest("close_virtual_account", body, userPrivateKey);
+};
+
+/**
+ * @param {String} userHandle
+ * @param {String} userPrivateKey
+ * @param {Object} payload
+ * @returns
+ */
+ const createTestVirtualAccountAchTransaction = (userHandle, userPrivateKey, payload={}) => {
+  var body = setHeaders({
+    header: {}
+  }, userHandle);
+  if (payload.amount) {
+    body.amount = payload.amount;
+  }
+  if (payload.entity_name) {
+    body.entity_name = payload.entity_name;
+  }
+  if (payload.tran_code) {
+    body.tran_code = payload.tran_code;
+  }
+  if (payload.virtual_account_number) {
+    body.virtual_account_number = payload.virtual_account_number;
+  }
+  if (payload.ced) {
+    body.ced = payload.ced;
+  }
+  if (payload.effective_date) {
+    body.effective_date = payload.effective_date;
+  }
+  if (payload.ach_name) {
+    body.ach_name = payload.ach_name;
+  }
+  
+  return makeRequest("create_test_virtual_account_ach_transaction", body, userPrivateKey);
 };
 
 /**
@@ -1746,4 +1815,6 @@ export default {
   getVirtualAccount,
   getVirtualAccounts,
   retryWebhook,
+  closeVirtualAccount,
+  createTestVirtualAccountAchTransaction,
 };
