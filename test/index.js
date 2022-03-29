@@ -154,7 +154,7 @@ sardineUser.zip = '12345';
 sardineUser.email = 'instant@silamoney.com';
 sardineUser.dateOfBirth = '1990-01-01';
 sardineUser.ssn = '123456222';
-sardineUser.sessionIdentifier = "c096f601-f927-44bc-9215-7fc7fa97c6d7";
+sardineUser.sessionIdentifier = "ppppp-aaaa-dddd-99ce-c45944174e0c";
 
 const plaidToken = () => {
     const promise = new Promise((resolve) => {
@@ -1094,7 +1094,9 @@ const paymentMethodsIds = {
     'bank_account_id':'',
     'card_id':'',
     'virtual_account_id_1':'',
+    'virtual_account_number_1':'',
     'virtual_account_id_2':'',
+    'virtual_account_number_2':'',
     'blockchain_address_id':''
 }
 
@@ -1326,7 +1328,7 @@ const addDeviceTests = [
         status: 'SUCCESS',
         device: {
             deviceFingerprint: uuid4(),
-            sessionIdentifier:"c096f601-f927-44bc-9215-7fc7fa97c6d7",
+            sessionIdentifier:"ppppp-aaaa-dddd-99ce-c45944174e0c",
         },
         description: `${sardineHandle} should add device session_identifier`,
         messageRegex: /Device successfully registered/,
@@ -1701,7 +1703,6 @@ const uploadDocumentTests = [
             filename: 'logo-geko',
             mimeType: 'image/png',
             documentType: 'doc_green_card',
-            identityType: 'other',
             name: 'some random name',
             description: 'some random description',
         },
@@ -3165,17 +3166,54 @@ describe('Open Virtual Account', function () {
     openVirtualAccountTests.forEach((test) => {
         it(test.description, async () => {
             try {
-                const res = await sila.openVirtualAccount(test.handle, test.key, test.virtual_account_name);
-
+                var payload = {
+                    "ach_debit_enabled":true,
+                    "ach_credit_enabled":false,
+                    "virtual_account_name":test.virtual_account_name
+                }
+                const res = await sila.openVirtualAccount(test.handle, test.key, payload);
+                if (!paymentMethodsIds['virtual_account_number_1']) {
+                    paymentMethodsIds['virtual_account_number_1'] = res.data.virtual_account.account_number;
+                    paymentMethodsIds['virtual_account_id_1'] = res.data.virtual_account.virtual_account_id;
+                } else if (!paymentMethodsIds['virtual_account_number_2']) {
+                    paymentMethodsIds['virtual_account_number_2'] = res.data.virtual_account.account_number;
+                    paymentMethodsIds['virtual_account_id_2'] = res.data.virtual_account.virtual_account_id;
+                }
+                
                 assert.equal(res.statusCode, test.statusCode);
                 assert.isTrue(res.data.success);
                 assert.equal(res.data.status, test.expectedResult);
                 assert.equal(res.data.virtual_account.virtual_account_name, test.virtual_account_name);
+                assert.equal(res.data.virtual_account.ach_debit_enabled, true);
+                assert.equal(res.data.virtual_account.ach_credit_enabled, false);
                 test.virtual_account_id = res.data.virtual_account.virtual_account_id;
             } catch (e) {
                 assert.fail(e);
             }
         });
+    });
+});
+
+describe('Update Virtual Account', function () {
+    this.timeout(300000);
+    it('Successfully update virtual account', async () => {
+        try {
+            let payload = {
+                "ach_debit_enabled":true,
+                "ach_credit_enabled":false,
+                "virtual_account_name":openVirtualAccountTests[0]['virtual_account_name'],
+                "virtual_account_id":paymentMethodsIds['virtual_account_id_1']
+            }
+            const res = await sila.updateVirtualAccount(handles[0], wallets[0].privateKey, payload);
+            assert.equal(res.statusCode, 200);
+            assert.isTrue(res.data.success);
+            assert.equal(res.data.status, 'SUCCESS');
+            assert.equal(res.data.virtual_account.ach_debit_enabled, true);
+            assert.equal(res.data.virtual_account.ach_credit_enabled, false);
+                
+        } catch (e) {
+            assert.fail(e);
+        }
     });
 });
 
@@ -3188,6 +3226,9 @@ describe('Get Virtual Account', function () {
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
             assert.isNotNull(res.data.virtual_account.virtual_account_name);
+            assert.equal(res.data.virtual_account.ach_debit_enabled, true);
+            assert.equal(res.data.virtual_account.ach_credit_enabled, false);
+            
         } catch (e) {
             assert.fail(e);
         }
@@ -3204,6 +3245,9 @@ describe('Get Virtual Accounts', function () {
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
             assert(res.data.virtual_accounts.length > 0);
+            assert.equal(res.data.virtual_accounts[0].ach_debit_enabled, true);
+            assert.equal(res.data.virtual_accounts[0].ach_credit_enabled, false);
+            
         } catch (e) {
             assert.fail(e);
         }
@@ -3223,18 +3267,16 @@ describe('Get Payment Methods', function () {
             for (let index = 0; index < res.data.payment_methods.length; index++) {
                 if (res.data.payment_methods[index]['payment_method_type'] == "bank_account" && res.data.payment_methods[index]['account_type'] == "CHECKING"){
                     paymentMethodsIds['bank_account_id'] = res.data.payment_methods[index]['bank_account_id'];                    
-                } else if (res.data.payment_methods[index]['account_type'] == "VIRTUAL_ACCOUNT" && !paymentMethodsIds['virtual_account_id_1']){
-                    if(res.data.payment_methods[index]['bank_account_id']) {
-                        paymentMethodsIds['virtual_account_id_1'] = res.data.payment_methods[index]['bank_account_id'];                        
-                    } else {
-                        paymentMethodsIds['virtual_account_id_1'] = res.data.payment_methods[index]['virtual_account_id'];                    
-                    }
-                } else if (res.data.payment_methods[index]['account_type'] == "VIRTUAL_ACCOUNT" && !paymentMethodsIds['virtual_account_id_2']){
-                    if(res.data.payment_methods[index]['bank_account_id']) {
-                        paymentMethodsIds['virtual_account_id_2'] = res.data.payment_methods[index]['bank_account_id'];                        
-                    } else {
-                        paymentMethodsIds['virtual_account_id_2'] = res.data.payment_methods[index]['virtual_account_id'];                    
-                    }
+                } else if (res.data.payment_methods[index]['payment_method_type'] == "virtual_account" && !paymentMethodsIds['virtual_account_id_1']){
+                    paymentMethodsIds['virtual_account_id_1'] = res.data.payment_methods[index]['virtual_account_id'];
+                    assert.isNotNull(res.data.payment_methods[index]['ach_credit_enabled']);
+                    assert.isNotNull(res.data.payment_methods[index]['ach_debit_enabled']);
+
+                } else if (res.data.payment_methods[index]['payment_method_type'] == "virtual_account" && !paymentMethodsIds['virtual_account_id_2']){
+                    paymentMethodsIds['virtual_account_id_2'] = res.data.payment_methods[index]['virtual_account_id'];
+                    assert.isNotNull(res.data.payment_methods[index]['ach_credit_enabled']);
+                    assert.isNotNull(res.data.payment_methods[index]['ach_debit_enabled']);
+
                 } else if (res.data.payment_methods[index]['payment_method_type'] == "card"){
                     paymentMethodsIds['card_id'] = res.data.payment_methods[index]['card_id'];                    
                 } else if (res.data.payment_methods[index]['payment_method_type'] == "blockchain_address"){
@@ -3684,6 +3726,81 @@ describe('Get Transactions Using Serach Filter INSTANT_SETTLEMENT', function () 
     });
 });
 
+describe('Get Transactions Using Serach Filter payment_method_id (single virtual account)', function () {
+    this.timeout(300000);
+    it("Successfully Get Transactions single virtual account.", async () => {
+        try {
+            let search_filters = {
+                "payment_method_id":paymentMethodsIds['virtual_account_id_1']
+            };
+
+            const res = await sila.getTransactions(
+                handles[0], 
+                wallets[0].privateKey,
+                search_filters
+            );
+            
+            assert.equal(res.statusCode, 200);
+            assert.isTrue(res.data.success);
+            assert.equal(res.data.status, 'SUCCESS');
+            assert.isArray(res.data.transactions);            
+
+        } catch (err) {
+            assert.fail(err);
+        }
+    });
+});
+
+describe('Test Virtual Account Ach Transaction', function () {
+    this.timeout(300000);
+    it("Successfully Test Virtual Account Ach Transaction.", async () => {
+        try {
+            let payload = {
+                "entity_name": "Sally Smith",
+                "amount": '4.00', 
+                "tran_code": 22,
+                "virtual_account_number": paymentMethodsIds['virtual_account_number_1'],
+                "ced": "PAYROLL",
+                "ach_name": "SILA INC"
+            }
+            const res = await sila.createTestVirtualAccountAchTransaction(
+                handles[0], 
+                wallets[0].privateKey,
+                payload
+            );
+            console.log(res)
+            assert.equal(res.statusCode, 200);
+            assert.isTrue(res.data.success);
+            assert.equal(res.data.status, 'SUCCESS');
+
+        } catch (err) {
+            assert.fail(err);
+        }
+    });
+});
+
+
+describe('Close Virtual Account', function () {
+    this.timeout(300000);
+    it("Successfully Close Virtual Account.", async () => {
+        try {
+            const res = await sila.closeVirtualAccount(
+                handles[0], 
+                wallets[0].privateKey,
+                paymentMethodsIds['virtual_account_id_1'],
+                paymentMethodsIds['virtual_account_number_1']
+            );
+            
+            assert.equal(res.statusCode, 200);
+            assert.isTrue(res.data.success);
+            assert.equal(res.data.status, 'SUCCESS');
+            assert.equal(res.data.virtual_account.account_number, paymentMethodsIds['virtual_account_number_1']);            
+
+        } catch (err) {
+            assert.fail(err);
+        }
+    });
+});
 
 describe('Poll Redeem Sila', function () {
     this.timeout(480000);
