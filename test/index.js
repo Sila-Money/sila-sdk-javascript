@@ -880,6 +880,12 @@ const getTransactionsTests = [
         status: 'SUCCESS',
         description: `${handles[0]} should retrieve transactions without user private key signature`,
     },
+    {
+        statusCode: 200,
+        expectedResult: true,
+        status: 'SUCCESS',
+        description: `Should retrieve transactions without user handle and private key signature`,
+    },
 ];
 
 /**
@@ -2640,6 +2646,8 @@ describe('Update Account', function () {
 
             assert.isTrue(res.data.success);
             assert.equal(res.data.account.account_name, "updated");
+            assert.isNotNull(res.data.account.web_debit_verified);
+
         } catch (error) {
             assert.fail(error);
         }
@@ -2710,6 +2718,8 @@ describe('Link Account - Token tests', function () {
                 );
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.status, test.expectedResult);
+                assert.isNotNull(res.data.web_debit_verified);
+                
             } catch (e) {
                 assert.fail(e);
             }
@@ -2760,6 +2770,8 @@ describe('Get Accounts', function () {
                 const res = await sila.getAccounts(test.handle, test.key);
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.length, test.accounts);
+                assert.isNotNull(res.data[0].web_debit_verified);
+
             } catch (err) {
                 assert.fail(err);
             }
@@ -3361,6 +3373,8 @@ describe('Issue Sila From Bank To Virtual Account And Verifiy Transaction', func
             assert.isNotNull(res.data.transactions[0]['source_id']);
             assert.isNotNull(res.data.transactions[0]['destination_id']);
             assert.isNotNull(res.data.transactions[0]['sila_ledger_type']);
+            assert.hasAnyKeys(res.data.transactions[0], ['sec_code'])
+         
 
         } catch (e) {
             assert.fail(e);
