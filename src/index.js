@@ -1550,7 +1550,7 @@ const openVirtualAccount = (userHandle, userPrivateKey, payload={}) => {
   const body = setHeaders({
     header: {}
   }, userHandle);
-  if (payload.virtual_account_name) {
+  if (payload.virtual_account_name !== undefined) {
     body.virtual_account_name = payload.virtual_account_name;
   }
   if (payload.ach_credit_enabled !== undefined) {
@@ -1573,13 +1573,13 @@ const updateVirtualAccount = (userHandle, userPrivateKey, payload={}) => {
   const body = setHeaders({
     header: {}
   }, userHandle);
-  if (payload.active) {
+  if (payload.active !== undefined) {
     body.active = payload.active;
   }
-  if (payload.virtual_account_id) {
+  if (payload.virtual_account_id !== undefined) {
     body.virtual_account_id = payload.virtual_account_id;
   }
-  if (payload.virtual_account_name) {
+  if (payload.virtual_account_name !== undefined) {
     body.virtual_account_name = payload.virtual_account_name;
   }
   if (payload.ach_credit_enabled !== undefined) {
