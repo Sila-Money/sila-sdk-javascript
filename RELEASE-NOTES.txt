@@ -1,3 +1,9 @@
+v0.2.43
+	Enhancements:
+		Added "sec_code" string field to the response in /get_transactions.
+		Make user_handle input field is optional in /get_transactions.
+		Added "web_debit_verified" boolean field to the response in /link_account, /get_accounts and /update_account.
+			
 v0.2.41
 	Enhancements:
 		Added virtual accounts as a type/section and ach_credit_enabled and ach_debit_enabled boolean fields to the response in /get_payment_methods.

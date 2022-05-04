@@ -85,7 +85,7 @@ const signOpts = (opts, key, businessPrivateKey) => {
   const options = lodash.cloneDeep(opts);
   if (opts.body.header) {
     options.headers = {};
-    options.headers['User-Agent'] = 'SilaSDK-node/0.2.41';
+    options.headers['User-Agent'] = 'SilaSDK-node/0.2.43';
     const bodyString = JSON.stringify(options.body);
     options.headers.authsignature = sign(bodyString, appKey);
     if (key) options.headers.usersignature = sign(bodyString, key);
@@ -1028,8 +1028,11 @@ const deleteWallet = (handle, privateKey) => {
  * @param {String} privateKey The user's wallet private key
  * @param {TransactionFilters} filters The filters used to narrow the search results
  */
-const getTransactions = (handle, privateKey = undefined, filters = {}) => {
-  const fullHandle = getFullHandle(handle);
+const getTransactions = (handle = undefined, privateKey = undefined, filters = {}) => {
+  let fullHandle = null;
+  if (handle != undefined && handle != null) {
+    fullHandle = getFullHandle(handle);
+  }
   const body = setHeaders({ header: {} }, fullHandle);
 
   body.message = 'get_transactions_msg';
@@ -1547,7 +1550,7 @@ const openVirtualAccount = (userHandle, userPrivateKey, payload={}) => {
   const body = setHeaders({
     header: {}
   }, userHandle);
-  if (payload.virtual_account_name) {
+  if (payload.virtual_account_name !== undefined) {
     body.virtual_account_name = payload.virtual_account_name;
   }
   if (payload.ach_credit_enabled !== undefined) {
@@ -1570,13 +1573,13 @@ const updateVirtualAccount = (userHandle, userPrivateKey, payload={}) => {
   const body = setHeaders({
     header: {}
   }, userHandle);
-  if (payload.active) {
+  if (payload.active !== undefined) {
     body.active = payload.active;
   }
-  if (payload.virtual_account_id) {
+  if (payload.virtual_account_id !== undefined) {
     body.virtual_account_id = payload.virtual_account_id;
   }
-  if (payload.virtual_account_name) {
+  if (payload.virtual_account_name !== undefined) {
     body.virtual_account_name = payload.virtual_account_name;
   }
   if (payload.ach_credit_enabled !== undefined) {
