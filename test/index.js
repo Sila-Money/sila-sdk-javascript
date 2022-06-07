@@ -3878,7 +3878,6 @@ describe('Test Virtual Account Ach Transaction', function () {
     });
 });
 
-
 describe('Close Virtual Account', function () {
     this.timeout(300000);
     it("Successfully Close Virtual Account.", async () => {
@@ -3928,4 +3927,3 @@ describe('Plaid Sameday Auth', function () {
         });
     });
 });
-

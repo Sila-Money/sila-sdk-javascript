@@ -515,6 +515,7 @@ const linkAccount = (
 
   return makeRequest('link_account', message, privateKey);
 };
+
 /**
  * Makes a call to /issue_sila endpoint.
  * @param {Number} amount The amount of sila tokens to issue
@@ -616,9 +617,6 @@ const redeemSila = (
   body.processing_type = processingType;
 
   if (mockWireAccountName) body.mock_wire_account_name = mockWireAccountName;
-
-  
-
   return makeRequest('redeem_sila', body, privateKey);
 };
 
@@ -1065,7 +1063,6 @@ const getSilaBalance = (address) => {
  */
 const getBalance = (address) => {
   const body = { address };
-
   const opts = {
     uri: getBalanceURL(),
     json: true,
@@ -1092,9 +1089,7 @@ const uploadDocument = async (userHandle, userPrivateKey, document) => {
     body.hash = await hashFileObject(document.fileBuffer, 'sha256');
   } else {
     body.hash = await hashFile(document.filePath, 'sha256');
-  }
-
-  
+  }  
   body.mime_type = document.mimeType;
   body.document_type = document.documentType;
   body.description = document.description;
@@ -1156,7 +1151,6 @@ const getBusinessTypes = () => {
  */
 const getBusinessRoles = () => {
   const body = setHeaders({ header: {} });
-
   return makeRequest('get_business_roles', body);
 };
 
@@ -1165,7 +1159,6 @@ const getBusinessRoles = () => {
  */
 const getNaicsCategories = () => {
   const body = setHeaders({ header: {} });
-
   return makeRequest('get_naics_categories', body);
 };
 
@@ -1713,7 +1706,6 @@ const approveWire = (userHandle, userPrivateKey, payload) => {
   body.mock_wire_account_name = payload.mock_wire_account_name;
   return makeRequest("approve_wire", body, userPrivateKey);
 };
-
 
 /**
  * @param {String} userHandle
