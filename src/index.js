@@ -85,7 +85,7 @@ const signOpts = (opts, key, businessPrivateKey) => {
   const options = lodash.cloneDeep(opts);
   if (opts.body.header) {
     options.headers = {};
-    options.headers['User-Agent'] = 'SilaSDK-node/0.2.43';
+    options.headers['User-Agent'] = 'SilaSDK-node/0.2.44';
     const bodyString = JSON.stringify(options.body);
     options.headers.authsignature = sign(bodyString, appKey);
     if (key) options.headers.usersignature = sign(bodyString, key);
@@ -515,6 +515,7 @@ const linkAccount = (
 
   return makeRequest('link_account', message, privateKey);
 };
+
 /**
  * Makes a call to /issue_sila endpoint.
  * @param {Number} amount The amount of sila tokens to issue
@@ -577,6 +578,7 @@ const issueSila = (
  * @param {String} cardName  The nickname of the card to debit from. Optional, OR "account_name": "default", never both.
  * @param {String} sourceId source account id to debit from (optional)
  * @param {String} destinationId destination account id for credit (optional)
+ * @param {String} mockWireAccountName Optional with value of "mock_account_success" or "mock_account_fail"
  */
 const redeemSila = (
   amount,
@@ -589,6 +591,7 @@ const redeemSila = (
   cardName = undefined,
   sourceId = undefined,
   destinationId = undefined,
+  mockWireAccountName = undefined,
 ) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
@@ -613,6 +616,7 @@ const redeemSila = (
   if (businessUuid) body.business_uuid = businessUuid;
   body.processing_type = processingType;
 
+  if (mockWireAccountName) body.mock_wire_account_name = mockWireAccountName;
   return makeRequest('redeem_sila', body, privateKey);
 };
 
@@ -1059,7 +1063,6 @@ const getSilaBalance = (address) => {
  */
 const getBalance = (address) => {
   const body = { address };
-
   const opts = {
     uri: getBalanceURL(),
     json: true,
@@ -1086,9 +1089,7 @@ const uploadDocument = async (userHandle, userPrivateKey, document) => {
     body.hash = await hashFileObject(document.fileBuffer, 'sha256');
   } else {
     body.hash = await hashFile(document.filePath, 'sha256');
-  }
-
-  
+  }  
   body.mime_type = document.mimeType;
   body.document_type = document.documentType;
   body.description = document.description;
@@ -1150,7 +1151,6 @@ const getBusinessTypes = () => {
  */
 const getBusinessRoles = () => {
   const body = setHeaders({ header: {} });
-
   return makeRequest('get_business_roles', body);
 };
 
@@ -1159,7 +1159,6 @@ const getBusinessRoles = () => {
  */
 const getNaicsCategories = () => {
   const body = setHeaders({ header: {} });
-
   return makeRequest('get_naics_categories', body);
 };
 
@@ -1662,7 +1661,7 @@ const closeVirtualAccount = (userHandle, userPrivateKey, virtualAccountId, accou
  * @param {Object} payload
  * @returns
  */
- const createTestVirtualAccountAchTransaction = (userHandle, userPrivateKey, payload={}) => {
+const createTestVirtualAccountAchTransaction = (userHandle, userPrivateKey, payload={}) => {
   var body = setHeaders({
     header: {}
   }, userHandle);
@@ -1689,6 +1688,38 @@ const closeVirtualAccount = (userHandle, userPrivateKey, virtualAccountId, accou
   }
   
   return makeRequest("create_test_virtual_account_ach_transaction", body, userPrivateKey);
+};
+
+/**
+ * @param {String} userHandle
+ * @param {String} userPrivateKey
+ * @param {Object} payload
+ * @returns
+ */
+const approveWire = (userHandle, userPrivateKey, payload) => {
+  var body = setHeaders({
+    header: {}
+  }, userHandle);
+  body.transaction_id = payload.transaction_id;
+  body.approve        = payload.approve;
+  body.notes          = payload.notes;
+  body.mock_wire_account_name = payload.mock_wire_account_name;
+  return makeRequest("approve_wire", body, userPrivateKey);
+};
+
+/**
+ * @param {String} userHandle
+ * @param {String} userPrivateKey
+ * @param {Object} payload
+ * @returns
+ */
+const mockWireOutFile = (userHandle, userPrivateKey, payload) => {
+  var body = setHeaders({
+    header: {}
+  }, userHandle);
+  body.transaction_id = payload.transaction_id;
+  body.wire_status    = payload.wire_status;
+  return makeRequest("mock_wire_out_file", body, userPrivateKey);
 };
 
 /**
@@ -1820,4 +1851,6 @@ export default {
   retryWebhook,
   closeVirtualAccount,
   createTestVirtualAccountAchTransaction,
+  approveWire,
+  mockWireOutFile
 };

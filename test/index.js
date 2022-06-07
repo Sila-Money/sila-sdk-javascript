@@ -156,6 +156,8 @@ sardineUser.dateOfBirth = '1990-01-01';
 sardineUser.ssn = '123456222';
 sardineUser.sessionIdentifier = "ppppp-aaaa-dddd-99ce-c45944174e0c";
 
+var mockWireTransactionId_1 = '';
+
 const plaidToken = () => {
     const promise = new Promise((resolve) => {
         const requestBody = {
@@ -192,7 +194,8 @@ const linkCardToken = () => {
     const promise = new Promise((resolve) => {
         const bodyParams = "cBm0RU8eASGfSxLYJjsG73Q\tn9010111999999992\te202205\ts2545";
         const headersObj = {'Content-Type': 'application/tabapay-compact'}
-
+        headersObj['Referer'] = 'https://sso.sandbox.tabapay.com:8443/SSOEvolveISO.html';
+        
         const options = {
             uri: 'https://sso.sandbox.tabapay.com:8443/v2/SSOEncrypt',
             json: false,
@@ -216,6 +219,7 @@ const linkCardToken = () => {
 //const validBusinessUuid = 'dbe721f6-1140-41e3-bdc4-baa632b37405';
 //SANDBOX
 const validBusinessUuid = '9f280665-629f-45bf-a694-133c86bffd5e';
+const wireBusinessUuid = '25e77968-1ca3-4a4b-8e72-506dcac20dc7';
 
 const invalidBusinessUuid = '6d933c10-fa89-41ab-b443-2e78a7cc8cac';
 const issueTransactionDescriptor = 'Issue Trans';
@@ -787,7 +791,7 @@ const issueSilaTests = [
     {
         handle: handles[0],
         key: wallets[0].privateKey,
-        amount: 1000,
+        amount: 50000,
         statusCode: 200,
         expectedResult: 'SUCCESS',
         description: `${handles[0]} should issue sila tokens successfully`,
@@ -805,7 +809,7 @@ const issueSilaTests = [
     {
         handle: handles[0],
         key: wallets[0].privateKey,
-        amount: 100,
+        amount: 50000,
         statusCode: 200,
         descriptor: issueTransactionDescriptor,
         businessUuid: validBusinessUuid,
@@ -1163,6 +1167,17 @@ const redeemSilaTests = [
         description: `${handles[0]} should redeem sila with card name`,
         statusCode: 200,
         expectedResult: 'SUCCESS',
+    },
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        amount: 11000,
+        processingType: 'WIRE',
+        businessUuid: wireBusinessUuid,
+        description: `${handles[0]} should redeem sila with WIRE processingType`,
+        statusCode: 200,
+        expectedResult: 'SUCCESS',
+        mockWireAccountName:'mock_account_success',
     },
 ];
 
@@ -2434,6 +2449,7 @@ describe('Successful Check KYC', function () {
                 let res = await sila.checkKYC(test.handle, test.key, test.kycLevel);
                 let { statusCode } = res;
                 let { status, message } = res.data;
+
                 while (
                     statusCode === 200 &&
                     status === 'FAILURE' &&
@@ -2442,6 +2458,7 @@ describe('Successful Check KYC', function () {
                 ) {
                     await sleep(30000, test.description); // eslint-disable-line no-await-in-loop
                     res = await sila.checkKYC(test.handle, test.key, test.kycLevel); // eslint-disable-line no-await-in-loop
+
                     ({ statusCode } = res);
                     ({ status, message } = res.data);
                 }
@@ -2936,7 +2953,6 @@ describe('Link Card', function () {
     it("Successfully linked the Card.", async () => {
         try {
             const resToken = await linkCardToken();
-
             const cardObj = {
                 "card_name":"visa",
                 "account_postal_code":"12345",
@@ -2947,7 +2963,6 @@ describe('Link Card', function () {
                 wallets[0].privateKey,
                 cardObj,
             );
-            
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
@@ -3157,7 +3172,13 @@ describe('Redeem Sila', function () {
                     test.businessUuid,
                     test.processingType,
                     cardName,
+                    test.source_id,
+                    test.destination_id,
+                    test.mockWireAccountName
                 );
+                if (test.processingType == 'WIRE' && !mockWireTransactionId_1) {
+                    mockWireTransactionId_1 = res.data.transaction_id;
+                }
                 
                 if (res.statusCode === 200) redeemReferences.push(res.data.reference);
                 assert.equal(res.statusCode, test.statusCode);
@@ -3170,6 +3191,72 @@ describe('Redeem Sila', function () {
                 assert.fail(e);
             }
         });
+    });
+});
+
+describe('Approve Wire:Approve', function () {
+    this.timeout(300000);
+    it('Successfully approve Wire', async () => {
+        try {
+            var loop_payload = {
+                "handle": handles[0],
+                "search_filters": {
+                    'transaction_id': mockWireTransactionId_1,
+                }
+            };  
+    
+            let transactionRes = await sila.getTransactions(loop_payload.handle, wallets[0].privateKey,loop_payload.search_filters);
+            let { statusCode } = transactionRes;
+            let { success } = transactionRes.data;
+    
+            let { provider_status } = transactionRes.data.transactions[0];
+
+            while (
+                statusCode === 200 &&
+                success &&
+                (provider_status !== 'pending_approval')
+            ) {
+                await sleep(3000, 'Get Transction..');
+                transactionRes = await sila.getTransactions(loop_payload.handle, wallets[0].privateKey,loop_payload.search_filters);
+                ({ statusCode } = transactionRes);
+                ({ success } = transactionRes.data);
+                ({ provider_status} = transactionRes.data.transactions[0]);
+            }
+
+            let payload = {
+                "approve":true,
+                "transaction_id":mockWireTransactionId_1,
+                "notes":null,
+                "mock_wire_account_name":"mock_account_success"
+            }
+            const res = await sila.approveWire(handles[0], wallets[0].privateKey, payload);
+            assert.equal(res.statusCode, 200);
+            assert.isTrue(res.data.success);
+            assert.equal(res.data.status, 'SUCCESS');
+                
+        } catch (e) {
+            assert.fail(e);
+        }
+    });
+});
+
+describe('Mock Wire Out File', function () {
+    this.timeout(300000);
+    it('Successfully update status mock wire out file', async () => {
+        try {
+            await sleep(30000, 'Mock Wire Out File');
+            let payload = {
+                "wire_status":"PR",
+                "transaction_id":mockWireTransactionId_1
+            }
+            const res = await sila.mockWireOutFile(handles[0], wallets[0].privateKey, payload);
+            assert.equal(res.statusCode, 200);
+            assert.isTrue(res.data.success);
+            assert.equal(res.data.status, 'SUCCESS');
+                
+        } catch (e) {
+            assert.fail(e);
+        }
     });
 });
 
@@ -3246,7 +3333,6 @@ describe('Get Virtual Account', function () {
         }
     });
 });
-
 
 describe('Get Virtual Accounts', function () {
     this.timeout(300000);
@@ -3782,7 +3868,6 @@ describe('Test Virtual Account Ach Transaction', function () {
                 wallets[0].privateKey,
                 payload
             );
-            console.log(res)
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
@@ -3792,7 +3877,6 @@ describe('Test Virtual Account Ach Transaction', function () {
         }
     });
 });
-
 
 describe('Close Virtual Account', function () {
     this.timeout(300000);
@@ -3843,4 +3927,3 @@ describe('Plaid Sameday Auth', function () {
         });
     });
 });
-
