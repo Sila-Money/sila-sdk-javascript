@@ -70,3 +70,8 @@ jobs:
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
+      
+    # Jira integration
+    - name: Sync GitHub Advanced Security and Jira
+      uses: github/ghas-jira-integration@v1.2.3
+
