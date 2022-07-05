@@ -5,11 +5,19 @@ import request from 'request';
 import uuid4 from 'uuid4';
 import moment from 'moment';
 import sila from '../src/index';
+import axios from 'axios';
 
 const sleep = (ms, description) => {
     console.log(`${description} waiting for ${ms / 1000} seconds`);
     return new Promise((resolve) => setTimeout(resolve, ms));
 };
+/*
+sila.configure({
+    key: 'a8ec7148de20f94af4c1a011176606e474effea14eee77a87ba34f3997a9029f', // Add your private key here. USE ENV VARIABLE
+    handle: 'arc_idv_doc', // Add your app handle here
+});
+sila.setEnvironment('test');
+*/
 
 sila.configure({
     key: 'e60a5c57130f4e82782cbdb498943f31fe8f92ab96daac2cc13cbbbf9c0b4d9e', // Add your private key here. USE ENV VARIABLE
@@ -23,7 +31,7 @@ sila.configure({
     handle: 'arcgate_stage_app01', // Add your app handle here
 });
 sila.setEnvironment('stage');
-*/
+
 
 //instant settlement APP
 /*sila.configure({
@@ -114,6 +122,7 @@ businessUser.business_type = 'corporation';
 businessUser.business_website = 'https://www.yourbusinesscustomer.com';
 businessUser.doing_business_as = 'doing business co';
 businessUser.naics_code = 721;
+businessUser.registration_state = 'AL';
 businessUser.handle = businessHandle;
 
 const basicUser = new sila.User();
@@ -197,20 +206,21 @@ const linkCardToken = () => {
         headersObj['Referer'] = 'https://sso.sandbox.tabapay.com:8443/SSOEvolveISO.html';
         
         const options = {
-            uri: 'https://sso.sandbox.tabapay.com:8443/v2/SSOEncrypt',
-            json: false,
+            url: 'https://sso.sandbox.tabapay.com:8443/v2/SSOEncrypt',
+            method: 'post',
             headers: headersObj,
-            body: bodyParams,
+            data: bodyParams,
         };
-
-        request.post(options, (err, response, body) => {
-            if (err) {
-                resolve({});
-            }
-            const token = body.slice(3);
-
+        axios(options)
+        .then(function (response) {
+            const token = response.data.slice(3);
             resolve(token);
+        })
+        .catch(function (error) {
+           console.error(error)
+           return;
         });
+
     });
     return promise;
 };
@@ -784,7 +794,6 @@ const reverseIssueSilaTransactionTests = [
     },
 ];
 
-
 const issueReferences = [];
 
 const issueSilaTests = [
@@ -889,6 +898,35 @@ const getTransactionsTests = [
         expectedResult: true,
         status: 'SUCCESS',
         description: `Should retrieve transactions without user handle and private key signature`,
+    },
+];
+
+var issue_transaction_idempotency_id = uuid4();
+var transfer_transaction_idempotency_id = uuid4();
+var redeem_transaction_idempotency_id = uuid4();
+
+const idempotencyIssueReferences = [];
+
+const idempotencySilaTransactionTests = [
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        amount: 500,
+        statusCode: 200,
+        expectedResult: 'SUCCESS',
+        description: `${handles[0]} should issue sila tokens successfully for Idempotency test`,
+        messageRegex: /submitted to processing queue/,
+        transaction_idempotency_id:issue_transaction_idempotency_id,
+    },
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        amount: 500,
+        statusCode: 200,
+        expectedResult: 'SUCCESS',
+        description: `${handles[0]} should issue sila tokens successfully for Idempotency test`,
+        messageRegex: /submitted to processing queue/,
+        transaction_idempotency_id:issue_transaction_idempotency_id,
     },
 ];
 
@@ -1055,6 +1093,31 @@ const transferSilaTests = [
     },
 ];
 
+const idempotencyTransferReferences = [];
+
+const transferSilaIdempotencyTests = [
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        destinationHanle: handles[1],
+        amount: 100,
+        description: `${handles[0]} should transfer to ${handles[1]} for Idempotency test`,
+        statusCode: 200,
+        expectedResult: 'SUCCESS',
+        transaction_idempotency_id:transfer_transaction_idempotency_id,
+    },
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        destinationHanle: handles[1],
+        amount: 100,
+        description: `${handles[0]} should transfer to ${handles[1]} for Idempotency test`,
+        statusCode: 200,
+        expectedResult: 'SUCCESS',
+        transaction_idempotency_id:transfer_transaction_idempotency_id,
+    },
+];
+
 const pollTransferTests = [
     {
         handle: handles[0],
@@ -1180,6 +1243,29 @@ const redeemSilaTests = [
         mockWireAccountName:'mock_account_success',
     },
 ];
+
+const redeemSilaIdempotencyTests = [
+    {
+        handle: handles[1],
+        key: wallets[1].privateKey,
+        amount: 100,
+        description: `${handles[1]} should redeem sila for Idempotency test`,
+        statusCode: 200,
+        expectedResult: 'SUCCESS',
+        transaction_idempotency_id:redeem_transaction_idempotency_id,
+    },
+    {
+        handle: handles[1],
+        key: wallets[1].privateKey,
+        amount: 100,
+        description: `${handles[1]} should redeem sila for Idempotency test`,
+        statusCode: 200,
+        expectedResult: 'SUCCESS',
+        transaction_idempotency_id:redeem_transaction_idempotency_id,
+    },
+];
+
+
 
 const pollRedeemTests = [
     {
@@ -1512,6 +1598,7 @@ const updateEntityTests = [
             naics_code: 721,
             doing_business_as: 'NC Ltc.',
             business_website: 'https://newdomain.go',
+            registration_state:'OR',
         },
     },
 ];
@@ -1657,6 +1744,15 @@ const getEntityTests = [
         status: 'SUCCESS',
         description: `${handles[0]} should retrieve entity with pretty dates`,
     },
+    {
+        handle: handles[4],
+        key: wallets[5].privateKey,
+        statusCode: 200,
+        expectedResult: true,
+        status: 'SUCCESS',
+        registration_state: 'AL',
+        description: `${handles[5]} should retrieve entity with registration_state`,
+    },
 ];
 
 const getDocumentTypesTests = [
@@ -1730,7 +1826,35 @@ const uploadDocumentTests = [
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
+        multiple:false,
         description: `${handles[0]} should upload file succesfully`,
+    },
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        document: [
+            {
+                filePath: `${__dirname}/images/logo-geko.png`,
+                filename: 'logo-geko',
+                mimeType: 'image/png',
+                documentType: 'doc_green_card',
+                name: 'some random name',
+                description: 'some random description',
+            },
+            {
+                filePath: `${__dirname}/images/dummy.pdf`,
+                filename: 'dummy',
+                mimeType: 'application/pdf',
+                documentType: 'bank_statement',
+                name: 'some random name',
+                description: 'some random description',
+            }
+        ],
+        multiple:true,
+        statusCode: 200,
+        expectedResult: true,
+        status: 'SUCCESS',
+        description: `${handles[0]} should upload multiple file succesfully`,
     },
     {
         handle: handles[0],
@@ -1738,6 +1862,7 @@ const uploadDocumentTests = [
         document: {
             filePath: `${__dirname}/images/logo-geko.png`,
         },
+        multiple:false,
         statusCode: 400,
         expectedResult: false,
         status: 'FAILURE',
@@ -1749,7 +1874,7 @@ const listDocumentsTests = [
     {
         handle: handles[0],
         key: wallets[0].privateKey,
-        documentsLength: 1,
+        documentsLength: 3,
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
@@ -1854,7 +1979,6 @@ describe('Get Insitutions', function () {
             const res = await sila.getInstitutions({
                 institution_name: '1st advantage bank'
             });
-
             assert.equal(res.statusCode, 200);
             assert.equal(res.data.success, true);
             assert(res.data.institutions);
@@ -2064,7 +2188,6 @@ describe('Get Entity', function () {
         it(test.description, async () => {
             try {
                 const res = await sila.getEntity(test.handle, test.key, test.options);
-
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.status, test.status);
@@ -2072,6 +2195,9 @@ describe('Get Entity', function () {
                     res.data.user_handle.toLowerCase(),
                     test.handle.toLowerCase(),
                 );
+                if (test.registration_state) {
+                    assert.equal(res.data.entity.registration_state, test.registration_state);
+                }
                 if (
                     test.options &&
                     test.options.prettyDates &&
@@ -2384,6 +2510,10 @@ describe('Update Entity', function () {
                         res.data.entity.business_website,
                         test.entity.business_website,
                     );
+                    assert.equal(
+                        res.data.entity.registration_state,
+                        test.entity.registration_state,
+                    );
                 }
             } catch (e) {
                 assert.fail(e);
@@ -2406,6 +2536,7 @@ describe('Check Handle taken', function () {
         });
     });
 });
+
 
 describe('Request KYC', function () {
     this.timeout(300000);
@@ -2493,19 +2624,37 @@ describe('Upload Document', function () {
     uploadDocumentTests.forEach((test) => {
         it(test.description, async () => {
             try {
-                const res = await sila.uploadDocument(
-                    test.handle,
-                    test.key,
-                    test.document,
-                );
-                assert.equal(res.statusCode, test.statusCode);
-                assert.equal(res.data.success, test.expectedResult);
-                assert.equal(res.data.status, test.status);
-                if (res.statusCode === 200) {
-                    assert.isString(res.data.reference_id);
-                    assert.isString(res.data.document_id);
-                    documentReferences.push(res.data.document_id);
+                if (!test.multiple) {
+                    const res = await sila.uploadDocument(
+                        test.handle,
+                        test.key,
+                        test.document,
+                    );
+                    assert.equal(res.statusCode, test.statusCode);
+                    assert.equal(res.data.success, test.expectedResult);
+                    assert.equal(res.data.status, test.status);
+                    if (res.statusCode === 200) {
+                        assert.isString(res.data.reference_id);
+                        documentReferences.push(res.data.document_id);
+                        assert.isString(res.data.document_id);
+                    }
+                } else {
+                    const res = await sila.uploadDocuments(
+                        test.handle,
+                        test.key,
+                        test.document,
+                    );
+                    assert.equal(res.statusCode, test.statusCode);
+                    assert.equal(res.data.success, test.expectedResult);
+                    assert.equal(res.data.status, test.status);
+                    if (res.statusCode === 200) {
+                        assert.isString(res.data.reference_id);
+                        assert.isArray(res.data.document_id);
+                        for (let i=0;i<res.data.document_id.length;i++)
+                        documentReferences.push(res.data.document_id[i]);
+                    }
                 }
+                
             } catch (e) {
                 assert.fail(e);
             }
@@ -2576,7 +2725,6 @@ describe('Certify Beneficial Owner', function () {
                 (await sila.getEntity(handles[3], wallets[4].privateKey)).data
                     .memberships[0].certification_token,
             );
-
             assert.equal(res.statusCode, 200);
             assert(res.data.success);
         } catch (err) {
@@ -2754,11 +2902,9 @@ describe('Check Instant ACH', function () {
                     test.handle,
                     test.key
                 );
-
                 assert.isNotNull(res.statusCode);
                 assert.isNotNull(res.data.status);
             } catch (e) {
-                console.log(e);
                 assert.fail(e);
             }
         });
@@ -3093,6 +3239,65 @@ describe('Poll Issue Sila', function () {
     });
 });
 
+describe('Issue Sila Transaction Idempotency Test ', function () {
+    this.timeout(300000);
+    let localTransIds = [];
+    idempotencySilaTransactionTests.forEach((test) => {
+        it(test.description, async () => {
+            try {
+                let accountName = undefined;
+                let cardName = undefined;
+                if(test.accountName) {
+                    accountName = test.accountName;
+                }
+                if(test.cardName) {
+                    cardName = test.cardName;
+                }
+                const res = await sila.issueSila(
+                    test.amount,
+                    test.handle,
+                    test.key,
+                    accountName,
+                    test.descriptor,
+                    test.businessUuid,
+                    test.processingType,
+                    cardName,
+                    test.source_id,
+                    test.destination_id,
+                    test.transaction_idempotency_id,
+                );
+
+                if (res.statusCode === 200) idempotencyIssueReferences.push(res.data.reference);
+                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.data.status, test.expectedResult);
+                if (res.data.status === 'SUCCESS'){
+                    assert.isString(res.data.transaction_id);
+                    if (!localTransIds.includes(res.data.transaction_id)) {
+                        localTransIds.push(res.data.transaction_id);
+                    }
+                    assert.equal(localTransIds.length, 1);
+                    
+                }
+                if (res.statusCode === 403)
+                    assert.equal(res.data.error_code, 'INSTANT_ACH_MAX_AMOUNT');
+                if (test.descriptor && res.data.descriptor)
+                    assert.equal(res.data.descriptor, test.descriptor);
+            } catch (err) {
+                assert.fail(err);
+            }
+        });
+    });
+});
+
+describe('Poll Idempotency Issue Sila', function () {
+    this.timeout(400000);
+    pollIssueTests.forEach((test) => {
+        it(test.description, async () => {
+            await pollGetTransactionsTest(test, idempotencyIssueReferences);
+        });
+    });
+});
+
 describe('Transfer Sila', function () {
     this.timeout(300000);
     transferSilaTests.forEach((test) => {
@@ -3129,6 +3334,54 @@ describe('Poll Transfer Sila', function () {
     pollTransferTests.forEach((test) => {
         it(test.description, async () => {
             await pollGetTransactionsTest(test, transferReferences);
+        });
+    });
+});
+
+describe('Transfer Sila Idempotency Test', function () {
+    this.timeout(300000);
+    let localTransIds = [];
+    transferSilaIdempotencyTests.forEach((test) => {
+        it(test.description, async () => {
+            try {
+                const res = await sila.transferSila(
+                    test.amount,
+                    test.handle,
+                    test.key,
+                    test.destinationHanle,
+                    test.walletNickname,
+                    test.walletAddress,
+                    test.descriptor,
+                    test.businessUuid,
+                    test.source_id,
+                    test.destination_id,
+                    test.transaction_idempotency_id,
+                );
+                if (res.statusCode === 200) idempotencyTransferReferences.push(res.data.reference);
+                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.data.status, test.expectedResult);
+                if (res.data.status === 'SUCCESS') {
+                    if (!localTransIds.includes(res.data.transaction_id)) {
+                        localTransIds.push(res.data.transaction_id)
+                    }
+                    assert.equal(localTransIds.length, 1);
+                    assert.isString(res.data.transaction_id);
+                    assert.isString(res.data.destination_address);
+                }
+                if (test.descriptor && res.data.descriptor)
+                    assert.equal(res.data.descriptor, test.descriptor);
+            } catch (e) {
+                assert.fail(e);
+            }
+        });
+    });
+});
+
+describe('Poll Transfer Sila Idempotency', function () {
+    this.timeout(300000);
+    pollTransferTests.forEach((test) => {
+        it(test.description, async () => {
+            await pollGetTransactionsTest(test, idempotencyTransferReferences);
         });
     });
 });
@@ -3185,6 +3438,55 @@ describe('Redeem Sila', function () {
                 assert.equal(res.data.status, test.expectedResult);
                 if (res.data.status === 'SUCCESS')
                     assert.isString(res.data.transaction_id);
+                if (test.descriptor && res.data.descriptor)
+                    assert.equal(res.data.descriptor, test.descriptor);
+            } catch (e) {
+                assert.fail(e);
+            }
+        });
+    });
+});
+
+describe('Redeem Sila Idempotency Test', function () {
+    this.timeout(300000);
+    let localTransIds = [];
+    redeemSilaIdempotencyTests.forEach((test) => {
+        it(test.description, async () => {
+            try {
+                let accountName = undefined;
+                let cardName = undefined;
+                if(test.accountName) {
+                    accountName = test.accountName;
+                }
+                if(test.cardName) {
+                    cardName = test.cardName;
+                }
+                const res = await sila.redeemSila(
+                    test.amount,
+                    test.handle,
+                    test.key,
+                    accountName,
+                    test.descriptor,
+                    test.businessUuid,
+                    test.processingType,
+                    cardName,
+                    test.source_id,
+                    test.destination_id,
+                    test.mockWireAccountName,
+                    test.transaction_idempotency_id,
+                );
+                
+                if (res.statusCode === 200)
+                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.data.status, test.expectedResult);
+                if (res.data.status === 'SUCCESS') {
+                    assert.isString(res.data.transaction_id);
+                    if (!localTransIds.includes(res.data.transaction_id)) {
+                        localTransIds.push(res.data.transaction_id)
+                    }
+                    assert.equal(localTransIds.length, 1);
+                }
+
                 if (test.descriptor && res.data.descriptor)
                     assert.equal(res.data.descriptor, test.descriptor);
             } catch (e) {
@@ -3702,7 +4004,6 @@ describe('Retry Webhooks', function () {
     });
 });
 
-
 describe('Cancel Transaction For Support INSTANT_SETTLEMENT Product', function () {
     this.timeout(300000);
     cancelTransactionTests.forEach((test) => {
@@ -3714,12 +4015,15 @@ describe('Cancel Transaction For Support INSTANT_SETTLEMENT Product', function (
                     assert.equal(issueRes.statusCode, 200);
                     transactionid = issueRes.data.transaction_id;
                 }
+                console.log("Cancel Transaction transactionid ===== ", transactionid)
+
                 await sleep(3000);
                 const res = await sila.cancelTransaction(
                     test.handle,
                     test.key,
                     transactionid,
                 );
+                console.log("Cancel Transaction res ===== ", res)
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.status, test.status);
