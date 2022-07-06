@@ -899,9 +899,9 @@ const getTransactionsTests = [
     },
 ];
 
-var issue_transaction_idempotency_id = uuid4();
-var transfer_transaction_idempotency_id = uuid4();
-var redeem_transaction_idempotency_id = uuid4();
+var issueTransactionIdempotencyId = uuid4();
+var transferTransactionIdempotencyId = uuid4();
+var redeemTransactionIdempotencyId = uuid4();
 
 const idempotencyIssueReferences = [];
 
@@ -914,7 +914,7 @@ const idempotencySilaTransactionTests = [
         expectedResult: 'SUCCESS',
         description: `${handles[0]} should issue sila tokens successfully for Idempotency test`,
         messageRegex: /submitted to processing queue/,
-        transaction_idempotency_id:issue_transaction_idempotency_id,
+        transaction_idempotency_id:issueTransactionIdempotencyId,
     },
     {
         handle: handles[0],
@@ -924,7 +924,7 @@ const idempotencySilaTransactionTests = [
         expectedResult: 'SUCCESS',
         description: `${handles[0]} should issue sila tokens successfully for Idempotency test`,
         messageRegex: /submitted to processing queue/,
-        transaction_idempotency_id:issue_transaction_idempotency_id,
+        transaction_idempotency_id:issueTransactionIdempotencyId,
     },
 ];
 
@@ -1102,7 +1102,7 @@ const transferSilaIdempotencyTests = [
         description: `${handles[0]} should transfer to ${handles[1]} for Idempotency test`,
         statusCode: 200,
         expectedResult: 'SUCCESS',
-        transaction_idempotency_id:transfer_transaction_idempotency_id,
+        transaction_idempotency_id:transferTransactionIdempotencyId,
     },
     {
         handle: handles[0],
@@ -1112,7 +1112,7 @@ const transferSilaIdempotencyTests = [
         description: `${handles[0]} should transfer to ${handles[1]} for Idempotency test`,
         statusCode: 200,
         expectedResult: 'SUCCESS',
-        transaction_idempotency_id:transfer_transaction_idempotency_id,
+        transaction_idempotency_id:transferTransactionIdempotencyId,
     },
 ];
 
@@ -1250,7 +1250,7 @@ const redeemSilaIdempotencyTests = [
         description: `${handles[1]} should redeem sila for Idempotency test`,
         statusCode: 200,
         expectedResult: 'SUCCESS',
-        transaction_idempotency_id:redeem_transaction_idempotency_id,
+        transaction_idempotency_id:redeemTransactionIdempotencyId,
     },
     {
         handle: handles[1],
@@ -1259,7 +1259,7 @@ const redeemSilaIdempotencyTests = [
         description: `${handles[1]} should redeem sila for Idempotency test`,
         statusCode: 200,
         expectedResult: 'SUCCESS',
-        transaction_idempotency_id:redeem_transaction_idempotency_id,
+        transaction_idempotency_id:redeemTransactionIdempotencyId,
     },
 ];
 
