@@ -55,8 +55,6 @@ const wallets = [
     sila.generateWallet(),
 ];
 
-console.log(wallets);
-
 const handles = [
     `nodeSDK-${uuid4()}`,
     `nodeSDK-${uuid4()}`,
@@ -4015,15 +4013,12 @@ describe('Cancel Transaction For Support INSTANT_SETTLEMENT Product', function (
                     assert.equal(issueRes.statusCode, 200);
                     transactionid = issueRes.data.transaction_id;
                 }
-                console.log("Cancel Transaction transactionid ===== ", transactionid)
-
                 await sleep(3000);
                 const res = await sila.cancelTransaction(
                     test.handle,
                     test.key,
                     transactionid,
                 );
-                console.log("Cancel Transaction res ===== ", res)
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.status, test.status);
