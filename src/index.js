@@ -63,6 +63,9 @@ const sign = (message, key) => {
 
 const configureUrl = () => {
   switch (env) {
+    case 'TEST':
+      baseUrl = 'https://test4api.silamoney.com/0.2/';
+      break;
     case 'PROD':
       baseUrl = 'https://api.silamoney.com/0.2/';
       break;
@@ -85,7 +88,7 @@ const signOpts = (opts, key, businessPrivateKey) => {
   const options = lodash.cloneDeep(opts);
   if (opts.body.header) {
     options.headers = {};
-    options.headers['User-Agent'] = 'SilaSDK-node/0.2.44';
+    options.headers['User-Agent'] = 'SilaSDK-node/0.2.48';
     const bodyString = JSON.stringify(options.body);
     options.headers.authsignature = sign(bodyString, appKey);
     if (key) options.headers.usersignature = sign(bodyString, key);
@@ -157,23 +160,41 @@ const post = (options) => {
       console.log('*** REQUEST ***');
       console.log(options.body);
     }
-    request.post(options, (err, response, body) => {
-      if (err) {
+
+    var config = {
+      method: 'post',
+      url: options.uri,
+      headers: options.headers,
+      data : options.body
+    };
+
+    axios(config)
+    .then(function (response) {
+      res({
+        statusCode: (response.status)?response.status:response.statusCode,
+        headers: response.headers,
+        data: response.data
+      });
+    })
+    .catch(function (error) {
+
+      if (error.response == undefined) {
         if (logging && env !== 'PROD') {
           console.log('*** RESPONSE ***');
-          console.log(err);
+          console.log(error);
         }
-        rej(err);
+        rej(error);
       }
       if (logging && env !== 'PROD') {
         console.log('*** RESPONSE ***');
         console.log(body);
       }
       res({
-        statusCode: response.statusCode,
-        headers: response.headers,
-        data: body,
+        statusCode: (error.response.status)?error.response.status:error.response.statusCode,
+        headers: error.response.headers,
+        data: error.response.data
       });
+    
     });
   });
   return promise;
@@ -186,11 +207,12 @@ const postFile = (options, filePath, fileObject) => {
       console.log(options.body);
     }
     
-    if (fileObject) {
+    if (fileObject && Object.keys(fileObject).length != 0) {
       var data = new FormData();
       data.append('data', JSON.stringify(options.body));
-      data.append('file', fileObject);
-
+      for (let key in fileObject) {
+        data.append(key, fileObject[key]);
+      }
       var config = {
         method: 'post',
         url: options.uri,
@@ -201,7 +223,7 @@ const postFile = (options, filePath, fileObject) => {
       axios(config)
       .then(function (response) {
         res({
-           statusCode: (response.status)?response.status:response.statusCode,
+          statusCode: (response.status)?response.status:response.statusCode,
           headers: response.headers,
           data: response.data
         });
@@ -215,15 +237,19 @@ const postFile = (options, filePath, fileObject) => {
       });
 
     } else {
-
+      
       const fileOptions = {
         uri: options.uri,
         headers: options.headers,
         formData: {
           data: JSON.stringify(options.body),
-          file: fs.createReadStream(filePath),
         },
       };
+
+      for (let key in filePath) {
+        fileOptions.formData[key] = filePath[key]
+      }
+
       request.post(fileOptions, (err, response, body) => {
         if (err) rej(err);
         res({
@@ -231,7 +257,7 @@ const postFile = (options, filePath, fileObject) => {
           headers: response.headers,
           data: JSON.parse(body),
         });
-      });
+      });      
     }
   });
   return promise;
@@ -265,7 +291,7 @@ const makeFileRequest = (path, body, filePath, fileObject, privateKey) => {
   let opts = {
     uri: url(path),
     body,
-  };
+  }; 
   opts = signOpts(opts, privateKey);
   return postFile(opts, filePath, fileObject);
 };
@@ -409,6 +435,7 @@ const register = (user) => {
     message.entity.doing_business_as = user.doing_business_as;
     message.entity.naics_code = user.naics_code;
     message.entity.business_type_uuid = user.businessTypeUuid;
+    message.entity.registration_state = user.registration_state;
   }
 
   if (user.ssn || user.ein) {
@@ -528,6 +555,7 @@ const linkAccount = (
  * @param {String} cardName  The nickname of the card to debit from. It defaults to 'default' // Optional, OR "account_name": "default", never both.
  * @param {String} sourceId source account id to debit from (optional)
  * @param {String} destinationId destination account id for credit (optional)
+ * @param {String} transactionIdempotencyId Optional. UUID to uniquely identify the transaction to make it idempotent.
  */
 const issueSila = (
   amount,
@@ -540,6 +568,7 @@ const issueSila = (
   cardName = undefined,
   sourceId = undefined,
   destinationId = undefined,
+  transactionIdempotencyId = undefined
 ) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
@@ -562,6 +591,7 @@ const issueSila = (
   if (descriptor) body.descriptor = descriptor;
   if (businessUuid) body.business_uuid = businessUuid;
   if (processingType) body.processing_type = processingType;
+  if (transactionIdempotencyId) body.transaction_idempotency_id = transactionIdempotencyId;
 
   return makeRequest('issue_sila', body, privateKey);
 };
@@ -579,6 +609,7 @@ const issueSila = (
  * @param {String} sourceId source account id to debit from (optional)
  * @param {String} destinationId destination account id for credit (optional)
  * @param {String} mockWireAccountName Optional with value of "mock_account_success" or "mock_account_fail"
+ * @param {String} transactionIdempotencyId Optional. UUID to uniquely identify the transaction to make it idempotent.
  */
 const redeemSila = (
   amount,
@@ -592,6 +623,7 @@ const redeemSila = (
   sourceId = undefined,
   destinationId = undefined,
   mockWireAccountName = undefined,
+  transactionIdempotencyId = undefined,
 ) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
@@ -617,6 +649,8 @@ const redeemSila = (
   body.processing_type = processingType;
 
   if (mockWireAccountName) body.mock_wire_account_name = mockWireAccountName;
+  if (transactionIdempotencyId) body.transaction_idempotency_id = transactionIdempotencyId;
+
   return makeRequest('redeem_sila', body, privateKey);
 };
 
@@ -632,6 +666,7 @@ const redeemSila = (
  * @param {String} businessUuid The UUID of the business for the ACH name (optional)
  * @param {String} sourceId source account id to debit from (optional)
  * @param {String} destinationId destination account id for credit (optional)
+ * @param {String} transactionIdempotencyId Optional. UUID to uniquely identify the transaction to make it idempotent.
  */
 
 const transferSila = (
@@ -645,6 +680,7 @@ const transferSila = (
   businessUuid = undefined,
   sourceId = undefined,
   destinationId = undefined,
+  transactionIdempotencyId = undefined,
 ) => {
   const fullHandle = getFullHandle(handle);
   const fullDestination = getFullHandle(destinationHandle);
@@ -657,6 +693,7 @@ const transferSila = (
   if (businessUuid) body.business_uuid = businessUuid;
   if (sourceId) body.source_id = sourceId;
   if (destinationId) body.destination_id = destinationId;
+  if (transactionIdempotencyId) body.transaction_idempotency_id = transactionIdempotencyId;
 
   return makeRequest('transfer_sila', body, privateKey);
 };
@@ -810,6 +847,7 @@ const updateEntity = (handle, privateKey, entity) => {
   body.naics_code = entity.naics_code;
   body.doing_business_as = entity.doing_business_as;
   body.business_website = entity.business_website;
+  body.registration_state = entity.registration_state;
 
   return makeRequest('update/entity', body, privateKey);
 };
@@ -1077,24 +1115,69 @@ const getBalance = (address) => {
  * @param {String} userHandle The user handle
  * @param {String} userPrivateKey The user's private key
  * @param {Object} document
+ * 
  */
 const uploadDocument = async (userHandle, userPrivateKey, document) => {
   const fullHandle = getFullHandle(userHandle);
   const body = setHeaders({ header: {} }, fullHandle);
 
-  body.name = document.name;
-  body.filename = document.filename;
-  
-  if(document.fileBuffer) {
-    body.hash = await hashFileObject(document.fileBuffer, 'sha256');
-  } else {
-    body.hash = await hashFile(document.filePath, 'sha256');
-  }  
-  body.mime_type = document.mimeType;
-  body.document_type = document.documentType;
-  body.description = document.description;
+    body.name = document.name;
+    body.filename = document.filename;
+    
+    var tmpFileObj = {};
+    var tmpFilePathObj = {};
 
-  return makeFileRequest('documents', body, document.filePath, document.fileObject, userPrivateKey);
+    if(document.fileBuffer) {
+      body.hash = await hashFileObject(document.fileBuffer, 'sha256');
+      tmpFileObj = {'file':document.fileObject}
+    } else {
+      body.hash = await hashFile(document.filePath, 'sha256');
+      tmpFilePathObj = {'file':fs.createReadStream(document.filePath)}
+    }  
+    body.mime_type = document.mimeType;
+    body.document_type = document.documentType;
+    body.description = document.description;
+
+    return makeFileRequest('documents', body, tmpFilePathObj, tmpFileObj, userPrivateKey);
+};
+
+/**
+ * Upload supporting documentation for KYC
+ * @param {String} userHandle The user handle
+ * @param {String} userPrivateKey The user's private key
+ * @param {Array} documents
+ * 
+ */
+ const uploadDocuments = async (userHandle, userPrivateKey, documents) => {
+  const fullHandle = getFullHandle(userHandle);
+  const body = setHeaders({ header: {} }, fullHandle);
+
+    body.file_metadata = {};
+    var filePaths = {};
+    let fileObjects = {};
+
+    for (let i=0;i<documents.length;i++) {
+      let docBodyObj = {};
+      let docObj = documents[i];
+      let index = i+1;
+      docBodyObj.name = docObj.name;
+      docBodyObj.filename = docObj.filename;
+      
+      if(docObj.fileBuffer) {
+        docBodyObj.hash = await hashFileObject(docObj.fileBuffer, 'sha256');
+        fileObjects['file_'+index] = docObj.fileObject;
+
+      } else {
+        docBodyObj.hash = await hashFile(docObj.filePath, 'sha256');
+        filePaths['file_'+index] = fs.createReadStream(docObj.filePath);
+      }  
+      docBodyObj.mime_type = docObj.mimeType;
+      docBodyObj.document_type = docObj.documentType;
+      docBodyObj.description = docObj.description;
+
+      body.file_metadata['file_'+index] = docBodyObj;      
+    }
+    return makeFileRequest('documents', body, filePaths, fileObjects, userPrivateKey);
 };
 
 /**
@@ -1852,5 +1935,6 @@ export default {
   closeVirtualAccount,
   createTestVirtualAccountAchTransaction,
   approveWire,
-  mockWireOutFile
+  mockWireOutFile,
+  uploadDocuments
 };
