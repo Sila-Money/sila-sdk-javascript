@@ -7,7 +7,7 @@ trigger:
 - master
 
 pool:
-  vmImage: 'ubuntu-18.04'
+  vmImage: 'ubuntu-latest'
 
 strategy:
   matrix:
@@ -20,15 +20,6 @@ strategy:
       nodeVersion: '14.x'
 
 steps:
-- task: SonarCloudPrepare@1
-  inputs:
-    SonarCloud: 'SonarCloud'
-    organization: 'silamoney'
-    scannerMode: 'CLI'
-    configMode: 'file'
-  displayName: 'Prepare Sonar analysis'
-  condition: and(succeeded(), eq(variables['executeSonar'], true))
-
 - task: NodeTool@0
   inputs:
     versionSpec: '$(nodeVersion)'
@@ -53,11 +44,3 @@ steps:
   inputs:
     codeCoverageTool: 'Cobertura'
     summaryFileLocation: 'coverage/cobertura-coverage.xml'
-
-- task: SonarCloudAnalyze@1
-  condition: and(succeededOrFailed(), eq(variables['executeSonar'], true))
-
-- task: SonarCloudPublish@1
-  inputs:
-    pollingTimeoutSec: '300'
-  condition: and(succeeded(), eq(variables['executeSonar'], true))
