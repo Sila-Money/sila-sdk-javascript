@@ -4002,33 +4002,6 @@ describe('Retry Webhooks', function () {
     });
 });
 
-describe('Cancel Transaction For Support INSTANT_SETTLEMENT Product', function () {
-    this.timeout(300000);
-    cancelTransactionTests.forEach((test) => {
-        it(test.description, async () => {
-            try {
-                let transactionid;
-                if (test.generateIssueTransaction) {
-                    const issueRes = await sila.issueSila(100, test.handle, test.key, 'default','','','INSTANT_SETTLEMENT');
-                    assert.equal(issueRes.statusCode, 200);
-                    transactionid = issueRes.data.transaction_id;
-                }
-                await sleep(3000);
-                const res = await sila.cancelTransaction(
-                    test.handle,
-                    test.key,
-                    transactionid,
-                );
-                assert.equal(res.statusCode, test.statusCode);
-                assert.equal(res.data.success, test.expectedResult);
-                assert.equal(res.data.status, test.status);
-            } catch (e) {
-                assert.fail(e);
-            }
-        });
-    });
-});
-
 describe('Issue Sila For Support INSTANT_SETTLEMENT Product', function () {
     this.timeout(300000);
     it("Successfully Issue Sila For Support INSTANT_SETTLEMENT.", async () => {

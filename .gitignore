@@ -82,3 +82,5 @@ typings/
 .idea/
 .vscode/
 lib/
+
+.DS_Store
