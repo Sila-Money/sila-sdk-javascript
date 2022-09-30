@@ -1,3 +1,10 @@
+v0.2.49
+	enhancements:
+		- Endpoint /link_account now supports addition of account via MX.
+		- Endpoint /get_account_balance has "provider" as a new response parameter.
+		- Endpoint /get_accounts has "provider" as a new response parameter.		
+	New Features:
+		- Added support for MX integration.
 v0.2.48
 	Enhancements:
 		- Added registration_state new optional input field for business user in /register. 

@@ -25,6 +25,12 @@ sila.configure({
 });
 sila.setEnvironment('sandbox');
 
+// sila.configure({
+//     key: '8a44030b7ed1f56508e25583ad93a862b0a332c80ebe3690d000930a5c8fa92d', // Add your private key here. USE ENV VARIABLE
+//     handle: 'test1_mx_001', // Add your app handle here
+// });
+// sila.setEnvironment('test');
+
 /*
 sila.configure({
     key: '197f4d0f41fa98a67b2bdcf931b3076e64005264b59f3d5c1658a6a9aba7e471', // Add your private key here. USE ENV VARIABLE
@@ -196,13 +202,47 @@ const plaidToken = () => {
     return promise;
 };
 
+const MxProcessorToken = () => {
+    const promise = new Promise((resolve) => {
+        const requestBody =
+        {
+            "payment_processor_authorization_code":
+            {
+                user_guid: "USR-78912abf-a65b-4661-806b-bdcf4e062e16",
+                member_guid: "MBR-1e0d03f3-d42e-46e7-86fb-ae07b79c557a",
+                account_guid: "ACT-cc129199-606c-41a3-aeec-ee32980362d4",
+            }
+        };
+        const headersObj = {
+            'Accept': 'application/vnd.mx.api.v1+json',
+            'Authorization':'Basic OWNlOTFhZWQtMDA4Zi00YjFmLThlMzktNGU3YTU5NjZlOTVhOmYyZThkYzE4MmY2MzQ5OTk5NjMzMDJlYTE3OGU3NTBkZWU2NDQ3ODM=',
+            'Content-Type': 'application/json',
+        }
+        const options = {
+            uri: 'https://int-api.mx.com/payment_processor_authorization_code',
+            json: true,
+            body: requestBody,
+            headers: headersObj,
+        };
+
+        request.post(options, (err, response, body) => {
+            if (err) {
+                resolve({});
+            }
+            const token = body.payment_processor_authorization_code.authorization_code;
+
+            resolve({ token });
+        });
+    });
+    return promise;
+};
 
 const linkCardToken = () => {
     const promise = new Promise((resolve) => {
         const bodyParams = "cBm0RU8eASGfSxLYJjsG73Q\tn9010111999999992\te202205\ts2545";
         const headersObj = {'Content-Type': 'application/tabapay-compact'}
         headersObj['Referer'] = 'https://sso.sandbox.tabapay.com:8443/SSOEvolveISO.html';
-        
+
         const options = {
             url: 'https://sso.sandbox.tabapay.com:8443/v2/SSOEncrypt',
             method: 'post',
@@ -210,14 +250,14 @@ const linkCardToken = () => {
             data: bodyParams,
         };
         axios(options)
-        .then(function (response) {
-            const token = response.data.slice(3);
-            resolve(token);
-        })
-        .catch(function (error) {
-           console.error(error)
-           return;
-        });
+            .then(function (response) {
+                const token = response.data.slice(3);
+                resolve(token);
+            })
+            .catch(function (error) {
+                console.error(error)
+                return;
+            });
 
     });
     return promise;
@@ -586,6 +626,28 @@ const linkAccountTests = [
     },
 ];
 
+const linkAccountMXTests = [
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        accountName: 'defaultMx',
+        expectedResult: 'SUCCESS',
+        statusCode: 200,
+        providerTokenType:'processor',
+        description: `"${handles[0]}" should link account through MX processor token`,
+    },
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        accountName: 'defaultMxx',
+        token: 'incorrect-token',
+        expectedResult: 'FAILURE',
+        statusCode: 400,
+        providerTokenType:'processor',
+        description: `"${handles[0]}" should link account through valid MX processor token`,
+    },
+];
+
 const checkInstantAchTests = [
     {
         handle: instantHandle,
@@ -599,7 +661,7 @@ const checkInstantAchTests = [
         accountName: 'instantValidation',
         kycLevel: 'INSTANT-ACHV2',
         description: `"${handles[0]}" should check instant ach v2.`,
-    },    
+    },
 ];
 
 const getAccountsTests = [
@@ -607,7 +669,7 @@ const getAccountsTests = [
         handle: handles[0],
         key: wallets[0].privateKey,
         statusCode: 200,
-        accounts: 5,
+        accounts: 6,
         description: `"${handles[0]}" should retrieve all accounts`,
     },
 ];
@@ -628,6 +690,14 @@ const getAccountBalanceTests = [
         statusCode: 400,
         expectedResult: false,
         description: `${handles[0]} should fail retrieve direct link account balance`,
+    },
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        accountName: 'defaultMx',
+        statusCode: 200,
+        expectedResult: true,
+        description: `${handles[0]} should retrieve default MX account balance`,
     },
 ];
 
@@ -872,6 +942,15 @@ const issueSilaTests = [
         statusCode: 403,
         expectedResult: 'FAILURE',
         description: `${instantHandle} should not issue sila tokens, error_code:INSTANT_ACH_MAX_AMOUNT`,
+    },
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        amount: 200,
+        accountName: 'defaultMx',
+        statusCode: 200,
+        expectedResult: 'SUCCESS',
+        description: `${instantHandle} should issue sila tokens successfully with defaultMx`,
     },
 ];
 
@@ -2649,10 +2728,10 @@ describe('Upload Document', function () {
                         assert.isString(res.data.reference_id);
                         assert.isArray(res.data.document_id);
                         for (let i=0;i<res.data.document_id.length;i++)
-                        documentReferences.push(res.data.document_id[i]);
+                            documentReferences.push(res.data.document_id[i]);
                     }
                 }
-                
+
             } catch (e) {
                 assert.fail(e);
             }
@@ -2758,6 +2837,18 @@ describe('Plaid Link Token', function () {
 
             assert.isTrue(res.data.success);
             assert.isDefined(res.data.link_token);
+        } catch (error) {
+            assert.fail(error);
+        }
+    })
+})
+
+describe('MX Processor Token', function () {
+    this.timeout(300000);
+    it("Successfully generate MX Processor token.", async () => {
+        try {
+            const res = await MxProcessorToken();
+            assert.isDefined(res.token);
         } catch (error) {
             assert.fail(error);
         }
@@ -2882,7 +2973,37 @@ describe('Link Account - Token tests', function () {
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.status, test.expectedResult);
                 assert.isNotNull(res.data.web_debit_verified);
-                
+
+            } catch (e) {
+                assert.fail(e);
+            }
+        });
+    });
+});
+
+describe('Link Account - MX Token tests', function () {
+    this.timeout(300000);
+    linkAccountMXTests.forEach((test) => {
+        it(test.description, async () => {
+            let token;
+
+            if (test.token) {
+                ({ token } = test);
+            } else {
+                const res = await MxProcessorToken();
+                ({ token } = res);
+            }
+            try {
+                const res = await sila.linkAccountMX(
+                    test.handle,
+                    test.key,
+                    test.providerTokenType,
+                    token,
+                    test.accountName,
+                );
+                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.data.status, test.expectedResult);
+
             } catch (e) {
                 assert.fail(e);
             }
@@ -3101,9 +3222,9 @@ describe('Link Card', function () {
                 "card_name":"visa",
                 "account_postal_code":"12345",
                 "token":resToken
-            } 
+            }
             const res = await sila.linkCard(
-                handles[0], 
+                handles[0],
                 wallets[0].privateKey,
                 cardObj,
             );
@@ -3180,7 +3301,7 @@ describe('Reverse Transaction', function () {
                     assert.equal(res.data.success, test.expectedResult);
                     assert.equal(res.data.status, test.status);
                 }
-                
+
             } catch (e) {
                 assert.fail(e);
             }
@@ -3211,7 +3332,7 @@ describe('Issue Sila', function () {
                     test.processingType,
                     cardName,
                 );
-                
+
                 if (res.statusCode === 200) issueReferences.push(res.data.reference);
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.status, test.expectedResult);
@@ -3274,7 +3395,7 @@ describe('Issue Sila Transaction Idempotency Test ', function () {
                         localTransIds.push(res.data.transaction_id);
                     }
                     assert.equal(localTransIds.length, 1);
-                    
+
                 }
                 if (res.statusCode === 403)
                     assert.equal(res.data.error_code, 'INSTANT_ACH_MAX_AMOUNT');
@@ -3430,7 +3551,7 @@ describe('Redeem Sila', function () {
                 if (test.processingType == 'WIRE' && !mockWireTransactionId_1) {
                     mockWireTransactionId_1 = res.data.transaction_id;
                 }
-                
+
                 if (res.statusCode === 200) redeemReferences.push(res.data.reference);
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.status, test.expectedResult);
@@ -3473,9 +3594,9 @@ describe('Redeem Sila Idempotency Test', function () {
                     test.mockWireAccountName,
                     test.transaction_idempotency_id,
                 );
-                
+
                 if (res.statusCode === 200)
-                assert.equal(res.statusCode, test.statusCode);
+                    assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.status, test.expectedResult);
                 if (res.data.status === 'SUCCESS') {
                     assert.isString(res.data.transaction_id);
@@ -3503,12 +3624,12 @@ describe('Approve Wire:Approve', function () {
                 "search_filters": {
                     'transaction_id': mockWireTransactionId_1,
                 }
-            };  
-    
+            };
+
             let transactionRes = await sila.getTransactions(loop_payload.handle, wallets[0].privateKey,loop_payload.search_filters);
             let { statusCode } = transactionRes;
             let { success } = transactionRes.data;
-    
+
             let { provider_status } = transactionRes.data.transactions[0];
 
             while (
@@ -3533,7 +3654,7 @@ describe('Approve Wire:Approve', function () {
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
-                
+
         } catch (e) {
             assert.fail(e);
         }
@@ -3553,7 +3674,7 @@ describe('Mock Wire Out File', function () {
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
-                
+
         } catch (e) {
             assert.fail(e);
         }
@@ -3578,7 +3699,7 @@ describe('Open Virtual Account', function () {
                     paymentMethodsIds['virtual_account_number_2'] = res.data.virtual_account.account_number;
                     paymentMethodsIds['virtual_account_id_2'] = res.data.virtual_account.virtual_account_id;
                 }
-                
+
                 assert.equal(res.statusCode, test.statusCode);
                 assert.isTrue(res.data.success);
                 assert.equal(res.data.status, test.expectedResult);
@@ -3609,7 +3730,7 @@ describe('Update Virtual Account', function () {
             assert.equal(res.data.status, 'SUCCESS');
             assert.equal(res.data.virtual_account.ach_debit_enabled, true);
             assert.equal(res.data.virtual_account.ach_credit_enabled, false);
-                
+
         } catch (e) {
             assert.fail(e);
         }
@@ -3627,7 +3748,7 @@ describe('Get Virtual Account', function () {
             assert.isNotNull(res.data.virtual_account.virtual_account_name);
             assert.equal(res.data.virtual_account.ach_debit_enabled, true);
             assert.equal(res.data.virtual_account.ach_credit_enabled, false);
-            
+
         } catch (e) {
             assert.fail(e);
         }
@@ -3645,7 +3766,7 @@ describe('Get Virtual Accounts', function () {
             assert(res.data.virtual_accounts.length > 0);
             assert.equal(res.data.virtual_accounts[0].ach_debit_enabled, true);
             assert.equal(res.data.virtual_accounts[0].ach_credit_enabled, false);
-            
+
         } catch (e) {
             assert.fail(e);
         }
@@ -3664,7 +3785,7 @@ describe('Get Payment Methods', function () {
 
             for (let index = 0; index < res.data.payment_methods.length; index++) {
                 if (res.data.payment_methods[index]['payment_method_type'] == "bank_account" && res.data.payment_methods[index]['account_type'] == "CHECKING"){
-                    paymentMethodsIds['bank_account_id'] = res.data.payment_methods[index]['bank_account_id'];                    
+                    paymentMethodsIds['bank_account_id'] = res.data.payment_methods[index]['bank_account_id'];
                 } else if (res.data.payment_methods[index]['payment_method_type'] == "virtual_account" && !paymentMethodsIds['virtual_account_id_1']){
                     paymentMethodsIds['virtual_account_id_1'] = res.data.payment_methods[index]['virtual_account_id'];
                     assert.isNotNull(res.data.payment_methods[index]['ach_credit_enabled']);
@@ -3676,9 +3797,9 @@ describe('Get Payment Methods', function () {
                     assert.isNotNull(res.data.payment_methods[index]['ach_debit_enabled']);
 
                 } else if (res.data.payment_methods[index]['payment_method_type'] == "card"){
-                    paymentMethodsIds['card_id'] = res.data.payment_methods[index]['card_id'];                    
+                    paymentMethodsIds['card_id'] = res.data.payment_methods[index]['card_id'];
                 } else if (res.data.payment_methods[index]['payment_method_type'] == "blockchain_address"){
-                    paymentMethodsIds['blockchain_address_id'] = res.data.payment_methods[index]['blockchain_address_id'];                    
+                    paymentMethodsIds['blockchain_address_id'] = res.data.payment_methods[index]['blockchain_address_id'];
                 }
             }
 
@@ -3698,7 +3819,7 @@ describe('Issue Sila From Bank To Virtual Account And Verifiy Transaction', func
                 "destination_id": paymentMethodsIds['virtual_account_id_1']
             };
             const res = await sila.issueSila(payload.amount, handles[0], wallets[0].privateKey,payload.account_name,payload.descriptor,'',payload.processing_type,payload.card_name,payload.source_id, payload.destination_id);
-            
+
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
@@ -3716,7 +3837,7 @@ describe('Issue Sila From Bank To Virtual Account And Verifiy Transaction', func
                 "destination_id": paymentMethodsIds['virtual_account_id_2']
             };
             const res = await sila.issueSila(payload.amount, handles[0], wallets[0].privateKey,payload.account_name,payload.descriptor,'',payload.processing_type,payload.card_name,payload.source_id, payload.destination_id);
-            
+
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
@@ -3760,7 +3881,7 @@ describe('Issue Sila From Bank To Virtual Account And Verifiy Transaction', func
             assert.isNotNull(res.data.transactions[0]['destination_id']);
             assert.isNotNull(res.data.transactions[0]['sila_ledger_type']);
             assert.hasAnyKeys(res.data.transactions[0], ['sec_code'])
-         
+
 
         } catch (e) {
             assert.fail(e);
@@ -3779,7 +3900,7 @@ describe('Redeem Sila From Virtual Account to card And Verifiy Transaction', fun
                 "destination_id": paymentMethodsIds['card_id']
             };
             const res = await sila.redeemSila(payload.amount, handles[0], wallets[0].privateKey,payload.account_name,payload.descriptor,'',payload.processing_type,payload.card_name,payload.source_id, payload.destination_id);
-            
+
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
@@ -3799,7 +3920,7 @@ describe('Redeem Sila From Virtual Account to card And Verifiy Transaction', fun
             };
             await sleep(30000, '');
             const res = await sila.redeemSila(payload.amount, handles[0], wallets[0].privateKey,payload.account_name,payload.descriptor,'',payload.processing_type,payload.card_name,payload.source_id, payload.destination_id);
-            
+
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
@@ -3819,7 +3940,7 @@ describe('Redeem Sila From Virtual Account to card And Verifiy Transaction', fun
             };
             await sleep(30000, '');
             const res = await sila.getTransactions(handles[0], wallets[0].privateKey, filters);
-            
+
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
@@ -3873,7 +3994,7 @@ describe('Transfer Sila Using Source And Destination ID', function () {
                 paymentMethodsIds['virtual_account_id_1'],
                 paymentMethodsIds['blockchain_address_id']
             );
-            
+
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
@@ -3900,13 +4021,13 @@ describe('Transfer Sila Using Source And Destination ID', function () {
                 paymentMethodsIds['virtual_account_id_1'],
                 paymentMethodsIds['virtual_account_id_2']
             );
-            
+
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
             assert.isNotNull(res.data.source_id);
             assert.isNotNull(res.data.destination_id);
-            
+
         } catch (e) {
             assert.fail(e);
         }
@@ -3932,7 +4053,7 @@ describe('Transfer Sila Using Source And Destination ID', function () {
             assert.isNotNull(res.data.transactions[0]['destination_id']);
             assert.isNotNull(res.data.transactions[0]['sila_ledger_type']);
             assert.isNotNull(res.data.transactions[0]['destination_sila_ledger_type']);
-            
+
 
         } catch (e) {
             assert.fail(e);
@@ -3946,11 +4067,11 @@ describe('Delete Card', function () {
         try {
             let cardName = 'visa';
             const res = await sila.deleteCard(
-                handles[0], 
+                handles[0],
                 wallets[0].privateKey,
                 cardName,
             );
-            
+
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
@@ -3985,11 +4106,11 @@ describe('Retry Webhooks', function () {
         try {
             if (eventUuid) {
                 const res = await sila.retryWebhook(
-                    handles[0], 
+                    handles[0],
                     wallets[0].privateKey,
                     eventUuid,
                 );
-                
+
                 assert.equal(res.statusCode, 200);
                 assert.isTrue(res.data.success);
                 assert.equal(res.data.status, 'SUCCESS');
@@ -4008,14 +4129,14 @@ describe('Issue Sila For Support INSTANT_SETTLEMENT Product', function () {
         try {
             const res = await sila.issueSila(
                 100,
-                handles[0], 
+                handles[0],
                 wallets[0].privateKey,
                 'default',
                 '',
                 '',
                 'INSTANT_SETTLEMENT'
             );
-            
+
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
@@ -4032,14 +4153,14 @@ describe('TransferSila For Support INSTANT_SETTLEMENT Product', function () {
         try {
             const res = await sila.transferSila(
                 100,
-                handles[0], 
+                handles[0],
                 wallets[0].privateKey,
                 handles[1],
                 '',
                 '',
                 ''
             );
-            
+
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
@@ -4056,7 +4177,7 @@ describe('RedeemSila For Support INSTANT_SETTLEMENT Product', function () {
         try {
             const res = await sila.redeemSila(
                 100,
-                handles[0], 
+                handles[0],
                 wallets[0].privateKey,
                 'default',
                 '',
@@ -4081,16 +4202,16 @@ describe('Get Transactions Using Serach Filter INSTANT_SETTLEMENT', function () 
             };
 
             const res = await sila.getTransactions(
-                handles[0], 
+                handles[0],
                 wallets[0].privateKey,
                 search_filters
             );
-            
+
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
             assert.isArray(res.data.transactions[0]['child_transactions']);
-            assert.equal(res.data.transactions[0]['processing_type'], 'INSTANT_SETTLEMENT');            
+            assert.equal(res.data.transactions[0]['processing_type'], 'INSTANT_SETTLEMENT');
 
         } catch (err) {
             assert.fail(err);
@@ -4107,15 +4228,15 @@ describe('Get Transactions Using Serach Filter payment_method_id (single virtual
             };
 
             const res = await sila.getTransactions(
-                handles[0], 
+                handles[0],
                 wallets[0].privateKey,
                 search_filters
             );
-            
+
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
-            assert.isArray(res.data.transactions);            
+            assert.isArray(res.data.transactions);
 
         } catch (err) {
             assert.fail(err);
@@ -4129,14 +4250,14 @@ describe('Test Virtual Account Ach Transaction', function () {
         try {
             let payload = {
                 "entity_name": "Sally Smith",
-                "amount": '4.00', 
+                "amount": '4.00',
                 "tran_code": 22,
                 "virtual_account_number": paymentMethodsIds['virtual_account_number_1'],
                 "ced": "PAYROLL",
                 "ach_name": "SILA INC"
             }
             const res = await sila.createTestVirtualAccountAchTransaction(
-                handles[0], 
+                handles[0],
                 wallets[0].privateKey,
                 payload
             );
@@ -4155,16 +4276,16 @@ describe('Close Virtual Account', function () {
     it("Successfully Close Virtual Account.", async () => {
         try {
             const res = await sila.closeVirtualAccount(
-                handles[0], 
+                handles[0],
                 wallets[0].privateKey,
                 paymentMethodsIds['virtual_account_id_1'],
                 paymentMethodsIds['virtual_account_number_1']
             );
-            
+
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
-            assert.equal(res.data.virtual_account.account_number, paymentMethodsIds['virtual_account_number_1']);            
+            assert.equal(res.data.virtual_account.account_number, paymentMethodsIds['virtual_account_number_1']);
 
         } catch (err) {
             assert.fail(err);
