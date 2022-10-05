@@ -88,7 +88,7 @@ const signOpts = (opts, key, businessPrivateKey) => {
   const options = lodash.cloneDeep(opts);
   if (opts.body.header) {
     options.headers = {};
-    options.headers['User-Agent'] = 'SilaSDK-node/0.2.48';
+    options.headers['User-Agent'] = 'SilaSDK-node/0.2.49';
     const bodyString = JSON.stringify(options.body);
     options.headers.authsignature = sign(bodyString, appKey);
     if (key) options.headers.usersignature = sign(bodyString, key);
@@ -510,6 +510,36 @@ const linkAccountDirect = (
   message.routing_number = routingNumber;
   if (accountType) message.account_type = accountType;
   if (accountName) message.account_name = accountName;
+
+  return makeRequest('link_account', message, privateKey);
+};
+
+/**
+ * Makes a call to /link_account endpoint.
+ * This method handles the MX account link flow
+ * @param {String} handle The user handle
+ * @param {String} privateKey The user's wallet private key
+ * @param {String} providerTokenType The token type
+ * @param {String} providerToken The token itself
+ * @param {String} accountName The account nickname
+ * @param {String} accountId The account id
+ */
+const linkAccountMX = (
+  handle,
+  privateKey,
+  providerTokenType,
+  providerToken,
+  accountName = undefined,
+  accountId = undefined,
+) => {
+  const fullHandle = getFullHandle(handle);
+  const message = setHeaders({ header: {} }, fullHandle);
+  message.message = 'link_account_msg';
+  message.provider = 'mx';
+  message.provider_token_type = providerTokenType;
+  message.provider_token = providerToken;
+  if (accountName) message.account_name = accountName;
+  if (accountId) message.selected_account_id = accountId;
 
   return makeRequest('link_account', message, privateKey);
 };
@@ -1875,6 +1905,7 @@ export default {
   getWallets,
   issueSila,
   linkAccount,
+  linkAccountMX,
   linkAccountDirect,
   listDocuments,
   plaidSamedayAuth,
