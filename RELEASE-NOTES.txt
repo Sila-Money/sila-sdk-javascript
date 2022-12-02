@@ -1,3 +1,7 @@
+v0.2.50
+	New Features:
+		- Added support for /get_wallet_statement_data.
+		- Added support for /get_statements_data.
 v0.2.49
 	Enhancements:
 		- Endpoint /link_account now supports addition of account via MX.

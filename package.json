@@ -36,8 +36,8 @@
       "cobertura"
     ]
   },
-  "name": "sila-sdk-javascript",
-  "version": "0.2.49",
+  "name": "@silamoney/sdk",
+  "version": "0.2.50",
   "main": "lib/index.js",
   "directories": {
     "lib": "lib",

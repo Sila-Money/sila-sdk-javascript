@@ -93,7 +93,7 @@ firstUser.zip = '12345';
 firstUser.phone = '1234567890';
 firstUser.email = 'test_1@silamoney.com';
 firstUser.dateOfBirth = '1990-01-01';
-firstUser.ssn = '123456222';
+firstUser.ssn = '319103848';
 firstUser.cryptoAddress = wallets[0].address;
 firstUser.handle = firstHandle;
 
@@ -149,7 +149,7 @@ instantUser.state = 'NY';
 instantUser.zip = '12345';
 instantUser.email = 'instant@silamoney.com';
 instantUser.dateOfBirth = '1990-01-01';
-instantUser.ssn = '123456222';
+instantUser.ssn = '319103848';
 
 
 const sardineUser = new sila.User();
@@ -166,7 +166,7 @@ sardineUser.state = 'NY';
 sardineUser.zip = '12345';
 sardineUser.email = 'instant@silamoney.com';
 sardineUser.dateOfBirth = '1990-01-01';
-sardineUser.ssn = '123456222';
+sardineUser.ssn = '319103848';
 sardineUser.sessionIdentifier = "ppppp-aaaa-dddd-99ce-c45944174e0c";
 
 var mockWireTransactionId_1 = '';
@@ -204,34 +204,34 @@ const plaidToken = () => {
 
 const MxProcessorToken = () => {
     const promise = new Promise((resolve) => {
-        const requestBody =
-        {
-            "payment_processor_authorization_code":
+        var data = JSON.stringify({
+            "payment_processor_authorization_code": 
             {
-                user_guid: "USR-78912abf-a65b-4661-806b-bdcf4e062e16",
-                member_guid: "MBR-1e0d03f3-d42e-46e7-86fb-ae07b79c557a",
-                account_guid: "ACT-cc129199-606c-41a3-aeec-ee32980362d4",
+              user_guid: "USR-78912abf-a65b-4661-806b-bdcf4e062e16",
+              member_guid: "MBR-1e0d03f3-d42e-46e7-86fb-ae07b79c557a",
+              account_guid: "ACT-cc129199-606c-41a3-aeec-ee32980362d4"
             }
-        };
-        const headersObj = {
-            'Accept': 'application/vnd.mx.api.v1+json',
-            'Authorization':'Basic OWNlOTFhZWQtMDA4Zi00YjFmLThlMzktNGU3YTU5NjZlOTVhOmYyZThkYzE4MmY2MzQ5OTk5NjMzMDJlYTE3OGU3NTBkZWU2NDQ3ODM=',
-            'Content-Type': 'application/json',
-        }
-        const options = {
-            uri: 'https://int-api.mx.com/payment_processor_authorization_code',
-            json: true,
-            body: requestBody,
-            headers: headersObj,
-        };
-
-        request.post(options, (err, response, body) => {
-            if (err) {
-                resolve({});
-            }
-            const token = body.payment_processor_authorization_code.authorization_code;
+          });
+          
+          var config = {
+            method: 'post',
+            url: 'https://int-api.mx.com/payment_processor_authorization_code',
+            headers: { 
+              'Authorization': 'Basic OWNlOTFhZWQtMDA4Zi00YjFmLThlMzktNGU3YTU5NjZlOTVhOmYyZThkYzE4MmY2MzQ5OTk5NjMzMDJlYTE3OGU3NTBkZWU2NDQ3ODM=', 
+              'Accept': 'application/vnd.mx.api.v1+json', 
+              'Content-Type': 'application/json'
+            },
+            data : data
+          };
+          
+          axios(config)
+          .then(function (response) {
+            const token = response.data.payment_processor_authorization_code.authorization_code;
 
             resolve({ token });
+          })
+          .catch(function (error) {
+            resolve({});
         });
     });
     return promise;
@@ -2049,6 +2049,56 @@ const getWebhooksTests = [
     },
 ];
 
+const getWalletStatementDataTests = [
+        // {
+        //     handle: handles[0],
+        //     key: wallets[0].privateKey,
+        //     statusCode: 200,
+        //     expectedResult: true,
+        //     status: 'SUCCESS',
+        //     description: `${handles[0]} should get wallet statement data successfully`,
+        // },
+        {
+            handle: handles[0],
+            key: wallets[0].privateKey,
+            walletId: wallets[0],
+            filters: {
+                startMonth: (new Date().getMonth()-1) + "-" + new Date().getFullYear(),
+                endMonth: (new Date().getMonth()) + "-" + new Date().getFullYear(),
+                page: 1,
+                perPage: 100,
+            },
+            statusCode: 200,
+            expectedResult: true,
+            status: 'SUCCESS',
+            description: `${handles[0]} should get wallet statement data successfully with all filters`,
+        },
+];
+
+const getStatementsDataTests = [
+    // {
+    //     handle: handles[0],
+    //     key: wallets[0].privateKey,
+    //     statusCode: 200,
+    //     expectedResult: true,
+    //     status: 'SUCCESS',
+    //     description: `${handles[0]} should get statements data successfully`,
+    // },
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        filters: {
+            month: (new Date().getMonth()-1) + "-" + new Date().getFullYear(),
+            page: 1,
+            perPage: 100,
+        },
+        statusCode: 200,
+        expectedResult: true,
+        status: 'SUCCESS',
+        description: `${handles[0]} should get statements data successfully with all filters`,
+    },
+];
+
 describe('Get Insitutions', function () {
     this.timeout(300000);
     it('Successfully retrieve institutions', async () => {
@@ -3003,7 +3053,7 @@ describe('Link Account - MX Token tests', function () {
                 );
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.status, test.expectedResult);
-
+                    
             } catch (e) {
                 assert.fail(e);
             }
@@ -3819,7 +3869,7 @@ describe('Issue Sila From Bank To Virtual Account And Verifiy Transaction', func
                 "destination_id": paymentMethodsIds['virtual_account_id_1']
             };
             const res = await sila.issueSila(payload.amount, handles[0], wallets[0].privateKey,payload.account_name,payload.descriptor,'',payload.processing_type,payload.card_name,payload.source_id, payload.destination_id);
-
+            
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
@@ -4314,6 +4364,49 @@ describe('Plaid Sameday Auth', function () {
                 );
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.status, test.expectedResult);
+            } catch (e) {
+                assert.fail(e);
+            }
+        });
+    });
+});
+
+describe('get wallet statement data', function () {
+    this.timeout(300000);
+    getWalletStatementDataTests.forEach((test) => {
+        it(test.description, async () => {
+            const wallet_res = await sila.getWallet(test.handle, test.key)
+            try {
+                const res = await sila.getWalletStatementData(
+                    test.handle,
+                    test.key,
+                    wallet_res.data.wallet.wallet_id,
+                    test.filters,
+                );
+                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.data.success, test.expectedResult);
+                assert.equal(res.data.status, test.status);
+
+            } catch (e) {
+                assert.fail(e);
+            }
+        });
+    });
+});
+
+describe('get statements data', function () {
+    this.timeout(300000);
+    getStatementsDataTests.forEach((test) => {
+        it(test.description, async () => {
+            try {
+                const res = await sila.getStatementsData(
+                    test.handle,
+                    test.key,
+                    test.filters,
+                );
+                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.data.success, test.expectedResult);
+                assert.equal(res.data.status, test.status);
             } catch (e) {
                 assert.fail(e);
             }
