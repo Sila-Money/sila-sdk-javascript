@@ -1885,9 +1885,8 @@ const setLogging = (log) => {
   logging = !!log;
 };
 
-
 const getWalletStatementData = (
-  handle, 
+  handle,
   privateKey, 
   walletId,
   searchFilters,
@@ -1916,10 +1915,8 @@ const getWalletStatementData = (
     return makeRequest('get_wallet_statement_data', message, privateKey);
   };
 
- 
  const getStatementsData = (
   handle, 
-  privateKey, 
   searchFilters,
 ) => {
     const fullHandle = getFullHandle(handle);

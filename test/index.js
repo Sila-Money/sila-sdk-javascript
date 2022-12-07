@@ -2050,14 +2050,6 @@ const getWebhooksTests = [
 ];
 
 const getWalletStatementDataTests = [
-        // {
-        //     handle: handles[0],
-        //     key: wallets[0].privateKey,
-        //     statusCode: 200,
-        //     expectedResult: true,
-        //     status: 'SUCCESS',
-        //     description: `${handles[0]} should get wallet statement data successfully`,
-        // },
         {
             handle: handles[0],
             key: wallets[0].privateKey,
@@ -2076,17 +2068,8 @@ const getWalletStatementDataTests = [
 ];
 
 const getStatementsDataTests = [
-    // {
-    //     handle: handles[0],
-    //     key: wallets[0].privateKey,
-    //     statusCode: 200,
-    //     expectedResult: true,
-    //     status: 'SUCCESS',
-    //     description: `${handles[0]} should get statements data successfully`,
-    // },
     {
         handle: handles[0],
-        key: wallets[0].privateKey,
         filters: {
             month: (new Date().getMonth()-1) + "-" + new Date().getFullYear(),
             page: 1,
@@ -4401,7 +4384,6 @@ describe('get statements data', function () {
             try {
                 const res = await sila.getStatementsData(
                     test.handle,
-                    test.key,
                     test.filters,
                 );
                 assert.equal(res.statusCode, test.statusCode);
