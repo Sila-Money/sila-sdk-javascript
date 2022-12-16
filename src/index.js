@@ -88,7 +88,7 @@ const signOpts = (opts, key, businessPrivateKey) => {
   const options = lodash.cloneDeep(opts);
   if (opts.body.header) {
     options.headers = {};
-    options.headers['User-Agent'] = 'SilaSDK-node/0.2.49';
+    options.headers['User-Agent'] = 'SilaSDK-node/0.2.50';
     const bodyString = JSON.stringify(options.body);
     options.headers.authsignature = sign(bodyString, appKey);
     if (key) options.headers.usersignature = sign(bodyString, key);
@@ -1885,6 +1885,57 @@ const setLogging = (log) => {
   logging = !!log;
 };
 
+const getWalletStatementData = (
+  handle,
+  privateKey, 
+  walletId,
+  searchFilters,
+) => {
+    const fullHandle = getFullHandle(handle);
+    const message = setHeaders({ header: {} }, fullHandle);
+    message.message = 'get_statement_data_msg';
+    message.wallet_id = walletId;
+
+    var payload = {};
+  
+    if (!searchFilters) {
+      payload = {};
+    }
+    else {
+      payload = {
+        "start_month": searchFilters.startMonth,
+        "end_month": searchFilters.endMonth,
+        "page": searchFilters.page,
+        "per_page": searchFilters.perPage,
+        
+    }
+  }
+  
+    message.search_filters = payload;
+    return makeRequest('get_wallet_statement_data', message, privateKey);
+  };
+
+ const getStatementsData = (
+  handle, 
+  searchFilters,
+) => {
+    const fullHandle = getFullHandle(handle);
+    const message = setHeaders({ header: {} }, fullHandle);
+    message.message = 'get_statements_data_msg';
+  
+    var payload = {};
+  
+    if (!searchFilters) {
+      payload = {};
+    }
+    else {
+      payload = searchFilters
+    }
+  
+    message.search_filters = payload;
+    return makeRequest('get_statements_data', message);
+  };
+ 
 export default {
   cancelTransaction,
   checkHandle,
@@ -1967,5 +2018,7 @@ export default {
   createTestVirtualAccountAchTransaction,
   approveWire,
   mockWireOutFile,
-  uploadDocuments
+  uploadDocuments,
+  getStatementsData,
+  getWalletStatementData
 };

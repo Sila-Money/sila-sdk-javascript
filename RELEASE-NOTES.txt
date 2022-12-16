@@ -1,3 +1,8 @@
+v0.2.50
+	New Features:
+		- Added support for /get_wallet_statement_data.
+		- Added support for /get_statements_data.
+		
 v0.2.49
 	Enhancements:
 		- Endpoint /link_account now supports addition of account via MX.
@@ -5,6 +10,7 @@ v0.2.49
 		- Endpoint /get_accounts has "provider" as a new response parameter.		
 	New Features:
 		- Added support for MX integration.
+
 v0.2.48
 	Enhancements:
 		- Added registration_state new optional input field for business user in /register. 
@@ -15,6 +21,7 @@ v0.2.48
 		- Added transaction_idempotency_id new optional input field in /transfer_sila. 
 	New Features:
     - Created a new method uploadDocuments to support multiple files upload at the same time for /documents endpoint.
+
 v0.2.44
 	Enhancements:
 		- Added sila_available_balance and sila_pending_balance in the response of /get_wallet.  
