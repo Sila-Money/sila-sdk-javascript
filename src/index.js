@@ -3,7 +3,7 @@ import request from 'request';
 import uuid4 from 'uuid4';
 import fs from 'fs';
 import crypt from 'crypto';
-import lodash from 'lodash';
+import lodash, { method } from 'lodash';
 import regeneratorRuntime from 'regenerator-runtime'; // eslint-disable-line no-unused-vars
 
 import axios from 'axios';
@@ -88,7 +88,7 @@ const signOpts = (opts, key, businessPrivateKey) => {
   const options = lodash.cloneDeep(opts);
   if (opts.body.header) {
     options.headers = {};
-    options.headers['User-Agent'] = 'SilaSDK-node/0.2.50';
+    options.headers['User-Agent'] = 'SilaSDK-node/0.2.51';
     const bodyString = JSON.stringify(options.body);
     options.headers.authsignature = sign(bodyString, appKey);
     if (key) options.headers.usersignature = sign(bodyString, key);
@@ -162,7 +162,7 @@ const post = (options) => {
     }
 
     var config = {
-      method: 'post',
+      method: options.method,
       url: options.uri,
       headers: options.headers,
       data : options.body
@@ -274,8 +274,10 @@ const makeRequest = (
   body,
   privateKey = undefined,
   business_private_key = undefined,
+  requestMethod = 'post',
 ) => {
   let opts = {
+    method: requestMethod,
     uri: url(path),
     json: true,
     body,
@@ -1017,7 +1019,7 @@ const plaidSamedayAuth = (handle, privateKey, accountName) => {
  * @param {String} privateKey An already registered user's wallet private key
  * @param {Wallet} wallet The new wallet
  */
-const registerWallet = (handle, privateKey, wallet, nickname, defaultVal) => {
+const registerWallet = (handle, privateKey, wallet, nickname, defaultVal, statements_enabled) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
 
@@ -1026,6 +1028,7 @@ const registerWallet = (handle, privateKey, wallet, nickname, defaultVal) => {
   body.wallet = {};
   body.wallet.blockchain_address = wallet.address;
   body.wallet.blockchain_network = 'ETH';
+  if (statements_enabled) body.wallet.statements_enabled = statements_enabled;
   if (nickname) body.wallet.nickname = nickname;
   if (defaultVal) body.wallet.default = defaultVal;
 
@@ -1581,11 +1584,12 @@ const getCards = (userHandle, userPrivateKey) => {
  * @param {String} cardName
  * @returns
  */
-const deleteCard = (userHandle, userPrivateKey, cardName) => {
+const deleteCard = (userHandle, userPrivateKey, cardName, provider) => {
   const body = setHeaders({
     header: {}
   }, userHandle);
   body.card_name = cardName;
+  body.provider = provider;
   return makeRequest('delete_card', body, userPrivateKey);
 };
 
@@ -1671,7 +1675,9 @@ const openVirtualAccount = (userHandle, userPrivateKey, payload={}) => {
   if (payload.ach_debit_enabled !== undefined) {
     body.ach_debit_enabled = payload.ach_debit_enabled;
   }
-
+  if (payload.statements_enabled !== undefined) {
+    body.statements_enabled = payload.statements_enabled;
+  }
   return makeRequest('open_virtual_account', body, userPrivateKey);
 };
 
@@ -1700,7 +1706,9 @@ const updateVirtualAccount = (userHandle, userPrivateKey, payload={}) => {
   if (payload.ach_debit_enabled !== undefined) {
     body.ach_debit_enabled = payload.ach_debit_enabled;
   }
-  
+  if (payload.statements_enabled !== undefined) {
+    body.statements_enabled = payload.statements_enabled;
+  }
   return makeRequest('update_virtual_account', body, userPrivateKey);
 };
 
@@ -1935,6 +1943,51 @@ const getWalletStatementData = (
     message.search_filters = payload;
     return makeRequest('get_statements_data', message);
   };
+
+  const statements = (
+    handle,
+    searchFilters,
+  ) => {
+    const fullHandle = getFullHandle(handle);
+    const message = setHeaders({ header: {} }, fullHandle);
+    message.message = 'header_msg';
+  
+      var payload = {};
+    
+      if (!searchFilters) {
+        payload = {};
+      }
+      else {
+        payload = {
+          "start_date": searchFilters.startDate,
+          "end_date": searchFilters.endDate,
+          "page": searchFilters.page,
+          "per_page": searchFilters.perPage,
+          "user_name": searchFilters.userName,
+          "user_handle": searchFilters.userHandle,
+          "account_type": searchFilters.accountType,
+          "email": searchFilters.email,          
+      }
+    }
+      message.search_filters = payload;
+
+      return makeRequest('statements', message, undefined, undefined, 'get');
+    };
+
+const resendStatements = (
+  handle,
+  email,
+  statementUuid,
+) => {
+  const fullHandle = getFullHandle(handle);
+  const message = setHeaders({ header: {} }, fullHandle);
+  message.message = 'header_msg';
+  
+  message.email = email;
+  return makeRequest('statements/' + statementUuid, message, undefined, undefined, 'put');
+  };
+
+ 
  
 export default {
   cancelTransaction,
@@ -2020,5 +2073,7 @@ export default {
   mockWireOutFile,
   uploadDocuments,
   getStatementsData,
-  getWalletStatementData
+  getWalletStatementData,
+  statements,
+  resendStatements,
 };

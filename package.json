@@ -37,7 +37,7 @@
     ]
   },
   "name": "@silamoney/sdk",
-  "version": "0.2.50",
+  "version": "0.2.51",
   "main": "lib/index.js",
   "directories": {
     "lib": "lib",

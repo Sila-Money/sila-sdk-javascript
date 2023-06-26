@@ -510,7 +510,7 @@ const checkPartnerKYCTests = [
         expectedResult: 'SUCCESS',
         description: `Checking cross app check handle`,
     },
-]
+];
 
 const linkAccountDirectTests = [
     {
@@ -711,6 +711,7 @@ const registerWalletTests = [
         statusCode: 200,
         expectedResult: true,
         description: `${handles[0]} should register new wallet`,
+        statements_enabled: true,
     },
     {
         handle: handles[0],
@@ -721,6 +722,7 @@ const registerWalletTests = [
         statusCode: 403,
         expectedResult: false,
         description: `${handles[0]} should fail register new wallet with invalid signature`,
+        statements_enabled: true,
     },
 ];
 
@@ -735,6 +737,7 @@ const getWalletsTests = [
         expectedResult: true,
         wallets: 2,
         description: `${handles[0]} should retrieve all wallets`,
+        statements_enabled: true,
     },
     {
         handle: handles[0],
@@ -744,6 +747,7 @@ const getWalletsTests = [
         expectedResult: true,
         wallets: 1,
         description: `${handles[0]} should retrieve all wallets`,
+        statements_enabled: true,
     },
 ];
 
@@ -760,6 +764,7 @@ const updateWalletTests = [
         changes: 2,
         description: `${handles[0]} should update wallet successfully`,
         blockchainAddress: wallets[0].address,
+        statements_enabled: true,
     },
     {
         handle: handles[1],
@@ -773,6 +778,7 @@ const updateWalletTests = [
         changes: 2,
         description: `${handles[1]} should update wallet successfully`,
         blockchainAddress: wallets[1].address,
+        statements_enabled: true,
     },
 ];
 
@@ -786,6 +792,7 @@ const getWalletTests = [
         default: true,
         nickname: 'default',
         blockchainAddress: wallets[0].address,
+        statements_enabled: true,
     },
     {
         handle: handles[0],
@@ -796,6 +803,7 @@ const getWalletTests = [
         default: false,
         nickname: 'new_wallet',
         blockchainAddress: wallets[3].address,
+        statements_enabled: true,
     },
 ];
 
@@ -1227,6 +1235,7 @@ const openVirtualAccountTests = [
         status: 'success',
         virtual_account_id:'',
         description: `${handles[0]} should open first virtual account successfully`,
+        statements_enabled: false,
     },
     {
         handle: handles[0],
@@ -1237,6 +1246,18 @@ const openVirtualAccountTests = [
         status: 'success',
         virtual_account_id:'',
         description: `${handles[0]} should open second virtual account successfully`,
+        statements_enabled: false,
+    },
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        virtual_account_name: 'testVarAccount-3',
+        statusCode: 200,
+        expectedResult: 'SUCCESS',
+        status: 'success',
+        virtual_account_id:'',
+        description: `${handles[0]} should open third virtual account successfully`,
+        statements_enabled: true,
     },
 ];
 
@@ -2055,8 +2076,8 @@ const getWalletStatementDataTests = [
             key: wallets[0].privateKey,
             walletId: wallets[0],
             filters: {
-                startMonth: (new Date().getMonth()-1) + "-" + new Date().getFullYear(),
-                endMonth: (new Date().getMonth()) + "-" + new Date().getFullYear(),
+                startMonth: "11-2022",
+                endMonth: "12-2022",
                 page: 1,
                 perPage: 100,
             },
@@ -2071,7 +2092,7 @@ const getStatementsDataTests = [
     {
         handle: handles[0],
         filters: {
-            month: (new Date().getMonth()-1) + "-" + new Date().getFullYear(),
+            month: "11-2022",
             page: 1,
             perPage: 100,
         },
@@ -2079,6 +2100,48 @@ const getStatementsDataTests = [
         expectedResult: true,
         status: 'SUCCESS',
         description: `${handles[0]} should get statements data successfully with all filters`,
+    },
+];
+
+const statementsTests = [
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        searchFilters: {
+            startDate: "2023-06-17",
+            endDate: "2023-06-17",
+            page: 1,
+            perPage: 100,
+            userName: "Postman User",
+            userHandle: "user_handle1_1686776339cudgjmzwckh4ohh",
+            accountType: "VIRTUAL_ACCOUNT",
+            email: "sunilarc14@silamoney.com",
+        },
+        statusCode: 200,
+        expectedResult: true,
+        status: 'SUCCESS',
+        description: `${handles[0]} should get statements successfully with all filters`,
+    },
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        statusCode: 200,
+        expectedResult: true,
+        status: 'SUCCESS',
+        description: `${handles[0]} should get statements successfully`,
+    },
+];
+
+const resendStatementsTests = [
+    {
+        handle: handles[0],
+        key: wallets[0].privateKey,
+        email: "sunilarc14@silamoney.com", 
+        statementUuid: "59a4feba-0fcd-40ac-bd9a-59e47da0b640",
+        statusCode: 200,
+        expectedResult: true,
+        status: 'SUCCESS',
+        description: `${handles[0]} should get resend statements successfully`,
     },
 ];
 
@@ -3124,9 +3187,13 @@ describe('Register Wallet', function () {
                     test.wallet,
                     test.nickname,
                     test.default,
+                    test.statements_enabled,
                 );
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.success, test.expectedResult);
+                if (test.expectedResult == true){
+                assert.equal(res.data.statements_enabled, test.statements_enabled);
+            }
             } catch (err) {
                 assert.fail(err);
             }
@@ -3139,11 +3206,12 @@ describe('Get Wallets', function () {
     getWalletsTests.forEach((test) => {
         it(test.description, async () => {
             try {
-                const res = await sila.getWallets(test.handle, test.key, test.filters);
+                const res = await sila.getWallets(test.handle, test.key, test.filters, test.statements_enabled);
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.wallets.length, test.wallets);
-                assert.equal(res.data.total_count, test.wallets);
+                assert.equal(res.data.wallets[0].statements_enabled, test.statements_enabled);
+                assert.equal(res.data.total_count, test.wallets);             
             } catch (err) {
                 assert.fail(err);
             }
@@ -3160,9 +3228,11 @@ describe('Update Wallet', function () {
                     scenario.handle,
                     scenario.key,
                     scenario.walletProperties,
+                    scenario.statements_enabled,
                 );
                 assert.equal(res.statusCode, scenario.statusCode);
                 assert.equal(res.data.success, scenario.expectedResult);
+                assert.equal(res.data.wallet.statements_enabled, scenario.statements_enabled);
                 assert.equal(res.data.changes.length, scenario.changes);
                 assert.equal(
                     res.data.wallet.nickname,
@@ -3191,6 +3261,7 @@ describe('Get Wallet', function () {
                 const res = await sila.getWallet(test.handle, test.key);
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.success, test.expectedResult);
+                assert.equal(res.data.wallet.statements_enabled, test.statements_enabled);
                 assert.equal(res.data.wallet.nickname, test.nickname);
                 assert.equal(res.data.wallet.default, test.default);
                 assert.equal(
@@ -3365,7 +3436,6 @@ describe('Issue Sila', function () {
                     test.processingType,
                     cardName,
                 );
-
                 if (res.statusCode === 200) issueReferences.push(res.data.reference);
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.status, test.expectedResult);
@@ -3722,7 +3792,8 @@ describe('Open Virtual Account', function () {
                 var payload = {
                     "ach_debit_enabled":true,
                     "ach_credit_enabled":false,
-                    "virtual_account_name":test.virtual_account_name
+                    "virtual_account_name":test.virtual_account_name,
+                    "statements_enabled": true,
                 }
                 const res = await sila.openVirtualAccount(test.handle, test.key, payload);
                 if (!paymentMethodsIds['virtual_account_number_1']) {
@@ -3732,13 +3803,14 @@ describe('Open Virtual Account', function () {
                     paymentMethodsIds['virtual_account_number_2'] = res.data.virtual_account.account_number;
                     paymentMethodsIds['virtual_account_id_2'] = res.data.virtual_account.virtual_account_id;
                 }
-
+                
                 assert.equal(res.statusCode, test.statusCode);
                 assert.isTrue(res.data.success);
                 assert.equal(res.data.status, test.expectedResult);
                 assert.equal(res.data.virtual_account.virtual_account_name, test.virtual_account_name);
                 assert.equal(res.data.virtual_account.ach_debit_enabled, true);
                 assert.equal(res.data.virtual_account.ach_credit_enabled, false);
+                assert.equal(res.data.virtual_account.statements_enabled, true);
                 test.virtual_account_id = res.data.virtual_account.virtual_account_id;
             } catch (e) {
                 assert.fail(e);
@@ -3755,7 +3827,8 @@ describe('Update Virtual Account', function () {
                 "ach_debit_enabled":true,
                 "ach_credit_enabled":false,
                 "virtual_account_name":openVirtualAccountTests[0]['virtual_account_name'],
-                "virtual_account_id":paymentMethodsIds['virtual_account_id_1']
+                "virtual_account_id":paymentMethodsIds['virtual_account_id_1'],
+                "statements_enabled":true,
             }
             const res = await sila.updateVirtualAccount(handles[0], wallets[0].privateKey, payload);
             assert.equal(res.statusCode, 200);
@@ -3763,7 +3836,7 @@ describe('Update Virtual Account', function () {
             assert.equal(res.data.status, 'SUCCESS');
             assert.equal(res.data.virtual_account.ach_debit_enabled, true);
             assert.equal(res.data.virtual_account.ach_credit_enabled, false);
-
+            assert.equal(res.data.virtual_account.statements_enabled, true);
         } catch (e) {
             assert.fail(e);
         }
@@ -4099,10 +4172,12 @@ describe('Delete Card', function () {
     it("Successfully Deleted the Card.", async () => {
         try {
             let cardName = 'visa';
+            let provider = 'evolve';
             const res = await sila.deleteCard(
                 handles[0],
                 wallets[0].privateKey,
                 cardName,
+                provider
             );
 
             assert.equal(res.statusCode, 200);
@@ -4252,7 +4327,7 @@ describe('Get Transactions Using Serach Filter INSTANT_SETTLEMENT', function () 
     });
 });
 
-describe('Get Transactions Using Serach Filter payment_method_id (single virtual account)', function () {
+describe('Get Transactions Using Search Filter payment_method_id (single virtual account)', function () {
     this.timeout(300000);
     it("Successfully Get Transactions single virtual account.", async () => {
         try {
@@ -4319,7 +4394,7 @@ describe('Close Virtual Account', function () {
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
             assert.equal(res.data.virtual_account.account_number, paymentMethodsIds['virtual_account_number_1']);
-
+            assert.equal(res.data.virtual_account.statements_enabled, true);
         } catch (err) {
             assert.fail(err);
         }
@@ -4354,7 +4429,7 @@ describe('Plaid Sameday Auth', function () {
     });
 });
 
-describe('get wallet statement data', function () {
+describe('Get Wallet Statement Data', function () {
     this.timeout(300000);
     getWalletStatementDataTests.forEach((test) => {
         it(test.description, async () => {
@@ -4365,11 +4440,10 @@ describe('get wallet statement data', function () {
                     test.key,
                     wallet_res.data.wallet.wallet_id,
                     test.filters,
-                );
+                    );
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.status, test.status);
-
             } catch (e) {
                 assert.fail(e);
             }
@@ -4377,7 +4451,7 @@ describe('get wallet statement data', function () {
     });
 });
 
-describe('get statements data', function () {
+describe('Get Statements Data', function () {
     this.timeout(300000);
     getStatementsDataTests.forEach((test) => {
         it(test.description, async () => {
@@ -4385,7 +4459,47 @@ describe('get statements data', function () {
                 const res = await sila.getStatementsData(
                     test.handle,
                     test.filters,
-                );
+                    );
+                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.data.success, test.expectedResult);
+                assert.equal(res.data.status, test.status);
+            } catch (e) {
+                assert.fail(e);
+            }
+        });
+    });
+});
+
+describe('Statements', function () {
+    this.timeout(300000);  
+    statementsTests.forEach((test) => {
+      it(test.description, async () => {
+        try {
+          const res = await sila.statements(
+            test.handle,
+            test.searchFilters,
+          );
+          assert.equal(res.statusCode, test.statusCode);
+          assert.equal(res.data.success, test.expectedResult);
+          assert.equal(res.data.status, test.status);
+        } catch (e) {
+          assert.fail(e);
+        }
+      });
+    });
+  });
+  
+
+describe('Resend Statements', function () {
+    this.timeout(300000);    
+    resendStatementsTests.forEach((test) => {
+        it(test.description, async () => {
+            try {
+                const res = await sila.resendStatements(
+                    test.handle,
+                    test.email,
+                    test.statementUuid
+                    );
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.status, test.status);
