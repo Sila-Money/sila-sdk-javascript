@@ -20,16 +20,12 @@ sila.setEnvironment('test');
 */
 
 sila.configure({
-    key: 'e60a5c57130f4e82782cbdb498943f31fe8f92ab96daac2cc13cbbbf9c0b4d9e', // Add your private key here. USE ENV VARIABLE
-    handle: 'digital_geko_e2e', // Add your app handle here
+    key: '9c17e7b767b8f4a63863caf1619ef3e9967a34b287ce58542f3eb19b5a72f076', // Add your private key here. USE ENV VARIABLE
+    handle: 'arc_sandbox_test_app01', // Add your app handle here
 });
 sila.setEnvironment('sandbox');
 
-// sila.configure({
-//     key: '8a44030b7ed1f56508e25583ad93a862b0a332c80ebe3690d000930a5c8fa92d', // Add your private key here. USE ENV VARIABLE
-//     handle: 'test1_mx_001', // Add your app handle here
-// });
-// sila.setEnvironment('test');
+
 
 /*
 sila.configure({
@@ -4301,7 +4297,7 @@ describe('RedeemSila For Support INSTANT_SETTLEMENT Product', function () {
     });
 });
 
-describe('Get Transactions Using Serach Filter INSTANT_SETTLEMENT', function () {
+describe('Get Transactions Using Search Filter INSTANT_SETTLEMENT', function () {
     this.timeout(300000);
     it("Successfully Get Transactions INSTANT_SETTLEMENT.", async () => {
         try {
