@@ -1019,7 +1019,7 @@ const plaidSamedayAuth = (handle, privateKey, accountName) => {
  * @param {String} privateKey An already registered user's wallet private key
  * @param {Wallet} wallet The new wallet
  */
-const registerWallet = (handle, privateKey, wallet, nickname, defaultVal, statements_enabled) => {
+const registerWallet = (handle, privateKey, wallet, nickname, defaultVal, statementsEnabled) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
 
@@ -1028,7 +1028,7 @@ const registerWallet = (handle, privateKey, wallet, nickname, defaultVal, statem
   body.wallet = {};
   body.wallet.blockchain_address = wallet.address;
   body.wallet.blockchain_network = 'ETH';
-  if (statements_enabled) body.wallet.statements_enabled = statements_enabled;
+  if (statementsEnabled) body.wallet.statements_enabled = statementsEnabled;
   if (nickname) body.wallet.nickname = nickname;
   if (defaultVal) body.wallet.default = defaultVal;
 
@@ -1675,8 +1675,8 @@ const openVirtualAccount = (userHandle, userPrivateKey, payload={}) => {
   if (payload.ach_debit_enabled !== undefined) {
     body.ach_debit_enabled = payload.ach_debit_enabled;
   }
-  if (payload.statements_enabled !== undefined) {
-    body.statements_enabled = payload.statements_enabled;
+  if (payload.statementsEnabled !== undefined) {
+    body.statements_enabled = payload.statementsEnabled;
   }
   return makeRequest('open_virtual_account', body, userPrivateKey);
 };
@@ -1706,8 +1706,8 @@ const updateVirtualAccount = (userHandle, userPrivateKey, payload={}) => {
   if (payload.ach_debit_enabled !== undefined) {
     body.ach_debit_enabled = payload.ach_debit_enabled;
   }
-  if (payload.statements_enabled !== undefined) {
-    body.statements_enabled = payload.statements_enabled;
+  if (payload.statementsEnabled !== undefined) {
+    body.statements_enabled = payload.statementsEnabled;
   }
   return makeRequest('update_virtual_account', body, userPrivateKey);
 };

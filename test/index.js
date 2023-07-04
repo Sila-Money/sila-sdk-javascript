@@ -707,7 +707,7 @@ const registerWalletTests = [
         statusCode: 200,
         expectedResult: true,
         description: `${handles[0]} should register new wallet`,
-        statements_enabled: true,
+        statementsEnabled: true,
     },
     {
         handle: handles[0],
@@ -718,7 +718,7 @@ const registerWalletTests = [
         statusCode: 403,
         expectedResult: false,
         description: `${handles[0]} should fail register new wallet with invalid signature`,
-        statements_enabled: true,
+        statementsEnabled: true,
     },
 ];
 
@@ -733,7 +733,7 @@ const getWalletsTests = [
         expectedResult: true,
         wallets: 2,
         description: `${handles[0]} should retrieve all wallets`,
-        statements_enabled: true,
+        statementsEnabled: true,
     },
     {
         handle: handles[0],
@@ -743,7 +743,7 @@ const getWalletsTests = [
         expectedResult: true,
         wallets: 1,
         description: `${handles[0]} should retrieve all wallets`,
-        statements_enabled: true,
+        statementsEnabled: true,
     },
 ];
 
@@ -760,7 +760,7 @@ const updateWalletTests = [
         changes: 2,
         description: `${handles[0]} should update wallet successfully`,
         blockchainAddress: wallets[0].address,
-        statements_enabled: true,
+        statementsEnabled: true,
     },
     {
         handle: handles[1],
@@ -774,7 +774,7 @@ const updateWalletTests = [
         changes: 2,
         description: `${handles[1]} should update wallet successfully`,
         blockchainAddress: wallets[1].address,
-        statements_enabled: true,
+        statementsEnabled: true,
     },
 ];
 
@@ -788,7 +788,7 @@ const getWalletTests = [
         default: true,
         nickname: 'default',
         blockchainAddress: wallets[0].address,
-        statements_enabled: true,
+        statementsEnabled: true,
     },
     {
         handle: handles[0],
@@ -799,7 +799,7 @@ const getWalletTests = [
         default: false,
         nickname: 'new_wallet',
         blockchainAddress: wallets[3].address,
-        statements_enabled: true,
+        statementsEnabled: true,
     },
 ];
 
@@ -1222,7 +1222,7 @@ const openVirtualAccountTests = [
         status: 'success',
         virtual_account_id:'',
         description: `${handles[0]} should open first virtual account successfully`,
-        statements_enabled: false,
+        statementsEnabled: false,
     },
     {
         handle: handles[0],
@@ -1233,7 +1233,7 @@ const openVirtualAccountTests = [
         status: 'success',
         virtual_account_id:'',
         description: `${handles[0]} should open second virtual account successfully`,
-        statements_enabled: false,
+        statementsEnabled: false,
     },
     {
         handle: handles[0],
@@ -1244,7 +1244,7 @@ const openVirtualAccountTests = [
         status: 'success',
         virtual_account_id:'',
         description: `${handles[0]} should open third virtual account successfully`,
-        statements_enabled: true,
+        statementsEnabled: true,
     },
 ];
 
@@ -3174,12 +3174,12 @@ describe('Register Wallet', function () {
                     test.wallet,
                     test.nickname,
                     test.default,
-                    test.statements_enabled,
+                    test.statementsEnabled,
                 );
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.success, test.expectedResult);
                 if (test.expectedResult == true){
-                assert.equal(res.data.statements_enabled, test.statements_enabled);
+                assert.equal(res.data.statements_enabled, test.statementsEnabled);
             }
             } catch (err) {
                 assert.fail(err);
@@ -3193,11 +3193,11 @@ describe('Get Wallets', function () {
     getWalletsTests.forEach((test) => {
         it(test.description, async () => {
             try {
-                const res = await sila.getWallets(test.handle, test.key, test.filters, test.statements_enabled);
+                const res = await sila.getWallets(test.handle, test.key, test.filters, test.statementsEnabled);
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.wallets.length, test.wallets);
-                assert.equal(res.data.wallets[0].statements_enabled, test.statements_enabled);
+                assert.equal(res.data.wallets[0].statements_enabled, test.statementsEnabled);
                 assert.equal(res.data.total_count, test.wallets);             
             } catch (err) {
                 assert.fail(err);
@@ -3215,11 +3215,11 @@ describe('Update Wallet', function () {
                     scenario.handle,
                     scenario.key,
                     scenario.walletProperties,
-                    scenario.statements_enabled,
+                    scenario.statementsEnabled,
                 );
                 assert.equal(res.statusCode, scenario.statusCode);
                 assert.equal(res.data.success, scenario.expectedResult);
-                assert.equal(res.data.wallet.statements_enabled, scenario.statements_enabled);
+                assert.equal(res.data.wallet.statements_enabled, scenario.statementsEnabled);
                 assert.equal(res.data.changes.length, scenario.changes);
                 assert.equal(
                     res.data.wallet.nickname,
@@ -3248,7 +3248,7 @@ describe('Get Wallet', function () {
                 const res = await sila.getWallet(test.handle, test.key);
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.success, test.expectedResult);
-                assert.equal(res.data.wallet.statements_enabled, test.statements_enabled);
+                assert.equal(res.data.wallet.statements_enabled, test.statementsEnabled);
                 assert.equal(res.data.wallet.nickname, test.nickname);
                 assert.equal(res.data.wallet.default, test.default);
                 assert.equal(
@@ -3902,7 +3902,7 @@ describe('Get Payment Methods', function () {
     });
 });
 
-describe('Issue Sila From Bank To Virtual Account And Verifiy Transaction', function () {
+describe('Issue Sila From Bank To Virtual Account And Verify Transaction', function () {
     this.timeout(300000);
     it('Successfully issueSila to virtual account-1', async () => {
         try {
@@ -3982,7 +3982,7 @@ describe('Issue Sila From Bank To Virtual Account And Verifiy Transaction', func
     });
 });
 
-describe('Redeem Sila From Virtual Account to card And Verifiy Transaction', function () {
+describe('Redeem Sila From Virtual Account to card And Verify Transaction', function () {
     this.timeout(300000);
 
     it('Successfully redeemSila to card', async () => {
