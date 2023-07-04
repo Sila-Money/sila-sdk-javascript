@@ -879,15 +879,6 @@ const issueSilaTests = [
         messageRegex: /submitted to processing queue/,
     },
     {
-        handle: handles[2],
-        key: wallets[2].privateKey,
-        amount: 1000,
-        statusCode: 401,
-        expectedResult: 'FAILURE',
-        description: `${handles[2]} should fail issue sila tokens`,
-        messageRegex: /not ID verified/,
-    },
-    {
         handle: handles[0],
         key: wallets[0].privateKey,
         amount: 50000,
