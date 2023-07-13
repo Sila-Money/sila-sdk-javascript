@@ -1,7 +1,6 @@
 /* eslint-disable func-names */
 import { assert } from 'chai';
 import regeneratorRuntime, { async } from 'regenerator-runtime'; // eslint-disable-line no-unused-vars
-import request from 'request';
 import uuid4 from 'uuid4';
 import moment from 'moment';
 import sila from '../src/index';
@@ -185,7 +184,7 @@ const plaidToken = () => {
             body: requestBody,
         };
 
-        request.post(options, (err, response, body) => {
+        axios.post(options.uri, {params: options.body}, (err, response, body) => {
             if (err) {
                 resolve({});
             }

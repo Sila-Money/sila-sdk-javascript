@@ -1,5 +1,4 @@
 import crypto from 'eth-crypto';
-import request from 'request';
 import uuid4 from 'uuid4';
 import fs from 'fs';
 import crypt from 'crypto';
@@ -250,7 +249,7 @@ const postFile = (options, filePath, fileObject) => {
         fileOptions.formData[key] = filePath[key]
       }
 
-      request.post(fileOptions, (err, response, body) => {
+      axios.post(fileOptions.uri, {params: fileOptions.formData, headers: fileOptions.headers}, (err, response, body) => {
         if (err) rej(err);
         res({
           statusCode: (response.status)?response.status:response.statusCode,
