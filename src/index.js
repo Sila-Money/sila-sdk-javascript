@@ -6,7 +6,7 @@ import lodash, { method } from 'lodash';
 import regeneratorRuntime from 'regenerator-runtime'; // eslint-disable-line no-unused-vars
 
 import axios from 'axios';
-import FormData from 'form-data';
+const FormData = require('form-data');
 
 import TransactionFilters from './models/transactionFilters';
 import User from './models/user';
@@ -154,50 +154,55 @@ const setHeaders = (msg, handle, businessHandle) => {
 };
 
 const post = (options) => {
-  const promise = new Promise((res, rej) => {
+  return new Promise((resolve, reject) => {
     if (logging && env !== 'PROD') {
       console.log('*** REQUEST ***');
       console.log(options.body);
     }
 
-    var config = {
-      method: options.method,
+    const config = {
       url: options.uri,
-      headers: options.headers,
-      data : options.body
+      headers: {...options.headers, ...options.body.header},
+      data: options.body
     };
 
-    axios(config)
-    .then(function (response) {
-      res({
-        statusCode: (response.status)?response.status:response.statusCode,
-        headers: response.headers,
-        data: response.data
-      });
-    })
-    .catch(function (error) {
+    // Common request function to handle different HTTP methods
+    const requestFn = (method, url, data, headers) => {
+      return axios[method.toLowerCase()](url, data, { headers });
+    };
 
-      if (error.response == undefined) {
-        if (logging && env !== 'PROD') {
-          console.log('*** RESPONSE ***');
-          console.log(error);
-        }
-        rej(error);
-      }
-      if (logging && env !== 'PROD') {
-        console.log('*** RESPONSE ***');
-        console.log(body);
-      }
-      res({
-        statusCode: (error.response.status)?error.response.status:error.response.statusCode,
-        headers: error.response.headers,
-        data: error.response.data
-      });
-    
-    });
+    // Determine the HTTP method and use the common request function
+    if (['GET', 'POST', 'PUT', 'DELETE'].includes(options.method.toUpperCase())) {
+      requestFn(options.method, config.url, config.data, config.headers)
+        .then((response) => {
+          resolve({
+            statusCode: response.status || response.statusCode,
+            headers: response.headers,
+            data: response.data
+          });
+        })
+        .catch((error) => {
+          if (error.response == undefined) {
+            console.log('*** RESPONSE ***');
+            console.log(error);
+            reject(error);
+          } else {
+            console.log('*** RESPONSE ***');
+            console.log(error.response.data);
+            resolve({
+              statusCode: error.response?.status || error.response?.statusCode,
+              headers: error.response?.headers,
+              data: error.response?.data
+            });
+          }
+        });
+    } else {
+      reject(new Error(`Invalid HTTP method: ${options.method}`));
+    }
   });
-  return promise;
 };
+
+
 
 const postFile = (options, filePath, fileObject) => {
   const promise = new Promise((res, rej) => {
@@ -205,62 +210,78 @@ const postFile = (options, filePath, fileObject) => {
       console.log('*** REQUEST ***');
       console.log(options.body);
     }
-    
-    if (fileObject && Object.keys(fileObject).length != 0) {
-      var data = new FormData();
+
+    if (fileObject && Object.keys(fileObject).length !== 0) {
+      const data = new FormData();
       data.append('data', JSON.stringify(options.body));
       for (let key in fileObject) {
         data.append(key, fileObject[key]);
       }
-      var config = {
+
+      const config = {
         method: 'post',
         url: options.uri,
-        headers: options.headers,
-        data : data
+        headers: {
+          ...options.headers,
+          ...data.getHeaders() // Add form-data headers
+        },
+        data: data
       };
 
       axios(config)
-      .then(function (response) {
-        res({
-          statusCode: (response.status)?response.status:response.statusCode,
-          headers: response.headers,
-          data: response.data
+        .then(function (response) {
+          res({
+            statusCode: response.status || response.statusCode,
+            headers: response.headers,
+            data: response.data
+          });
+        })
+        .catch(function (error) {
+          res({
+            statusCode: error.response?.status || error.response?.statusCode,
+            headers: error.response?.headers,
+            data: error.response?.data
+          });
         });
-      })
-      .catch(function (error) {
-        res({
-          statusCode: (error.response.status)?error.response.status:error.response.statusCode,
-          headers: error.response.headers,
-          data: error.response.data
-        });
-      });
-
     } else {
-      
-      const fileOptions = {
-        uri: options.uri,
-        headers: options.headers,
-        formData: {
-          data: JSON.stringify(options.body),
-        },
-      };
+      const formData = new FormData();
+      formData.append('data', JSON.stringify(options.body));
 
       for (let key in filePath) {
-        fileOptions.formData[key] = filePath[key]
+        formData.append(key, filePath[key]);
       }
 
-      axios.post(fileOptions.uri, {params: fileOptions.formData, headers: fileOptions.headers}, (err, response, body) => {
-        if (err) rej(err);
-        res({
-          statusCode: (response.status)?response.status:response.statusCode,
-          headers: response.headers,
-          data: JSON.parse(body),
+      const config = {
+        method: 'post',
+        url: options.uri,
+        headers: {
+          ...options.headers,
+          ...formData.getHeaders() // Add form-data headers
+        },
+        data: formData
+      };
+
+      axios(config)
+        .then(function (response) {
+          res({
+            statusCode: response.status || response.statusCode,
+            headers: response.headers,
+            data: response.data
+          });
+        })
+        .catch(function (error) {
+          res({
+            statusCode: error.response?.status || error.response?.statusCode,
+            headers: error.response?.headers,
+            data: error.response?.data
+          });
         });
-      });      
     }
   });
+
   return promise;
 };
+
 
 /**
  *
@@ -292,7 +313,7 @@ const makeFileRequest = (path, body, filePath, fileObject, privateKey) => {
   let opts = {
     uri: url(path),
     body,
-  }; 
+  };
   opts = signOpts(opts, privateKey);
   return postFile(opts, filePath, fileObject);
 };
@@ -610,7 +631,7 @@ const issueSila = (
   }
   body.account_name = accountName;
   if (cardName !== undefined) {
-    body.card_name = cardName;  
+    body.card_name = cardName;
   }
   if (sourceId !== undefined) {
     body.source_id = sourceId;
@@ -660,13 +681,13 @@ const redeemSila = (
   const body = setHeaders({ header: {} }, fullHandle);
   body.amount = amount;
   body.message = 'redeem_msg';
-  
+
   if (cardName == undefined && accountName == undefined && sourceId == undefined) {
     accountName = 'default';
   }
   body.account_name = accountName;
   if (cardName !== undefined) {
-    body.card_name = cardName;  
+    body.card_name = cardName;
   }
   if (sourceId !== undefined) {
     body.source_id = sourceId;
@@ -1147,7 +1168,7 @@ const getBalance = (address) => {
  * @param {String} userHandle The user handle
  * @param {String} userPrivateKey The user's private key
  * @param {Object} document
- * 
+ *
  */
 const uploadDocument = async (userHandle, userPrivateKey, document) => {
   const fullHandle = getFullHandle(userHandle);
@@ -1155,7 +1176,7 @@ const uploadDocument = async (userHandle, userPrivateKey, document) => {
 
     body.name = document.name;
     body.filename = document.filename;
-    
+
     var tmpFileObj = {};
     var tmpFilePathObj = {};
 
@@ -1165,7 +1186,7 @@ const uploadDocument = async (userHandle, userPrivateKey, document) => {
     } else {
       body.hash = await hashFile(document.filePath, 'sha256');
       tmpFilePathObj = {'file':fs.createReadStream(document.filePath)}
-    }  
+    }
     body.mime_type = document.mimeType;
     body.document_type = document.documentType;
     body.description = document.description;
@@ -1178,7 +1199,7 @@ const uploadDocument = async (userHandle, userPrivateKey, document) => {
  * @param {String} userHandle The user handle
  * @param {String} userPrivateKey The user's private key
  * @param {Array} documents
- * 
+ *
  */
  const uploadDocuments = async (userHandle, userPrivateKey, documents) => {
   const fullHandle = getFullHandle(userHandle);
@@ -1194,7 +1215,7 @@ const uploadDocument = async (userHandle, userPrivateKey, document) => {
       let index = i+1;
       docBodyObj.name = docObj.name;
       docBodyObj.filename = docObj.filename;
-      
+
       if(docObj.fileBuffer) {
         docBodyObj.hash = await hashFileObject(docObj.fileBuffer, 'sha256');
         fileObjects['file_'+index] = docObj.fileObject;
@@ -1202,12 +1223,12 @@ const uploadDocument = async (userHandle, userPrivateKey, document) => {
       } else {
         docBodyObj.hash = await hashFile(docObj.filePath, 'sha256');
         filePaths['file_'+index] = fs.createReadStream(docObj.filePath);
-      }  
+      }
       docBodyObj.mime_type = docObj.mimeType;
       docBodyObj.document_type = docObj.documentType;
       docBodyObj.description = docObj.description;
 
-      body.file_metadata['file_'+index] = docBodyObj;      
+      body.file_metadata['file_'+index] = docBodyObj;
     }
     return makeFileRequest('documents', body, filePaths, fileObjects, userPrivateKey);
 };
@@ -1522,7 +1543,7 @@ const checkInstantAch = ({ account_name, kyc_level }, user_handle, user_private_
   const body = setHeaders({ header: {} }, user_handle);
   body.account_name = account_name;
   if (kyc_level) body.kyc_level = kyc_level;
-  
+
   return makeRequest('check_instant_ach', body, user_private_key);
 };
 
@@ -1632,11 +1653,11 @@ const getWebhooks = (userHandle, userPrivateKey, searchFilters) => {
       end_epoch: undefined,
       page: undefined,
       per_page: undefined
-    };  
+    };
   } else {
     payload = searchFilters;
   }
-  
+
   body.search_filters = payload;
   return makeRequest('get_webhooks', body, userPrivateKey);
 };
@@ -1722,7 +1743,7 @@ const getVirtualAccount = (userHandle, userPrivateKey, virtualAccountId) => {
     header: {}
   }, userHandle);
   body.virtual_account_id = virtualAccountId;
-  
+
   return makeRequest('get_virtual_account', body, userPrivateKey);
 };
 
@@ -1806,7 +1827,7 @@ const createTestVirtualAccountAchTransaction = (userHandle, userPrivateKey, payl
   if (payload.ach_name) {
     body.ach_name = payload.ach_name;
   }
-  
+
   return makeRequest("create_test_virtual_account_ach_transaction", body, userPrivateKey);
 };
 
@@ -1894,7 +1915,7 @@ const setLogging = (log) => {
 
 const getWalletStatementData = (
   handle,
-  privateKey, 
+  privateKey,
   walletId,
   searchFilters,
 ) => {
@@ -1904,7 +1925,7 @@ const getWalletStatementData = (
     message.wallet_id = walletId;
 
     var payload = {};
-  
+
     if (!searchFilters) {
       payload = {};
     }
@@ -1914,31 +1935,31 @@ const getWalletStatementData = (
         "end_month": searchFilters.endMonth,
         "page": searchFilters.page,
         "per_page": searchFilters.perPage,
-        
+
     }
   }
-  
+
     message.search_filters = payload;
     return makeRequest('get_wallet_statement_data', message, privateKey);
   };
 
  const getStatementsData = (
-  handle, 
+  handle,
   searchFilters,
 ) => {
     const fullHandle = getFullHandle(handle);
     const message = setHeaders({ header: {} }, fullHandle);
     message.message = 'get_statements_data_msg';
-  
+
     var payload = {};
-  
+
     if (!searchFilters) {
       payload = {};
     }
     else {
       payload = searchFilters
     }
-  
+
     message.search_filters = payload;
     return makeRequest('get_statements_data', message);
   };
@@ -1950,9 +1971,9 @@ const getWalletStatementData = (
     const fullHandle = getFullHandle(handle);
     const message = setHeaders({ header: {} }, fullHandle);
     message.message = 'header_msg';
-  
+
       var payload = {};
-    
+
       if (!searchFilters) {
         payload = {};
       }
@@ -1965,7 +1986,7 @@ const getWalletStatementData = (
           "user_name": searchFilters.userName,
           "user_handle": searchFilters.userHandle,
           "account_type": searchFilters.accountType,
-          "email": searchFilters.email,          
+          "email": searchFilters.email,
       }
     }
       message.search_filters = payload;
@@ -1981,13 +2002,13 @@ const resendStatements = (
   const fullHandle = getFullHandle(handle);
   const message = setHeaders({ header: {} }, fullHandle);
   message.message = 'header_msg';
-  
+
   message.email = email;
   return makeRequest('statements/' + statementUuid, message, undefined, undefined, 'put');
   };
 
- 
- 
+
+
 export default {
   cancelTransaction,
   checkHandle,

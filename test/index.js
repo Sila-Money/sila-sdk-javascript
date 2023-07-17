@@ -10,13 +10,6 @@ const sleep = (ms, description) => {
     console.log(`${description} waiting for ${ms / 1000} seconds`);
     return new Promise((resolve) => setTimeout(resolve, ms));
 };
-/*
-sila.configure({
-    key: 'a8ec7148de20f94af4c1a011176606e474effea14eee77a87ba34f3997a9029f', // Add your private key here. USE ENV VARIABLE
-    handle: 'arc_idv_doc', // Add your app handle here
-});
-sila.setEnvironment('test');
-*/
 
 sila.configure({
     key: '9c17e7b767b8f4a63863caf1619ef3e9967a34b287ce58542f3eb19b5a72f076', // Add your private key here. USE ENV VARIABLE
@@ -24,23 +17,6 @@ sila.configure({
 });
 sila.setEnvironment('sandbox');
 
-
-
-/*
-sila.configure({
-    key: '197f4d0f41fa98a67b2bdcf931b3076e64005264b59f3d5c1658a6a9aba7e471', // Add your private key here. USE ENV VARIABLE
-    handle: 'arcgate_stage_app01', // Add your app handle here
-});
-sila.setEnvironment('stage');
-
-
-//instant settlement APP
-/*sila.configure({
-    key: 'eaf42ff2c0016fcb0a996d0ce1e692559e19b38f58056a87492683cdf6e9a7cc', // Add your private key here. USE ENV VARIABLE
-    handle: 'is_sandbox_test_app004', // Add your app handle here
-});
-sila.setEnvironment('sandbox');
-*/
 const invalidWallet = sila.generateWallet();
 invalidWallet.privateKey = 'e60a5c57130f4e82782cbdb498943f31fe8f92ab96daac2cc13cbbbf9c0b4d9d';
 
@@ -167,58 +143,64 @@ sardineUser.sessionIdentifier = "ppppp-aaaa-dddd-99ce-c45944174e0c";
 var mockWireTransactionId_1 = '';
 
 const plaidToken = () => {
-    const promise = new Promise((resolve) => {
-        const requestBody = {
-            public_key: 'fa9dd19eb40982275785b09760ab79',
-            initial_products: ['transactions'],
-            institution_id: 'ins_109508',
-            credentials: {
-                username: 'user_good',
-                password: 'pass_good',
-            },
-        };
+  const promise = new Promise((resolve, reject) => {
+    const requestBody = {
+      public_key: 'fa9dd19eb40982275785b09760ab79',
+      initial_products: ['transactions'],
+      institution_id: 'ins_109508',
+      credentials: {
+        username: 'user_good',
+        password: 'pass_good',
+      },
+    };
 
-        const options = {
-            uri: 'https://sandbox.plaid.com/link/item/create',
-            json: true,
-            body: requestBody,
-        };
+    const options = {
+      uri: 'https://sandbox.plaid.com/link/item/create',
+      json: true,
+      body: requestBody,
+    };
 
-        axios.post(options.uri, {params: options.body}, (err, response, body) => {
-            if (err) {
-                resolve({});
-            }
-            const token = body.public_token;
-            const accountId = body.accounts[0].account_id;
+    axios
+      .post(options.uri, options.body)
+      .then((response) => {
+        const body = response.data;
+        const token = body.public_token;
+        const accountId = body.accounts[0].account_id;
 
-            resolve({ token, accountId });
-        });
-    });
-    return promise;
+        resolve({ token, accountId });
+      })
+      .catch((error) => {
+        console.error('Error making Plaid API request:', error);
+        resolve({}); // Resolve with empty object if there's an error
+      });
+  });
+
+  return promise;
 };
+
 
 const MxProcessorToken = () => {
     const promise = new Promise((resolve) => {
         var data = JSON.stringify({
-            "payment_processor_authorization_code": 
+            "payment_processor_authorization_code":
             {
               user_guid: "USR-78912abf-a65b-4661-806b-bdcf4e062e16",
               member_guid: "MBR-1e0d03f3-d42e-46e7-86fb-ae07b79c557a",
               account_guid: "ACT-cc129199-606c-41a3-aeec-ee32980362d4"
             }
           });
-          
+
           var config = {
             method: 'post',
             url: 'https://int-api.mx.com/payment_processor_authorization_code',
-            headers: { 
-              'Authorization': 'Basic OWNlOTFhZWQtMDA4Zi00YjFmLThlMzktNGU3YTU5NjZlOTVhOmYyZThkYzE4MmY2MzQ5OTk5NjMzMDJlYTE3OGU3NTBkZWU2NDQ3ODM=', 
-              'Accept': 'application/vnd.mx.api.v1+json', 
+            headers: {
+              'Authorization': 'Basic OWNlOTFhZWQtMDA4Zi00YjFmLThlMzktNGU3YTU5NjZlOTVhOmYyZThkYzE4MmY2MzQ5OTk5NjMzMDJlYTE3OGU3NTBkZWU2NDQ3ODM=',
+              'Accept': 'application/vnd.mx.api.v1+json',
               'Content-Type': 'application/json'
             },
             data : data
           };
-          
+
           axios(config)
           .then(function (response) {
             const token = response.data.payment_processor_authorization_code.authorization_code;
@@ -258,8 +240,6 @@ const linkCardToken = () => {
     return promise;
 };
 
-//STAGING
-//const validBusinessUuid = 'dbe721f6-1140-41e3-bdc4-baa632b37405';
 //SANDBOX
 const validBusinessUuid = '9f280665-629f-45bf-a694-133c86bffd5e';
 const wireBusinessUuid = '25e77968-1ca3-4a4b-8e72-506dcac20dc7';
@@ -2122,7 +2102,7 @@ const resendStatementsTests = [
     {
         handle: handles[0],
         key: wallets[0].privateKey,
-        email: "sunilarc14@silamoney.com", 
+        email: "sunilarc14@silamoney.com",
         statementUuid: "59a4feba-0fcd-40ac-bd9a-59e47da0b640",
         statusCode: 200,
         expectedResult: true,
@@ -3085,7 +3065,7 @@ describe('Link Account - MX Token tests', function () {
                 );
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.status, test.expectedResult);
-                    
+
             } catch (e) {
                 assert.fail(e);
             }
@@ -3197,7 +3177,7 @@ describe('Get Wallets', function () {
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.wallets.length, test.wallets);
                 assert.equal(res.data.wallets[0].statements_enabled, test.statementsEnabled);
-                assert.equal(res.data.total_count, test.wallets);             
+                assert.equal(res.data.total_count, test.wallets);
             } catch (err) {
                 assert.fail(err);
             }
@@ -3789,7 +3769,7 @@ describe('Open Virtual Account', function () {
                     paymentMethodsIds['virtual_account_number_2'] = res.data.virtual_account.account_number;
                     paymentMethodsIds['virtual_account_id_2'] = res.data.virtual_account.virtual_account_id;
                 }
-                
+
                 assert.equal(res.statusCode, test.statusCode);
                 assert.isTrue(res.data.success);
                 assert.equal(res.data.status, test.expectedResult);
@@ -3911,7 +3891,7 @@ describe('Issue Sila From Bank To Virtual Account And Verify Transaction', funct
                 "destination_id": paymentMethodsIds['virtual_account_id_1']
             };
             const res = await sila.issueSila(payload.amount, handles[0], wallets[0].privateKey,payload.account_name,payload.descriptor,'',payload.processing_type,payload.card_name,payload.source_id, payload.destination_id);
-            
+
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
@@ -4457,7 +4437,7 @@ describe('Get Statements Data', function () {
 });
 
 describe('Statements', function () {
-    this.timeout(300000);  
+    this.timeout(300000);
     statementsTests.forEach((test) => {
       it(test.description, async () => {
         try {
@@ -4474,10 +4454,10 @@ describe('Statements', function () {
       });
     });
   });
-  
+
 
 describe('Resend Statements', function () {
-    this.timeout(300000);    
+    this.timeout(300000);
     resendStatementsTests.forEach((test) => {
         it(test.description, async () => {
             try {
