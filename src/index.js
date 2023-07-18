@@ -161,44 +161,35 @@ const post = (options) => {
     }
 
     const config = {
+      method: options.method,
       url: options.uri,
       headers: {...options.headers, ...options.body.header},
       data: options.body
     };
 
-    // Common request function to handle different HTTP methods
-    const requestFn = (method, url, data, headers) => {
-      return axios[method.toLowerCase()](url, data, { headers });
-    };
-
-    // Determine the HTTP method and use the common request function
-    if (['GET', 'POST', 'PUT', 'DELETE'].includes(options.method.toUpperCase())) {
-      requestFn(options.method, config.url, config.data, config.headers)
-        .then((response) => {
-          resolve({
-            statusCode: response.status || response.statusCode,
-            headers: response.headers,
-            data: response.data
-          });
-        })
-        .catch((error) => {
-          if (error.response == undefined) {
-            console.log('*** RESPONSE ***');
-            console.log(error);
-            reject(error);
-          } else {
-            console.log('*** RESPONSE ***');
-            console.log(error.response.data);
-            resolve({
-              statusCode: error.response?.status || error.response?.statusCode,
-              headers: error.response?.headers,
-              data: error.response?.data
-            });
-          }
+    axios(config)
+      .then((response) => {
+        resolve({
+          statusCode: response.status || response.statusCode,
+          headers: response.headers,
+          data: response.data
         });
-    } else {
-      reject(new Error(`Invalid HTTP method: ${options.method}`));
-    }
+      })
+      .catch((error) => {
+        if (error.response == undefined) {
+          console.log('*** RESPONSE ***');
+          console.log(error);
+          reject(error);
+        } else {
+          console.log('*** RESPONSE ***');
+          console.log(error.response.data);
+          resolve({
+            statusCode: error.response?.status || error.response?.statusCode,
+            headers: error.response?.headers,
+            data: error.response?.data
+          });
+        }
+      });
   });
 };
 
