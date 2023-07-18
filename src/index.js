@@ -6,7 +6,7 @@ import lodash, { method } from 'lodash';
 import regeneratorRuntime from 'regenerator-runtime'; // eslint-disable-line no-unused-vars
 
 import axios from 'axios';
-const FormData = require('form-data');
+import FormData from 'form-data';
 
 import TransactionFilters from './models/transactionFilters';
 import User from './models/user';
