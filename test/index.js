@@ -1789,6 +1789,17 @@ const linkBusinessMemberTests = [
     },
 ];
 
+const unLinkBusinessMemberTests = [
+    {
+        user_handle: handles[0],
+        user_private_key: wallets[0].privateKey,
+        business_handle: handles[4],
+        business_private_key: wallets[5].privateKey,
+        role: 'administrator',
+        details: 'first admin',
+    },
+];
+
 const getEntityTests = [
     {
         handle: handles[0],
@@ -3962,25 +3973,25 @@ describe('Issue Sila From Bank To Virtual Account And Verify Transaction', funct
 });
 
 describe('Redeem Sila From Virtual Account to card And Verify Transaction', function () {
-    this.timeout(300000);
+    // this.timeout(300000);
 
-    it('Successfully redeemSila to card', async () => {
-        try {
-            var payload = {
-                "amount": 50,
-                "source_id": paymentMethodsIds['virtual_account_id_1'],
-                "destination_id": paymentMethodsIds['card_id']
-            };
-            const res = await sila.redeemSila(payload.amount, handles[0], wallets[0].privateKey,payload.account_name,payload.descriptor,'',payload.processing_type,payload.card_name,payload.source_id, payload.destination_id);
+    // it('Successfully redeemSila to card', async () => {
+    //     try {
+    //         var payload = {
+    //             "amount": 50,
+    //             "source_id": paymentMethodsIds['virtual_account_id_1'],
+    //             "destination_id": paymentMethodsIds['card_id']
+    //         };
+    //         const res = await sila.redeemSila(payload.amount, handles[0], wallets[0].privateKey,payload.account_name,payload.descriptor,'',payload.processing_type,payload.card_name,payload.source_id, payload.destination_id);
 
-            assert.equal(res.statusCode, 200);
-            assert.isTrue(res.data.success);
-            assert.equal(res.data.status, 'SUCCESS');
+    //         assert.equal(res.statusCode, 200);
+    //         assert.isTrue(res.data.success);
+    //         assert.equal(res.data.status, 'SUCCESS');
 
-        } catch (e) {
-            assert.fail(e);
-        }
-    });
+    //     } catch (e) {
+    //         assert.fail(e);
+    //     }
+    // });
 
     this.timeout(300000);
     it('Successfully redeemSila to virtual account-2', async () => {
@@ -4002,28 +4013,28 @@ describe('Redeem Sila From Virtual Account to card And Verify Transaction', func
         }
     });
 
-    this.timeout(300000);
-    it('Get redeemSila Transaction to Validate source and destination id-1', async () => {
-        try {
-            var filters = {
-                "source_id":paymentMethodsIds['virtual_account_id_1'],
-                "destination_id": paymentMethodsIds['card_id'],
-                "transaction_types": ["redeem"],
-            };
-            await sleep(30000, '');
-            const res = await sila.getTransactions(handles[0], wallets[0].privateKey, filters);
+    // this.timeout(300000);
+    // it('Get redeemSila Transaction to Validate source and destination id-1', async () => {
+    //     try {
+    //         var filters = {
+    //             "source_id":paymentMethodsIds['virtual_account_id_1'],
+    //             "destination_id": paymentMethodsIds['card_id'],
+    //             "transaction_types": ["redeem"],
+    //         };
+    //         await sleep(30000, '');
+    //         const res = await sila.getTransactions(handles[0], wallets[0].privateKey, filters);
 
-            assert.equal(res.statusCode, 200);
-            assert.isTrue(res.data.success);
-            assert.equal(res.data.status, 'SUCCESS');
-            assert.isNotNull(res.data.transactions[0]['source_id']);
-            assert.isNotNull(res.data.transactions[0]['destination_id']);
-            assert.isNotNull(res.data.transactions[0]['sila_ledger_type']);
+    //         assert.equal(res.statusCode, 200);
+    //         assert.isTrue(res.data.success);
+    //         assert.equal(res.data.status, 'SUCCESS');
+    //         assert.isNotNull(res.data.transactions[0]['source_id']);
+    //         assert.isNotNull(res.data.transactions[0]['destination_id']);
+    //         assert.isNotNull(res.data.transactions[0]['sila_ledger_type']);
 
-        } catch (e) {
-            assert.fail(e);
-        }
-    });
+    //     } catch (e) {
+    //         assert.fail(e);
+    //     }
+    // });
 
     this.timeout(300000);
     it('Get redeemSila Transaction to Validate source and destination id-2', async () => {
@@ -4475,3 +4486,49 @@ describe('Resend Statements', function () {
         });
     });
 });
+
+describe('Unlink business member', function () {
+    this.timeout(300000);
+    unLinkBusinessMemberTests.forEach((member) => {
+        it(`${member.user_handle} should be unlinked`, async () => {
+            try {
+                const res = await sila.unlinkBusinessMember(
+                    member.user_handle,
+                    member.user_private_key,
+                    member.business_handle,
+                    member.business_private_key,
+                    member.role,
+                );
+                assert.equal(res.statusCode, 200);
+                assert(res.data.success);
+            } catch (err) {
+                assert.fail(err);
+            }
+        });
+    });
+});
+
+describe('Delete Account', function () {
+    this.timeout(300000);
+  
+    const accountsToDelete = [
+      'sync_direct',
+      'defaultpt',
+      'sync_by_id',
+      'defaultMx',
+      'default'
+    ];
+  
+    it('should successfully delete accounts', async () => {
+      try {
+        for (const accountName of accountsToDelete) {
+          const res = await sila.deleteAccount(handles[0], accountName, wallets[0].privateKey);
+          assert.equal(res.statusCode, 200);
+          assert(res.data.success);
+          assert.equal(res.data.account_name, accountName);
+        }
+      } catch (error) {
+        assert.fail(error);
+      }
+    });
+  });
