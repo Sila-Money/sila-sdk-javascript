@@ -3972,6 +3972,7 @@ describe('Issue Sila From Bank To Virtual Account And Verify Transaction', funct
     });
 });
 
+// commented test cases as evolve card flow has been depreciated and cko haven't been published in sdk.
 describe('Redeem Sila From Virtual Account to card And Verify Transaction', function () {
     // this.timeout(300000);
 
