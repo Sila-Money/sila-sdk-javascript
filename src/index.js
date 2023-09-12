@@ -1574,6 +1574,8 @@ const getInstitutions = (
   body.card_name = cardObject['card_name'];
   body.account_postal_code = cardObject['account_postal_code'];
   body.token = cardObject['token'];
+  body.provider = cardObject['provider'];
+  body.skip_verification = cardObject['skip_verification'];
   return makeRequest('link_card', body, userPrivateKey);
 };
 
@@ -1934,56 +1936,56 @@ const getWalletStatementData = (
     return makeRequest('get_wallet_statement_data', message, privateKey);
   };
 
- const getStatementsData = (
+const getStatementsData = (
   handle,
   searchFilters,
 ) => {
-    const fullHandle = getFullHandle(handle);
-    const message = setHeaders({ header: {} }, fullHandle);
-    message.message = 'get_statements_data_msg';
+  const fullHandle = getFullHandle(handle);
+  const message = setHeaders({ header: {} }, fullHandle);
+  message.message = 'get_statements_data_msg';
 
-    var payload = {};
+  var payload = {};
 
-    if (!searchFilters) {
-      payload = {};
+  if (!searchFilters) {
+    payload = {};
+  }
+  else {
+    payload = searchFilters
+  }
+
+  message.search_filters = payload;
+  return makeRequest('get_statements_data', message);
+};
+
+const statements = (
+  handle,
+  searchFilters,
+) => {
+  const fullHandle = getFullHandle(handle);
+  const message = setHeaders({ header: {} }, fullHandle);
+  message.message = 'header_msg';
+
+  var payload = {};
+
+  if (!searchFilters) {
+    payload = {};
+  }
+  else {
+    payload = {
+      "start_date": searchFilters.startDate,
+      "end_date": searchFilters.endDate,
+      "page": searchFilters.page,
+      "per_page": searchFilters.perPage,
+      "user_name": searchFilters.userName,
+      "user_handle": searchFilters.userHandle,
+      "account_type": searchFilters.accountType,
+      "email": searchFilters.email,
     }
-    else {
-      payload = searchFilters
-    }
+  }
+  message.search_filters = payload;
 
-    message.search_filters = payload;
-    return makeRequest('get_statements_data', message);
-  };
-
-  const statements = (
-    handle,
-    searchFilters,
-  ) => {
-    const fullHandle = getFullHandle(handle);
-    const message = setHeaders({ header: {} }, fullHandle);
-    message.message = 'header_msg';
-
-      var payload = {};
-
-      if (!searchFilters) {
-        payload = {};
-      }
-      else {
-        payload = {
-          "start_date": searchFilters.startDate,
-          "end_date": searchFilters.endDate,
-          "page": searchFilters.page,
-          "per_page": searchFilters.perPage,
-          "user_name": searchFilters.userName,
-          "user_handle": searchFilters.userHandle,
-          "account_type": searchFilters.accountType,
-          "email": searchFilters.email,
-      }
-    }
-      message.search_filters = payload;
-
-      return makeRequest('statements', message, undefined, undefined, 'get');
-    };
+  return makeRequest('statements', message, undefined, undefined, 'get');
+};
 
 const resendStatements = (
   handle,
@@ -1996,9 +1998,35 @@ const resendStatements = (
 
   message.email = email;
   return makeRequest('statements/' + statementUuid, message, undefined, undefined, 'put');
-  };
+};
 
+const createCkoTestingToken = (
+  handle,
+  cardDetails
+  ) => {
+  const fullHandle = getFullHandle(handle);
+  const message = setHeaders({ header: {} }, fullHandle);
+  message.message = 'header_msg';
+  message.cko_public_key = cardDetails.cko_public_key;
+  message.card_number = cardDetails.card_number
+  message.expiry_month = cardDetails.expiry_month
+  message.expiry_year = cardDetails.expiry_year
 
+  return makeRequest('create_cko_testing_token', message, undefined, undefined, 'post');
+};
+
+const refundDebitCard = (
+  handle,
+  userPrivateKey,
+  transactionId
+) => {
+  const fullHandle = getFullHandle(handle);
+  const message = setHeaders({ header: {} }, fullHandle);
+  message.message = 'header_msg';
+  message.transaction_id = transactionId
+
+  return makeRequest('refund_debit_card', message, userPrivateKey, undefined, 'post');
+};
 
 export default {
   cancelTransaction,
@@ -2087,4 +2115,6 @@ export default {
   getWalletStatementData,
   statements,
   resendStatements,
+  createCkoTestingToken,
+  refundDebitCard
 };

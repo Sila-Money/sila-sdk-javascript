@@ -54,6 +54,10 @@ const [
     sardineHandle,
 ] = handles;
 
+const timestamp = Date.now();
+const email = `fake${timestamp}@silamoney.com`;
+const fake_card_name = `fake_card_${timestamp}`
+
 const firstUser = new sila.User();
 firstUser.firstName = 'First';
 firstUser.lastName = 'Last';
@@ -68,10 +72,9 @@ firstUser.ssn = '319103848';
 firstUser.cryptoAddress = wallets[0].address;
 firstUser.handle = firstHandle;
 
-
 const secondUser = Object.assign({}, firstUser);
 secondUser.firstName = 'Second';
-secondUser.email = 'test_2@silamoney.com';
+secondUser.email = email;
 secondUser.cryptoAddress = wallets[1].address;
 secondUser.handle = secondHandle;
 
@@ -83,7 +86,7 @@ thirdUser.handle = thirdHandle;
 
 const fourthUser = Object.assign({}, firstUser);
 fourthUser.firstName = 'Fourth';
-fourthUser.email = 'test_3@silamoney.com';
+fourthUser.email = 'test_4@silamoney.com';
 fourthUser.cryptoAddress = wallets[4].address;
 fourthUser.handle = fourthHandle;
 
@@ -1364,7 +1367,7 @@ const addEmailTests = [
         expectedResult: true,
         status: 'SUCCESS',
         email: 'erickjeronimo1@gmail.com',
-        description: `${handles[1]} should add email`,
+        description: `${handles[0]} should add email`,
     },
     {
         handle: handles[0],
@@ -1373,7 +1376,7 @@ const addEmailTests = [
         expectedResult: false,
         status: 'FAILURE',
         email: '',
-        description: `${handles[1]} should fail to add email`,
+        description: `${handles[0]} should fail to add email`,
     },
 ];
 
@@ -1517,7 +1520,7 @@ const updateEmailTests = [
             email: 'erickjeronimo1@gmail.com',
             uuid: 4,
         },
-        description: `${handles[1]} should update email`,
+        description: `${handles[0]} should update email`,
     },
     {
         handle: handles[0],
@@ -1529,7 +1532,7 @@ const updateEmailTests = [
             email: '',
             uuid: undefined,
         },
-        description: `${handles[1]} should fail to update email`,
+        description: `${handles[0]} should fail to update email`,
     },
 ];
 
@@ -2120,6 +2123,56 @@ const resendStatementsTests = [
         status: 'SUCCESS',
         description: `${handles[0]} should get resend statements successfully`,
     },
+];
+
+const createCkoTestingTokenTests = [
+    {
+        handle: handles[1],
+        key: wallets[1].privateKey,
+        payload: {
+            "card_number": "4659105569051157",
+            "expiry_month": 12,
+            "expiry_year": 2027,
+            "cko_public_key": "pk_sbox_i2uzy5w5nsllogfsc4xdscorcii"
+        },
+        statusCode: 200,
+        expectedResult: true,
+        status: 'SUCCESS',
+        description: `${handles[1]} should create cko testing token successfully`,
+    },
+    {
+        handle: handles[1],
+        key: wallets[1].privateKey,
+        payload: {
+            "card_number": "4659105569051158",
+            "expiry_month": 12,
+            "expiry_year": 2020,
+            "cko_public_key": "pk_sbox_i2uzy5w5nsllogfsc4xdscorcii"
+        },
+        statusCode: 400,
+        expectedResult: false,
+        status: 'FAILURE',
+        description: `${handles[1]} should fail to create cko testing token`,
+    }
+];
+
+const refundDebitCardTests = [
+    {
+        handle: handles[1],
+        key: wallets[1].privateKey,
+        statusCode: 202,
+        expectedResult: true,
+        status: 'SUCCESS',
+        description: `${handles[1]} should refund debit card successfully`,
+    },
+    {
+        handle: handles[1],
+        key: wallets[1].privateKey,
+        statusCode: 404,
+        expectedResult: false,
+        status: 'FAILURE',
+        description: `${handles[1]} should fail to refund debit card`,
+    }
 ];
 
 describe('Get Insitutions', function () {
@@ -4145,29 +4198,6 @@ describe('Transfer Sila Using Source And Destination ID', function () {
     });
 });
 
-describe('Delete Card', function () {
-    this.timeout(300000);
-    it("Successfully Deleted the Card.", async () => {
-        try {
-            let cardName = 'visa';
-            let provider = 'evolve';
-            const res = await sila.deleteCard(
-                handles[0],
-                wallets[0].privateKey,
-                cardName,
-                provider
-            );
-
-            assert.equal(res.statusCode, 200);
-            assert.isTrue(res.data.success);
-            assert.equal(res.data.status, 'SUCCESS');
-
-        } catch (err) {
-            assert.fail(err);
-        }
-    });
-});
-
 describe('Get Webhooks', function () {
     this.timeout(300000);
     getWebhooksTests.forEach((test) => {
@@ -4488,6 +4518,90 @@ describe('Resend Statements', function () {
     });
 });
 
+describe('create cko testing token and link card with CKO token', function () {
+    this.timeout(300000);
+
+    createCkoTestingTokenTests.forEach((test) => {
+        it(test.description, async () => {
+            try {
+                const createTokenResponse = await sila.createCkoTestingToken(
+                    test.handle,
+                    test.payload
+                );
+
+                const ckoToken = createTokenResponse.data.token;
+
+                assert.equal(createTokenResponse.statusCode, test.statusCode);
+                assert.equal(createTokenResponse.data.success, test.expectedResult);
+                assert.equal(createTokenResponse.data.status, test.status);
+
+                const ckoTokenPayload = {
+                    card_name: fake_card_name,
+                    provider: 'CKO',
+                    token: ckoToken,
+                    skip_verification: false
+                };
+
+                const linkCardResponse = await sila.linkCard(
+                    handles[1],
+                    wallets[1].privateKey,
+                    ckoTokenPayload
+                );
+
+                assert.equal(linkCardResponse.statusCode, test.statusCode);
+                assert.equal(linkCardResponse.data.success, test.expectedResult);
+                assert.equal(linkCardResponse.data.status, test.status);
+            } catch (e) {
+                assert.fail(e);
+            }
+        });
+    });
+});
+
+describe('refund debit card', function () {
+    this.timeout(300000); 
+    
+    refundDebitCardTests.forEach((test) => {
+        it(test.description, async () => {
+            try {
+                const res1 = await sila.issueSila(
+                    200,
+                    handles[1],
+                    wallets[1].privateKey,
+                    undefined,
+                    null,
+                    null,
+                    null,
+                    fake_card_name,
+                )
+                await new Promise(resolve => setTimeout(resolve, 5000));
+
+                const transactionId = res1.data.transaction_id;
+
+                let transaction_id;
+                if (test.expectedResult == false){
+                    transaction_id = "9f280665-629f-45bf-a694-133c86bffd5e";
+                }                    
+                else { 
+                    transaction_id = transactionId;
+                }
+                this.timeout(5000); 
+                const res2 = await sila.refundDebitCard(
+                    handles[1],
+                    wallets[1].privateKey,
+                    transaction_id
+                    );
+
+                assert.equal(res2.statusCode, test.statusCode);
+                assert.equal(res2.data.success, test.expectedResult);
+                assert.equal(res2.data.status, test.status);
+            } catch (e) {
+                assert.fail(e);
+            }
+        });
+    });
+});
+
 describe('Unlink business member', function () {
     this.timeout(300000);
     unLinkBusinessMemberTests.forEach((member) => {
@@ -4533,3 +4647,26 @@ describe('Delete Account', function () {
       }
     });
   });
+
+describe('Delete Cards', function () {
+    this.timeout(300000);
+
+    it("Successfully Deletes Cards with Different Providers", async () => {
+        try {
+            const cardData = [
+                { cardName: 'visa', provider: 'evolve', handle: handles[0], wallet: wallets[0].privateKey },
+                { cardName: fake_card_name, provider: 'cko', handle: handles[1], wallet: wallets[1].privateKey },
+            ];
+
+                for (const { cardName, provider, handle, wallet } of cardData) {
+                    const res = await sila.deleteCard(handle, wallet, cardName, provider);
+
+                    assert.equal(res.statusCode, 200);
+                    assert.isTrue(res.data.success);
+                    assert.equal(res.data.status, 'SUCCESS');
+                }
+        } catch (err) {
+            assert.fail(err);
+        }
+    });
+});
