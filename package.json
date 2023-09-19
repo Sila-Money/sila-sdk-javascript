@@ -44,7 +44,7 @@
   },
   "dependencies": {
     "ajv": "^6.12.3",
-    "axios": "^1.4.0",
+    "axios": "^1.5.0",
     "browserslist": "^4.21.9",
     "decode-uri-component": "^0.4.1",
     "eth-crypto": "^2.6.0",
