@@ -691,7 +691,7 @@ const redeemSila = (
   body.processing_type = processingType;
 
   if (transactionIdempotencyId) body.transaction_idempotency_id = transactionIdempotencyId;
-  console.log(body)
+
   return makeRequest('redeem_sila', body, privateKey);
 };
 
