@@ -665,7 +665,6 @@ const redeemSila = (
   cardName = undefined,
   sourceId = undefined,
   destinationId = undefined,
-  mockWireAccountName = undefined,
   transactionIdempotencyId = undefined,
 ) => {
   const fullHandle = getFullHandle(handle);
@@ -691,7 +690,6 @@ const redeemSila = (
   if (businessUuid) body.business_uuid = businessUuid;
   body.processing_type = processingType;
 
-  if (mockWireAccountName) body.mock_wire_account_name = mockWireAccountName;
   if (transactionIdempotencyId) body.transaction_idempotency_id = transactionIdempotencyId;
 
   return makeRequest('redeem_sila', body, privateKey);
