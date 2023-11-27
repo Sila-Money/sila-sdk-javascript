@@ -1,3 +1,10 @@
+v1.0.2
+	Enhancements:
+		- Updated Axios version
+		- Updated Plaid version
+		- Updated Chai version
+		- Removed obsolete tests
+
 v1.0.1
 	Enhancements:
 		- Allowed skipVerification a new optional input field in /link_card.
