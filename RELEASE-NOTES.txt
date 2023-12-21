@@ -1,3 +1,6 @@
+v1.0.3
+	- Added notices.txt
+
 v1.0.2
 	Enhancements:
 		- Updated Axios version

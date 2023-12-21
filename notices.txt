@@ -1,0 +1,293 @@
+Third Party Software License/Notices
+This document contains Third Party Software Notices and/or Additional Terms and Conditions for licensed third party software components included within sila-sdk-csharp.
+These notices and/or additional terms and conditions are made a part of and incorporated by reference into the sila-sdk-csharp Software License Agreement.
+
+Third Party Software
+
+Notice/Terms
+
+ajv
+
+MIT
+Copyright (c) 2015-2021 Evgeny Poberezkin
+https://github.com/ajv-validator/ajv/blob/master/LICENSE
+
+
+Axios
+
+MIT
+Copyright (c) 2014-present Matt Zabriskie & Collaborators
+https://github.com/axios/axios/blob/v1.x/LICENSE
+
+
+browserlist
+
+MIT
+Copyright 2014 Andrey Sitnik <andrey@sitnik.ru> and other contributors
+https://github.com/browserslist/browserslist/blob/main/LICENSE
+
+
+decode-uri-component
+
+MIT
+Copyright (c) 2017, Sam Verschueren <sam.verschueren@gmail.com> (github.com/SamVerschueren)
+https://github.com/SamVerschueren/decode-uri-component/blob/main/license
+
+
+eth-crypto
+
+MIT
+Copyright (c) 2018 Daniel M
+https://github.com/pubkey/eth-crypto/blob/master/LICENSE
+
+
+form-data
+
+MIT
+Copyright (c) 2012 Felix Geisendörfer (felix@debuggable.com) and contributors
+https://github.com/form-data/form-data/blob/master/License
+
+
+json-schema
+
+AFL-2.1 or BSD-3-Clause
+Copyright (c) 2005-2015, The Dojo Foundation
+https://github.com/kriszyp/json-schema/blob/master/LICENSE
+
+
+lodash
+
+MIT
+Copyright JS Foundation and other contributors <https://js.foundation/>
+https://github.com/lodash/lodash/blob/main/LICENSE
+
+
+qs
+
+BSD-3-Clause
+Copyright (c) 2014, Nathan LaFreniere and other contributors All rights reserved.
+https://github.com/ljharb/qs/blob/main/LICENSE.md
+
+
+regenerator-runtime
+
+MIT
+Copyright (c) 2014-present, Facebook, Inc.
+https://github.com/facebook/regenerator/blob/main/LICENSE
+
+
+semver
+
+ISC
+Copyright (c) Isaac Z. Schlueter and Contributors
+https://github.com/npm/node-semver/blob/main/LICENSE
+
+
+simple-get
+
+MIT
+Copyright (c) Feross Aboukhadijeh
+https://github.com/feross/simple-get/blob/master/LICENSE
+
+
+tough-cookie
+
+BSD-3-Clause
+Copyright (c) 2015, Salesforce.com, Inc.
+All rights reserved.
+https://github.com/salesforce/tough-cookie/blob/master/LICENSE
+
+
+uuid4
+
+Apache 2.0
+Copyright (c) 2020, Michael J. Ryan
+https://github.com/tracker1/node-uuid4/blob/master/LICENSE
+
+
+ws
+
+MIT
+Copyright (c) 2011 Einar Otto Stangvik <einaros@gmail.com>
+Copyright (c) 2013 Arnout Kazemier and contributors
+Copyright (c) 2016 Luigi Pinca and contributors
+https://github.com/websockets/ws/blob/master/LICENSE
+
+
+y18n
+
+ISC
+Copyright (c) 2015, Contributors
+Permission to use, copy, modify, and/or distribute this software for any purpose
+with or without fee is hereby granted, provided that the above copyright notice
+and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
+OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+THIS SOFTWARE.
+https://github.com/yargs/y18n/blob/master/LICENSE
+
+
+@babel/cli
+
+MIT
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+https://github.com/babel/babel/blob/main/LICENSE
+
+
+@babel/core
+
+MIT
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+https://github.com/babel/babel/blob/main/LICENSE
+
+
+@babel/plugin-transform-regenerator
+
+MIT
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+https://github.com/babel/babel/blob/main/LICENSE
+
+
+@babel/preset-env
+
+MIT
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+https://github.com/babel/babel/blob/main/LICENSE
+
+
+@babel/register
+
+MIT
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+https://github.com/babel/babel/blob/main/LICENSE
+
+
+Chai
+
+MIT
+Copyright (c) 2017 Chai.js Assertion Library
+https://github.com/chaijs/chai/blob/4.x.x/LICENSE
+
+
+cors
+
+MIT
+Copyright (c) 2013 Troy Goode <troygoode@gmail.com>
+https://github.com/expressjs/cors/blob/master/LICENSE
+
+
+eslint
+
+MIT
+Copyright OpenJS Foundation and other contributors, <www.openjsf.org>
+https://github.com/eslint/eslint/blob/main/LICENSE
+
+
+eslint-config-airbnb-base
+
+MIT
+Copyright (c) 2012 Airbnb
+https://github.com/airbnb/javascript/blob/master/LICENSE.md
+
+
+eslint-plugin-import
+
+MIT
+Copyright (c) 2015 Ben Mosher
+https://github.com/import-js/eslint-plugin-import/blob/main/LICENSE
+
+
+eslint-plugin-prettier
+
+MIT
+Copyright (c) 2017, 2018, 2019, 2020, 2021, 2022, 2023 Simon Lydell and contributors
+https://github.com/prettier/eslint-config-prettier/blob/main/LICENSE
+
+
+jshint
+
+MIT
+Copyright 2012 Anton Kovalyov (http://jshint.com)
+https://github.com/jshint/jshint/blob/main/LICENSE
+
+
+mocha
+
+MIT
+Copyright (c) 2011-2022 OpenJS Foundation and contributors, https://openjsf.org
+https://github.com/mochajs/mocha/blob/master/LICENSE
+
+
+mocha-junit-reporter
+
+MIT
+Copyright (c) 2015 Michael Allen
+https://github.com/michaelleeallen/mocha-junit-reporter/blob/master/LICENSE.txt
+
+
+mocha-multi-reporters
+
+MIT
+Copyright (c) 2019 Yousaf Nabi
+Copyright (c) 2015 Stanley Ng
+https://github.com/stanleyhlng/mocha-multi-reporters/blob/master/LICENSE
+
+
+moment
+
+MIT
+Copyright (c) JS Foundation and other contributors
+https://github.com/moment/moment/blob/develop/LICENSE
+
+
+node-fetch
+
+MIT
+Copyright (c) 2016 - 2020 Node Fetch Team
+https://github.com/node-fetch/node-fetch/blob/main/LICENSE.md
+
+
+nyc
+
+ISC
+https://github.com/istanbuljs/nyc/blob/master/LICENSE.txt
+Copyright (c) 2015, Contributors
+
+Permission to use, copy, modify, and/or distribute this software
+for any purpose with or without fee is hereby granted, provided
+that the above copyright notice and this permission notice
+appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE
+LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES
+OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+plaid
+
+MIT
+Copyright (c) 2021 Plaid Inc. <support@plaid.com>
+https://github.com/plaid/plaid-node/blob/master/LICENSE
+
+
+prettier
+
+MIT
+Copyright © James Long and contributors
+https://github.com/prettier/prettier/blob/main/LICENSE
+
+
+elliptic
+
+MIT
+Copyright Fedor Indutny, 2014.
+https://github.com/indutny/elliptic
