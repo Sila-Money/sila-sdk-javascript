@@ -3212,6 +3212,43 @@ describe('Link Card', function () {
     });
 });
 
+describe('Link Anonymous Card', function () {
+    this.timeout(300000);
+    it("Successfully linked the Anonymous Card.", async () => {
+        try {
+            const resToken = await linkCardToken();
+            const cardObj = {
+                card_name: "John Doe's Card",
+                account_postal_code: "12345",
+                token: resToken,
+                provider: "Card Provider Inc.",
+                anonymous: true, 
+                first_name: "John",
+                last_name: "Doe", 
+                address: {
+                    street_address_1: "123 Main St",
+                    street_address_2: "Apt 4B",
+                    city: "Anytown",
+                    county: "Anycounty",
+                    postal_code: "12345"
+                },
+            };
+              
+            const res = await sila.linkCard(
+                handles[0],
+                wallets[0].privateKey,
+                cardObj,
+            );
+            assert.equal(res.statusCode, 200);
+            assert.isTrue(res.data.success);
+            assert.equal(res.data.status, 'SUCCESS');
+
+        } catch (err) {
+            assert.fail(err);
+        }
+    });
+});
+
 describe('Get Cards', function () {
     this.timeout(300000);
     it("Successfully Get Card List.", async () => {

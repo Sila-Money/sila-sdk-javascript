@@ -1573,7 +1573,25 @@ const getInstitutions = (
   body.account_postal_code = cardObject['account_postal_code'];
   body.token = cardObject['token'];
   body.provider = cardObject['provider'];
-  body.skip_verification = cardObject['skip_verification'];
+
+  // non-anonymous fields
+  if (cardObject['skip_verification']) body.skip_verification = cardObject['skip_verification'];
+  
+  // anonymous card fields
+  if (cardObject['anonymous']) body.anonymous = cardObject['anonymous'];
+  if (cardObject['first_name']) body.skip_verification = cardObject['first_name'];
+  if (cardObject['last_name']) body.skip_verification = cardObject['last_name'];
+  if (cardObject['address']) {
+    const bodyAddress = {}
+    const cardObjectAddress = cardObject['address']
+    if (cardObjectAddress['street_address_1']) bodyAddress['street_address_1'] = cardObjectAddress['street_address_1'];
+    if (cardObjectAddress['street_address_2']) bodyAddress['street_address_2'] = cardObjectAddress['street_address_2'];
+    if (cardObjectAddress['city']) bodyAddress['city'] = cardObjectAddress['city'];
+    if (cardObjectAddress['county']) bodyAddress['county'] = cardObjectAddress['county'];
+    if (cardObjectAddress['postal_code']) bodyAddress['postal_code'] = cardObjectAddress['postal_code'];
+    body.address = bodyAddress
+  }
+
   return makeRequest('link_card', body, userPrivateKey);
 };
 
