@@ -3221,7 +3221,7 @@ describe('Link Anonymous Card', function () {
                 card_name: "John Doe's Card",
                 account_postal_code: "12345",
                 token: resToken,
-                provider: "Card Provider Inc.",
+                skip_verification: "true",
                 anonymous: true, 
                 first_name: "John",
                 last_name: "Doe", 
@@ -3230,6 +3230,8 @@ describe('Link Anonymous Card', function () {
                     street_address_2: "Apt 4B",
                     city: "Anytown",
                     county: "Anycounty",
+                    state: 'CA',
+                    country: "US",
                     postal_code: "12345"
                 },
             };
