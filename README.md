@@ -30,3 +30,7 @@ Then browse to the address displayed in your terminal.
 NOTE: If you do not have http-server installed, you can install it with the following command:
 
 > npm i -g http-server
+
+### Note on Package Name Change
+
+The SDK package name has changed from `@silamoney/sdk` to `sila-sdk` starting with version 1.0.2. Please update your dependencies to `sila-sdk` for future updates.
