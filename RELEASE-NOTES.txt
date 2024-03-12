@@ -1,5 +1,7 @@
 v1.0.3
 	- Added notices.txt
+	Enhancements:
+		- Added support to link anonymous cards in /link_card
 
 v1.0.2
 	Enhancements:
