@@ -1574,6 +1574,12 @@ const getInstitutions = (
   body.token = cardObject['token'];
   body.provider = cardObject['provider'];
   body.skip_verification = cardObject['skip_verification'];
+  
+  // anonymous card fields
+  if (cardObject['anonymous']) body.anonymous = cardObject['anonymous'];
+  if (cardObject['first_name']) body.first_name = cardObject['first_name'];
+  if (cardObject['last_name']) body.last_name = cardObject['last_name'];
+  if (cardObject['address']) body.address = cardObject['address']
   return makeRequest('link_card', body, userPrivateKey);
 };
 
