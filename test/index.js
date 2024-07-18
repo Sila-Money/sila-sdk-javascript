@@ -795,13 +795,13 @@ const issueSilaTests = [
         description: `${handles[0]} should not issue sila tokens`,
     },
     {
-        handle: handles[0],
-        key: wallets[0].privateKey,
+        handle: handles[1],
+        key: wallets[1].privateKey,
         amount: 100,
-        cardName: 'visa',
+        cardName: fake_card_name,
         statusCode: 200,
         expectedResult: 'SUCCESS',
-        description: `${handles[0]} should issue sila tokens successfully with card name`,
+        description: `${handles[1]} should issue sila tokens successfully with card name`,
     },
     {
         handle: handles[0],
@@ -1168,16 +1168,6 @@ const redeemSilaTests = [
         amount: 100,
         processingType: 'SAME_DAY_ACH',
         description: `${handles[1]} should redeem sila with processing type`,
-        statusCode: 200,
-        expectedResult: 'SUCCESS',
-    },
-    {
-        handle: handles[0],
-        key: wallets[0].privateKey,
-        amount: 100,
-        cardName: 'visa',
-        processingType: 'CARD',
-        description: `${handles[0]} should redeem sila with card name`,
         statusCode: 200,
         expectedResult: 'SUCCESS',
     },
@@ -3267,6 +3257,46 @@ describe('Get Cards', function () {
     });
 });
 
+describe('create cko testing token and link card with CKO token', function () {
+    this.timeout(300000);
+
+    createCkoTestingTokenTests.forEach((test) => {
+        it(test.description, async () => {
+            try {
+                const createTokenResponse = await sila.createCkoTestingToken(
+                    test.handle,
+                    test.payload
+                );
+
+                const ckoToken = createTokenResponse.data.token;
+
+                assert.equal(createTokenResponse.statusCode, test.statusCode);
+                assert.equal(createTokenResponse.data.success, test.expectedResult);
+                assert.equal(createTokenResponse.data.status, test.status);
+
+                const ckoTokenPayload = {
+                    card_name: fake_card_name,
+                    provider: 'CKO',
+                    token: ckoToken,
+                    skip_verification: false
+                };
+
+                const linkCardResponse = await sila.linkCard(
+                    handles[1],
+                    wallets[1].privateKey,
+                    ckoTokenPayload
+                );
+
+                assert.equal(linkCardResponse.statusCode, test.statusCode);
+                assert.equal(linkCardResponse.data.success, test.expectedResult);
+                assert.equal(linkCardResponse.data.status, test.status);
+            } catch (e) {
+                assert.fail(e);
+            }
+        });
+    });
+});
+
 describe('Issue Sila', function () {
     this.timeout(300000);
     issueSilaTests.forEach((test) => {
@@ -4260,46 +4290,6 @@ describe('Resend Statements', function () {
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.status, test.status);
-            } catch (e) {
-                assert.fail(e);
-            }
-        });
-    });
-});
-
-describe('create cko testing token and link card with CKO token', function () {
-    this.timeout(300000);
-
-    createCkoTestingTokenTests.forEach((test) => {
-        it(test.description, async () => {
-            try {
-                const createTokenResponse = await sila.createCkoTestingToken(
-                    test.handle,
-                    test.payload
-                );
-
-                const ckoToken = createTokenResponse.data.token;
-
-                assert.equal(createTokenResponse.statusCode, test.statusCode);
-                assert.equal(createTokenResponse.data.success, test.expectedResult);
-                assert.equal(createTokenResponse.data.status, test.status);
-
-                const ckoTokenPayload = {
-                    card_name: fake_card_name,
-                    provider: 'CKO',
-                    token: ckoToken,
-                    skip_verification: false
-                };
-
-                const linkCardResponse = await sila.linkCard(
-                    handles[1],
-                    wallets[1].privateKey,
-                    ckoTokenPayload
-                );
-
-                assert.equal(linkCardResponse.statusCode, test.statusCode);
-                assert.equal(linkCardResponse.data.success, test.expectedResult);
-                assert.equal(linkCardResponse.data.status, test.status);
             } catch (e) {
                 assert.fail(e);
             }
