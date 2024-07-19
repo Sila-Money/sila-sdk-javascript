@@ -34,11 +34,11 @@ Copyright (c) 2017, Sam Verschueren <sam.verschueren@gmail.com> (github.com/SamV
 https://github.com/SamVerschueren/decode-uri-component/blob/main/license
 
 
-eth-crypto
+ethers
 
 MIT
-Copyright (c) 2018 Daniel M
-https://github.com/pubkey/eth-crypto/blob/master/LICENSE
+Copyright (c) 2016-2023 Richard Moore
+https://github.com/ethers-io/ethers.js/blob/main/LICENSE.md
 
 
 form-data

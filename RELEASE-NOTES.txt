@@ -1,3 +1,9 @@
+v1.0.4
+	Enhancements:
+		- Removed support for Node.js 12.x.
+		- Removed obsolete tests
+		- Updated Packages
+
 v1.0.3
 	- Added notices.txt
 	Enhancements:
