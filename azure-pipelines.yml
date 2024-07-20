@@ -11,9 +11,6 @@ pool:
 
 strategy:
   matrix:
-    node12:
-      nodeVersion: '12.x'
-      executeSonar: true
     node14:
       nodeVersion: '14.x'
 

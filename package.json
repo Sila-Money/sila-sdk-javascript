@@ -26,6 +26,7 @@
     "node-fetch": "^2.6.1",
     "nyc": "^15.1.0",
     "plaid": "^18.0.0",
+    "sinon": "^18.0.0",
     "prettier": "^2.2.1"
   },
   "nyc": {
@@ -36,7 +37,7 @@
     ]
   },
   "name": "sila-sdk",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "main": "lib/index.js",
   "directories": {
     "lib": "lib",
@@ -44,20 +45,21 @@
   },
   "dependencies": {
     "ajv": "^6.12.3",
-    "axios": "^1.6.4",
-    "browserslist": "^4.21.9",
+    "axios": "^1.6.5",
+    "browserslist": "^4.22.1",
     "decode-uri-component": "^0.4.1",
-    "eth-crypto": "^2.6.0",
+    "ethers": "^6.13.1",
     "form-data": "^4.0.0",
     "json-schema": "^0.4.0",
     "lodash": "^4.17.21",
     "qs": "^6.5.3",
-    "regenerator-runtime": "^0.13.7",
+    "randombytes": "^2.1.0",
+    "regenerator-runtime": "^0.13.11",
     "semver": "^6.3.1",
     "simple-get": "2.8.2",
     "tough-cookie": "^4.1.3",
     "uuid4": "^1.1.4",
-    "ws": "^5.2.3",
+    "ws": "^5.2.4",
     "y18n": "^5.0.8"
   },
   "resolutions": {

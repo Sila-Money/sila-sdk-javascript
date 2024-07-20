@@ -1,4 +1,5 @@
-import crypto from 'eth-crypto';
+import randomBytes from 'randombytes';
+import { ethers } from 'ethers'
 import uuid4 from 'uuid4';
 import fs from 'fs';
 import crypt from 'crypto';
@@ -44,8 +45,15 @@ const sign = (message, key) => {
   if (!appKey || !key) {
     throw new Error('Unable to sign request: keys not set');
   }
-  const hash = crypto.hash.keccak256(message);
-  const signature = crypto.sign(key, hash);
+  const hash =  ethers.solidityPackedKeccak256(['string'], [message]);
+  const signingKey = new ethers.SigningKey('0x' + key)
+  const signatureObject = signingKey.sign(hash)
+
+  const r = signatureObject.r.slice(2);
+  const s = signatureObject.s.slice(2);
+  const yParity = signatureObject.yParity === 1 ? '1c' : '1b';
+  
+  const signature = `${r}${s}${yParity}`;
 
   if (logging && env !== 'PROD') {
     console.log('*** MESSAGE STRING ***');
@@ -54,10 +62,10 @@ const sign = (message, key) => {
     console.log(hash);
     console.log('*** SIGNING WITH KEY ***');
     console.log(key);
-    console.log('*** SIGNATURE (remove leading 0x before sending) ***');
+    console.log('*** SIGNATURE ***');
     console.log(signature);
   }
-  return signature.substr(2);
+  return signature;
 };
 
 const configureUrl = () => {
@@ -1902,8 +1910,11 @@ const disableSandbox = () => {
  * @returns {Wallet} A new ETH wallet
  */
 const generateWallet = () => {
-  const wallet = crypto.createIdentity();
-  return new Wallet(wallet.address, wallet.privateKey);
+  const privateKey = randomBytes(32).toString('hex');
+  const generated = new ethers.Wallet(privateKey);
+
+  const address = generated.address;
+  return new Wallet(address, privateKey);
 };
 
 const setLogging = (log) => {
