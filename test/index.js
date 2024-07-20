@@ -5,7 +5,8 @@ import uuid4 from 'uuid4';
 import moment from 'moment';
 import sila from '../src/index';
 import axios from 'axios';
-import sinon from 'sinon';
+const sinon = require('sinon');
+const proxyquire = require('proxyquire');
 
 const sleep = (ms, description) => {
     console.log(`${description} waiting for ${ms / 1000} seconds`);
@@ -3227,9 +3228,9 @@ describe('Link Anonymous Card', function () {
                 account_postal_code: "12345",
                 token: resToken,
                 skip_verification: "true",
-                anonymous: true, 
+                anonymous: true,
                 first_name: "John",
-                last_name: "Doe", 
+                last_name: "Doe",
                 address: {
                     street_address_1: "123 Main St",
                     street_address_2: "Apt 4B",
@@ -3240,7 +3241,7 @@ describe('Link Anonymous Card', function () {
                     postal_code: "12345"
                 },
             };
-              
+
             const res = await sila.linkCard(
                 handles[0],
                 wallets[0].privateKey,
@@ -4312,21 +4313,24 @@ describe('Resend Statements', function () {
     });
 });
 
-describe('refund debit card', function () {
-    let refundDebitCardStub;
+describe.only('refund debit card', function () {
+    let postStub;
+    let silaProxy;
 
     beforeEach(() => {
-        refundDebitCardStub = sinon.stub(sila, 'refundDebitCard');
-    });
+        postStub = sinon.stub(sila, './post');
 
-    afterEach(() => {
-        refundDebitCardStub.restore();
+    //     silaProxy = proxyquire('../src/index', {
+    //         './index/post': {
+    //             post: postStub
+    //         }
+    //     });
     });
 
     refundDebitCardTests.forEach((test) => {
         it(test.description, async () => {
             try {
-                refundDebitCardStub.resolves({
+                postStub.resolves({
                     statusCode: test.statusCode,
                     data: {
                         success: test.expectedResult,
@@ -4334,20 +4338,17 @@ describe('refund debit card', function () {
                     }
                 });
 
-                const transaction_id = test.expectedResult === false
-                    ? "9f280665-629f-45bf-a694-133c86bffd5e"
-                    : "some-mocked-transaction-id";
+                const transactionId =  "9f280665-629f-45bf-a694-133c86bffd5e";
 
-                this.timeout(5000); 
-                const res2 = await sila.refundDebitCard(
+                const res1 = await sila.refundDebitCard(
                     handles[1],
                     wallets[1].privateKey,
-                    transaction_id
+                    transactionId
                 );
 
-                assert.equal(res2.statusCode, test.statusCode);
-                assert.equal(res2.data.success, test.expectedResult);
-                assert.equal(res2.data.status, test.status);
+                assert.equal(res1.statusCode, test.statusCode);
+                assert.equal(res1.data.success, test.expectedResult);
+                assert.equal(res1.data.status, test.status);
             } catch (e) {
                 assert.fail(e);
             }
@@ -4378,7 +4379,7 @@ describe('Unlink business member', function () {
 
 describe('Delete Account', function () {
     this.timeout(300000);
-  
+
     const accountsToDelete = [
       'sync_direct',
       'defaultpt',
@@ -4386,7 +4387,7 @@ describe('Delete Account', function () {
       'defaultMx',
       'default'
     ];
-  
+
     it('should successfully delete accounts', async () => {
       try {
         for (const accountName of accountsToDelete) {

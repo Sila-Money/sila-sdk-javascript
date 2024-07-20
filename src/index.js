@@ -52,7 +52,7 @@ const sign = (message, key) => {
   const r = signatureObject.r.slice(2);
   const s = signatureObject.s.slice(2);
   const yParity = signatureObject.yParity === 1 ? '1c' : '1b';
-  
+
   const signature = `${r}${s}${yParity}`;
 
   if (logging && env !== 'PROD') {
@@ -1582,7 +1582,7 @@ const getInstitutions = (
   body.token = cardObject['token'];
   body.provider = cardObject['provider'];
   body.skip_verification = cardObject['skip_verification'];
-  
+
   // anonymous card fields
   if (cardObject['anonymous']) body.anonymous = cardObject['anonymous'];
   if (cardObject['first_name']) body.first_name = cardObject['first_name'];
@@ -2067,6 +2067,7 @@ export default {
   linkAccountDirect,
   listDocuments,
   plaidSamedayAuth,
+  post,
   redeemSila,
   register,
   registerWallet,
