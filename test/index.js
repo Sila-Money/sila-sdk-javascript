@@ -2013,7 +2013,7 @@ const refundDebitCardTests = [
         statusCode: 202,
         expectedResult: true,
         status: 'SUCCESS',
-        description: `${handles[1]} should refund debit card successfully`,
+        description: `${handles[0]} should refund debit card successfully`,
     },
     {
         handle: handles[1],
@@ -3152,24 +3152,20 @@ describe('Delete Wallet', function () {
 });
 
 describe('Cancel Transaction', function () {
-    let cancelTransactionStub;
+    let postStub;
 
     beforeEach(() => {
-        cancelTransactionStub = sinon.stub(sila, 'cancelTransaction');
+        postStub = sinon.stub(require('../src/utils/post'), 'post');
     });
 
     afterEach(() => {
-        cancelTransactionStub.restore();
+        postStub.restore();
     });
 
     cancelTransactionTests.forEach((test) => {
         it(test.description, async () => {
             try {
-                const transactionid = test.expectedResult === false
-                    ? "9f280665-629f-45bf-a694-133c86bffd5e"
-                    : "some-mocked-transaction-id";
-
-                cancelTransactionStub.resolves({
+                postStub.resolves({
                     statusCode: test.statusCode,
                     data: {
                         success: test.expectedResult,
@@ -3180,7 +3176,7 @@ describe('Cancel Transaction', function () {
                 const res = await sila.cancelTransaction(
                     test.handle,
                     test.key,
-                    transactionid,
+                    "9f280665-629f-45bf-a694-133c86bffd5e",
                 );
                 assert.equal(res.statusCode, test.statusCode);
                 assert.equal(res.data.success, test.expectedResult);
@@ -4313,20 +4309,20 @@ describe('Resend Statements', function () {
 });
 
 describe('refund debit card', function () {
-    let refundDebitCardStub;
+    let postStub;
 
     beforeEach(() => {
-        refundDebitCardStub = sinon.stub(sila, 'refundDebitCard');
+        postStub = sinon.stub(require('../src/utils/post'), 'post');
     });
 
     afterEach(() => {
-        refundDebitCardStub.restore();
+        postStub.restore();
     });
 
     refundDebitCardTests.forEach((test) => {
         it(test.description, async () => {
             try {
-                refundDebitCardStub.resolves({
+                postStub.resolves({
                     statusCode: test.statusCode,
                     data: {
                         success: test.expectedResult,
@@ -4334,15 +4330,10 @@ describe('refund debit card', function () {
                     }
                 });
 
-                const transaction_id = test.expectedResult === false
-                    ? "9f280665-629f-45bf-a694-133c86bffd5e"
-                    : "some-mocked-transaction-id";
-
-                this.timeout(5000); 
                 const res2 = await sila.refundDebitCard(
-                    handles[1],
-                    wallets[1].privateKey,
-                    transaction_id
+                    test.handle,
+                    test.key,
+                    '9f280665-629f-45bf-a694-133c86bffd5e'
                 );
 
                 assert.equal(res2.statusCode, test.statusCode);
