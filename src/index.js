@@ -13,6 +13,7 @@ import TransactionFilters from './models/transactionFilters';
 import User from './models/user';
 import Wallet from './models/wallet';
 import WalletFilters from './models/walletFilters';
+import { post } from './utils/post';
 
 let appKey = null;
 let appHandle = null;
@@ -161,48 +162,6 @@ const setHeaders = (msg, handle, businessHandle) => {
   return message;
 };
 
-const post = (options) => {
-  return new Promise((resolve, reject) => {
-    if (logging && env !== 'PROD') {
-      console.log('*** REQUEST ***');
-      console.log(options.body);
-    }
-
-    const config = {
-      method: options.method,
-      url: options.uri,
-      headers: {...options.headers, ...options.body.header},
-      data: options.body
-    };
-
-    axios(config)
-      .then((response) => {
-        resolve({
-          statusCode: response.status || response.statusCode,
-          headers: response.headers,
-          data: response.data
-        });
-      })
-      .catch((error) => {
-        if (error.response == undefined) {
-          console.log('*** RESPONSE ***');
-          console.log(error);
-          reject(error);
-        } else {
-          console.log('*** RESPONSE ***');
-          console.log(error.response.data);
-          resolve({
-            statusCode: error.response?.status || error.response?.statusCode,
-            headers: error.response?.headers,
-            data: error.response?.data
-          });
-        }
-      });
-  });
-};
-
-
-
 const postFile = (options, filePath, fileObject) => {
   const promise = new Promise((res, rej) => {
     if (logging && env !== 'PROD') {
@@ -305,7 +264,7 @@ const makeRequest = (
     opts['encoding'] = 'binary';
   }
   opts = signOpts(opts, privateKey, business_private_key);
-  return post(opts);
+  return post(opts, env, logging);
 };
 
 const makeFileRequest = (path, body, filePath, fileObject, privateKey) => {
@@ -1157,7 +1116,7 @@ const getBalance = (address) => {
     body,
   };
 
-  return post(opts);
+  return post(opts, env, logging);
 };
 
 /**
