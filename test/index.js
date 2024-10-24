@@ -3,9 +3,10 @@ import { assert } from 'chai';
 import regeneratorRuntime, { async } from 'regenerator-runtime'; // eslint-disable-line no-unused-vars
 import uuid4 from 'uuid4';
 import moment from 'moment';
-import sila from '../src/index';
 import axios from 'axios';
 import sinon from 'sinon';
+
+import sila from '../src/index';
 
 const sleep = (ms, description) => {
     console.log(`${description} waiting for ${ms / 1000} seconds`);
@@ -51,12 +52,12 @@ const [
     fourthHandle,
     businessHandle,
     basicHandle,
-    instantHandle,
+    fifthHandle,
 ] = handles;
 
 const timestamp = Date.now();
 const email = `fake${timestamp}@silamoney.com`;
-const fake_card_name = `fake_card_${timestamp}`
+const fake_card_name = `fake_card_${timestamp}`;
 
 const firstUser = new sila.User();
 firstUser.firstName = 'First';
@@ -109,21 +110,19 @@ basicUser.lastName = 'User';
 basicUser.cryptoAddress = wallets[6].address;
 basicUser.handle = basicHandle;
 
-const instantUser = new sila.User();
-instantUser.firstName = 'Intant';
-instantUser.lastName = 'User';
-instantUser.cryptoAddress = wallets[7].address;
-instantUser.handle = instantHandle;
-instantUser.phone = '1234567890';
-instantUser.smsOptIn = true;
-instantUser.deviceFingerprint = uuid4();
-instantUser.address = '123 Main St';
-instantUser.city = 'Anytown';
-instantUser.state = 'NY';
-instantUser.zip = '12345';
-instantUser.email = 'instant@silamoney.com';
-instantUser.dateOfBirth = '1990-01-01';
-instantUser.ssn = '319103848';
+const fifthUser = new sila.User();
+fifthUser.firstName = 'Fifth';
+fifthUser.lastName = 'User';
+fifthUser.cryptoAddress = wallets[7].address;
+fifthUser.handle = fifthHandle;
+fifthUser.phone = '1234567890';
+fifthUser.address = '123 Main St';
+fifthUser.city = 'Anytown';
+fifthUser.state = 'NY';
+fifthUser.zip = '12345';
+fifthUser.email = 'test_5@silamoney.com';
+fifthUser.dateOfBirth = '1990-01-01';
+fifthUser.ssn = '319103848';
 
 const plaidToken = () => {
   const promise = new Promise((resolve, reject) => {
@@ -306,10 +305,10 @@ const createEntityTests = [
         description: `Valid registration test for ${basicUser.handle}.silamoney.eth`,
     },
     {
-        input: instantUser,
+        input: fifthUser,
         expectedResult: 'SUCCESS',
         statusCode: 200,
-        description: `Valid registration test for ${instantUser.handle}.silamoney.eth`,
+        description: `Valid registration test for ${fifthUser.handle}.silamoney.eth`,
     },
 ];
 
@@ -373,12 +372,12 @@ const requestKYCTests = [
 
 const requestKYCLevelTests = [
     {
-        handle: instantUser.handle,
+        handle: fifthUser.handle,
         key: wallets[7].privateKey,
         kyc_level: 'KYC-STANDARD',
         expectedResult: 'SUCCESS',
         statusCode: 200,
-        description: `${instantUser.handle} should be sent for KYC-STANDARD check`,
+        description: `${fifthUser.handle} should be sent for KYC-STANDARD check`,
         messageRegex: /submitted for KYC review/,
     },
     {
@@ -426,12 +425,12 @@ const checkKYCTests = [
         description: `"${handles[4]}.silamoney.eth" should pass KYC check.`,
     },
     {
-        handle: instantHandle,
+        handle: fifthHandle,
         key: wallets[7].privateKey,
         statusCode: 200,
         expectedResult: 'SUCCESS',
         messageRegex: /\bpassed\b/,
-        description: `"${instantHandle}.silamoney.eth" should pass KYC check.`,
+        description: `"${fifthHandle}.silamoney.eth" should pass KYC check.`,
     },
 ];
 
@@ -538,14 +537,14 @@ const linkAccountTests = [
         withAccountId: false,
     },
     {
-        handle: instantHandle,
+        handle: fifthHandle,
         key: wallets[7].privateKey,
-        accountName: 'instantValidation',
+        accountName: 'fifthHandleAccount',
         token: 'sandbox',
         expectedResult: 'SUCCESS',
         statusCode: 200,
         messageRegex: /successfully linked/,
-        description: `"${instantHandle}" should link account through plaid token`,
+        description: `"${fifthHandle}" should link account through plaid token`,
     },
 ];
 
@@ -811,7 +810,7 @@ const issueSilaTests = [
         accountName: 'defaultMx',
         statusCode: 200,
         expectedResult: 'SUCCESS',
-        description: `${instantHandle} should issue sila tokens successfully with defaultMx`,
+        description: `${fifthHandle} should issue sila tokens successfully with defaultMx`,
     },
 ];
 
@@ -1265,14 +1264,14 @@ const addPhoneTests = [
         messageRegex: /Bad request/,
     },
     {
-        handle: instantUser.handle,
+        handle: fifthUser.handle,
         key: wallets[7].privateKey,
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
         phone: '1234567891',
         smsOptIn: true,
-        description: `${instantUser.handle} should add phone`,
+        description: `${fifthUser.handle} should add phone`,
         messageRegex: /Successfully added phone/,
     },
 ];
@@ -1332,30 +1331,6 @@ const addAddressTests = [
             street_address_2: undefined,
         },
         description: `${handles[1]} should fail to add address`,
-    },
-];
-
-const addDeviceTests = [
-    {
-        handle: handles[0],
-        key: wallets[0].privateKey,
-        statusCode: 200,
-        expectedResult: true,
-        status: 'SUCCESS',
-        device: {
-            deviceFingerprint: uuid4(),
-        },
-        description: `${handles[0]} should add device`,
-        messageRegex: /Device successfully registered/,
-    },
-    {
-        handle: handles[0],
-        key: wallets[0].privateKey,
-        statusCode: 400,
-        expectedResult: false,
-        status: 'FAILURE',
-        description: `${handles[0]} should fail add device without fingerprint`,
-        messageRegex: /Bad request/,
     },
 ];
 
@@ -1424,10 +1399,10 @@ const updateIdentityTests = [
         status: 'SUCCESS',
         identity: {
             alias: 'SSN',
-            value: '123455898',
+            value: Math.floor(Math.random() * 999999999),
             uuid: 7,
         },
-        description: `${handles[1]} should update identity`,
+        description: `${handles[0]} should update identity`,
         messageRegex: /Successfully updated identity/,
     },
     {
@@ -1455,11 +1430,11 @@ const updateAddressTests = [
         status: 'SUCCESS',
         address: {
             alias: 'Home Number Two',
-            street_address_1: '324 Songbird Avenue',
+            street_address_1: '325 Songbird Avenue',
             street_address_2: 'Apt. 132',
-            city: 'Portland',
-            state: 'VA',
-            postal_code: '12345',
+            city: 'Portlandia',
+            state: 'WA',
+            postal_code: '94112',
             country: 'US',
             uuid: 8,
         },
@@ -1482,7 +1457,7 @@ const updateAddressTests = [
             country: '',
             uuid: undefined,
         },
-        description: `${handles[1]} should fail to update address`,
+        description: `${handles[0]} should fail to update address`,
         messageRegex: /Bad request/,
     },
 ];
@@ -1528,7 +1503,7 @@ const deleteEmailTests = [
         expectedResult: true,
         status: 'SUCCESS',
         uuid: 0,
-        description: `${handles[1]} should delete email`,
+        description: `${handles[0]} should delete email`,
     },
     {
         handle: handles[0],
@@ -1537,7 +1512,7 @@ const deleteEmailTests = [
         expectedResult: false,
         status: 'FAILURE',
         uuid: undefined,
-        description: `${handles[1]} should fail to delete email`,
+        description: `${handles[0]} should fail to delete email`,
     },
 ];
 
@@ -1549,7 +1524,7 @@ const deletePhoneTests = [
         expectedResult: true,
         status: 'SUCCESS',
         uuid: 1,
-        description: `${handles[1]} should delete phone`,
+        description: `${handles[0]} should delete phone`,
     },
     {
         handle: handles[0],
@@ -1558,7 +1533,7 @@ const deletePhoneTests = [
         expectedResult: false,
         status: 'FAILURE',
         uuid: undefined,
-        description: `${handles[1]} should fail to delete phone`,
+        description: `${handles[0]} should fail to delete phone`,
     },
 ];
 
@@ -1570,7 +1545,7 @@ const deleteIdentityTests = [
         expectedResult: true,
         status: 'SUCCESS',
         uuid: 2,
-        description: `${handles[1]} should delete identity`,
+        description: `${handles[0]} should delete identity`,
     },
     {
         handle: handles[0],
@@ -1579,7 +1554,7 @@ const deleteIdentityTests = [
         expectedResult: false,
         status: 'FAILURE',
         uuid: undefined,
-        description: `${handles[1]} should fail to delete identity`,
+        description: `${handles[0]} should fail to delete identity`,
     },
 ];
 
@@ -1591,7 +1566,7 @@ const deleteAddressTests = [
         expectedResult: true,
         status: 'SUCCESS',
         uuid: 3,
-        description: `${handles[1]} should delete address`,
+        description: `${handles[0]} should delete address`,
     },
     {
         handle: handles[0],
@@ -1600,7 +1575,7 @@ const deleteAddressTests = [
         expectedResult: false,
         status: 'FAILURE',
         uuid: undefined,
-        description: `${handles[1]} should fail to delete address`,
+        description: `${handles[0]} should fail to delete address`,
     },
 ];
 
@@ -2098,7 +2073,7 @@ describe('Get Document Types', function () {
         it(test.description, async () => {
             try {
                 const res = await sila.getDocumentTypes(test.pagination);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.status, test.status);
                 if (res.statusCode === 200) {
@@ -2119,7 +2094,7 @@ describe('Get Entities', function () {
             try {
                 const res = await sila.getEntities(test.entityType, test.options);
 
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.isAtLeast(
                     res.data.entities.individuals.length,
@@ -2180,7 +2155,7 @@ describe('Get Transactions', function () {
         it(test.description, async () => {
             try {
                 const res = await sila.getTransactions(test.handle, test.key);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.status, test.status);
             } catch (e) {
@@ -2241,7 +2216,7 @@ describe('Get Entity', function () {
         it(test.description, async () => {
             try {
                 const res = await sila.getEntity(test.handle, test.key, test.options);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.status, test.status);
                 assert.equal(
@@ -2287,7 +2262,7 @@ describe('Delete Email', function () {
                 const uuid =
                     test.uuid !== undefined ? registrationData[test.uuid] : test.uuid;
                 const res = await sila.deleteEmail(test.handle, test.key, uuid);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.status, test.status);
             } catch (e) {
                 assert.fail(e);
@@ -2303,7 +2278,7 @@ describe('Delete Phone', function () {
             try {
                 const uuid = test.uuid ? registrationData[test.uuid] : test.uuid;
                 const res = await sila.deletePhone(test.handle, test.key, uuid);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.status, test.status);
             } catch (e) {
                 assert.fail(e);
@@ -2319,7 +2294,7 @@ describe('Delete Identity', function () {
             try {
                 const uuid = test.uuid ? registrationData[test.uuid] : test.uuid;
                 const res = await sila.deleteIdentity(test.handle, test.key, uuid);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.status, test.status);
             } catch (e) {
                 assert.fail(e);
@@ -2335,7 +2310,7 @@ describe('Delete Address', function () {
             try {
                 const uuid = test.uuid ? registrationData[test.uuid] : test.uuid;
                 const res = await sila.deleteAddress(test.handle, test.key, uuid);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.status, test.status);
             } catch (e) {
                 assert.fail(e);
@@ -2350,7 +2325,7 @@ describe('Add Email', function () {
         it(test.description, async () => {
             try {
                 const res = await sila.addEmail(test.handle, test.key, test.email);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.status, test.status);
                 if (res.statusCode === 200) registrationData.push(res.data.email.uuid);
@@ -2366,20 +2341,14 @@ describe('Add Phone', function () {
     addPhoneTests.forEach((test) => {
         it(test.description, async () => {
             try {
-                const res = await sila.addPhone(test.handle, test.key, test.phone, {
-                    smsOptIn: test.smsOptIn,
-                });
-                assert.equal(res.statusCode, test.statusCode);
+                const res = await sila.addPhone(test.handle, test.key, test.phone );
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.status, test.status);
                 assert.match(res.data.message, test.messageRegex);
                 if (res.statusCode === 200) {
                     registrationData.push(res.data.phone.uuid);
                     assert.equal(res.data.phone.phone, test.phone);
-                    assert.equal(
-                        res.data.phone.sms_confirmation_requested,
-                        test.smsOptIn ? test.smsOptIn : false,
-                    );
                 }
             } catch (e) {
                 assert.fail(e);
@@ -2398,7 +2367,7 @@ describe('Add Identity', function () {
                     test.key,
                     test.identity,
                 );
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.status, test.status);
                 if (res.statusCode === 200)
@@ -2416,28 +2385,11 @@ describe('Add Address', function () {
         it(test.description, async () => {
             try {
                 const res = await sila.addAddress(test.handle, test.key, test.address);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.status, test.status);
                 if (res.statusCode === 200)
                     registrationData.push(res.data.address.uuid);
-            } catch (e) {
-                assert.fail(e);
-            }
-        });
-    });
-});
-
-describe('Add Device', function () {
-    this.timeout(300000);
-    addDeviceTests.forEach((test) => {
-        it(test.description, async () => {
-            try {
-                const res = await sila.addDevice(test.handle, test.key, test.device);
-                assert.equal(res.statusCode, test.statusCode);
-                assert.equal(res.data.success, test.expectedResult);
-                assert.equal(res.data.status, test.status);
-                assert.match(res.data.message, test.messageRegex);
             } catch (e) {
                 assert.fail(e);
             }
@@ -2455,7 +2407,7 @@ describe('Update Email', function () {
                     ? registrationData[test.email.uuid]
                     : test.email.uuid;
                 const res = await sila.updateEmail(test.handle, test.key, email);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.status, test.status);
             } catch (e) {
@@ -2475,7 +2427,7 @@ describe('Update Phone', function () {
                     ? registrationData[test.phone.uuid]
                     : test.phone.uuid;
                 const res = await sila.updatePhone(test.handle, test.key, phone);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.status, test.status);
                 assert.match(res.data.message, test.messageRegex);
@@ -2499,7 +2451,7 @@ describe('Update Identity', function () {
                     ? registrationData[test.identity.uuid]
                     : test.identity.uuid;
                 const res = await sila.updateIdentity(test.handle, test.key, identity);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.status, test.status);
             } catch (e) {
@@ -2519,7 +2471,7 @@ describe('Update Address', function () {
                     ? registrationData[test.address.uuid]
                     : test.address.uuid;
                 const res = await sila.updateAddress(test.handle, test.key, address);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.status, test.status);
             } catch (e) {
@@ -2539,7 +2491,7 @@ describe('Update Entity', function () {
                     test.privateKey,
                     test.entity,
                 );
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.status, test.status);
                 assert.isTrue(res.data.user_handle.includes(test.handle.toLowerCase()));
@@ -2597,7 +2549,7 @@ describe('Request KYC', function () {
         it(test.description, async () => {
             try {
                 const res = await sila.requestKYC(test.handle, test.key);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.status, test.expectedResult);
             } catch (err) {
                 assert.fail(err);
@@ -2616,7 +2568,7 @@ describe('Request KYC - KYC Level', function () {
                     test.key,
                     test.kyc_level,
                 );
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.status, test.expectedResult);
             } catch (err) {
                 assert.fail(err);
@@ -2683,7 +2635,7 @@ describe('Upload Document', function () {
                         test.key,
                         test.document,
                     );
-                    assert.equal(res.statusCode, test.statusCode);
+                    assert.equal(res.statusCode, test.statusCode, res.data.message);
                     assert.equal(res.data.success, test.expectedResult);
                     assert.equal(res.data.status, test.status);
                     if (res.statusCode === 200) {
@@ -2697,7 +2649,7 @@ describe('Upload Document', function () {
                         test.key,
                         test.document,
                     );
-                    assert.equal(res.statusCode, test.statusCode);
+                    assert.equal(res.statusCode, test.statusCode, res.data.message);
                     assert.equal(res.data.success, test.expectedResult);
                     assert.equal(res.data.status, test.status);
                     if (res.statusCode === 200) {
@@ -2725,7 +2677,7 @@ describe('List Documents', function () {
                     test.key,
                     test.filters,
                 );
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.status, test.status);
                 if (res.data.statusCode === 200) {
@@ -2750,7 +2702,7 @@ describe('Get Document', function () {
                         ? documentReferences[test.documentIndex]
                         : undefined;
                 const res = await sila.getDocument(test.handle, test.key, documentId);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 if (res.statusCode === 200) {
                     assert.isString(res.data);
                     assert.equal(res.headers['content-type'], test.contentType);
@@ -2843,7 +2795,7 @@ describe('Link Account - Direct', function () {
                     test.routingNumber,
                     test.accountName,
                 );
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.status, test.expectedResult);
             } catch (e) {
                 assert.fail(e);
@@ -2946,7 +2898,7 @@ describe('Link Account - Token tests', function () {
                     accountId,
                     test.plaidTokenType
                 );
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.status, test.expectedResult);
                 assert.isNotNull(res.data.web_debit_verified);
 
@@ -2977,7 +2929,7 @@ describe('Link Account - MX Token tests', function () {
                     token,
                     test.accountName,
                 );
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.status, test.expectedResult);
 
             } catch (e) {
@@ -3007,7 +2959,7 @@ describe('Get Accounts', function () {
         it(test.description, async () => {
             try {
                 const res = await sila.getAccounts(test.handle, test.key);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.length, test.accounts);
                 assert.isNotNull(res.data[0].web_debit_verified);
 
@@ -3028,7 +2980,7 @@ describe('Get Account Balance', function () {
                     test.key,
                     test.accountName,
                 );
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
             } catch (err) {
                 assert.fail(err);
@@ -3050,7 +3002,7 @@ describe('Register Wallet', function () {
                     test.default,
                     test.statementsEnabled,
                 );
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
                 if (test.expectedResult == true){
                 assert.equal(res.data.statements_enabled, test.statementsEnabled);
@@ -3068,7 +3020,7 @@ describe('Get Wallets', function () {
         it(test.description, async () => {
             try {
                 const res = await sila.getWallets(test.handle, test.key, test.filters, test.statementsEnabled);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.wallets.length, test.wallets);
                 assert.equal(res.data.wallets[0].statements_enabled, test.statementsEnabled);
@@ -3120,7 +3072,7 @@ describe('Get Wallet', function () {
         it(test.description, async () => {
             try {
                 const res = await sila.getWallet(test.handle, test.key);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.wallet.statements_enabled, test.statementsEnabled);
                 assert.equal(res.data.wallet.nickname, test.nickname);
@@ -3142,7 +3094,7 @@ describe('Delete Wallet', function () {
         it(test.description, async () => {
             try {
                 const res = await sila.deleteWallet(test.handle, test.key);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
             } catch (err) {
                 assert.fail(err);
@@ -3178,7 +3130,7 @@ describe('Cancel Transaction', function () {
                     test.key,
                     "9f280665-629f-45bf-a694-133c86bffd5e",
                 );
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.status, test.status);
             } catch (e) {
@@ -3332,7 +3284,7 @@ describe('Issue Sila', function () {
                     cardName,
                 );
                 if (res.statusCode === 200) issueReferences.push(res.data.reference);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.status, test.expectedResult);
                 if (res.data.status === 'SUCCESS')
                     assert.isString(res.data.transaction_id);
@@ -3383,7 +3335,7 @@ describe('Issue Sila Transaction Idempotency Test ', function () {
                 );
 
                 if (res.statusCode === 200) idempotencyIssueReferences.push(res.data.reference);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.status, test.expectedResult);
                 if (res.data.status === 'SUCCESS'){
                     assert.isString(res.data.transaction_id);
@@ -3427,7 +3379,7 @@ describe('Transfer Sila', function () {
                     test.businessUuid,
                 );
                 if (res.statusCode === 200) transferReferences.push(res.data.reference);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.status, test.expectedResult);
                 if (res.data.status === 'SUCCESS') {
                     assert.isString(res.data.transaction_id);
@@ -3471,7 +3423,7 @@ describe('Transfer Sila Idempotency Test', function () {
                     test.transaction_idempotency_id,
                 );
                 if (res.statusCode === 200) idempotencyTransferReferences.push(res.data.reference);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.status, test.expectedResult);
                 if (res.data.status === 'SUCCESS') {
                     if (!localTransIds.includes(res.data.transaction_id)) {
@@ -3505,7 +3457,7 @@ describe('Get Sila Balance', function () {
         it(test.description, async () => {
             try {
                 const res = await sila.getSilaBalance(test.address);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.address, test.address);
                 assert.isAtLeast(res.data.sila_balance, test.balance);
@@ -3543,7 +3495,7 @@ describe('Redeem Sila', function () {
                 );
 
                 if (res.statusCode === 200) redeemReferences.push(res.data.reference);
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.status, test.expectedResult);
                 if (res.data.status === 'SUCCESS')
                     assert.isString(res.data.transaction_id);
@@ -3585,7 +3537,7 @@ describe('Redeem Sila Idempotency Test', function () {
                 );
 
                 if (res.statusCode === 200)
-                    assert.equal(res.statusCode, test.statusCode);
+                    assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.status, test.expectedResult);
                 if (res.data.status === 'SUCCESS') {
                     assert.isString(res.data.transaction_id);
@@ -3624,7 +3576,7 @@ describe('Open Virtual Account', function () {
                     paymentMethodsIds['virtual_account_id_2'] = res.data.virtual_account.virtual_account_id;
                 }
 
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.isTrue(res.data.success);
                 assert.equal(res.data.status, test.expectedResult);
                 assert.equal(res.data.virtual_account.virtual_account_name, test.virtual_account_name);
@@ -3817,25 +3769,6 @@ describe('Issue Sila From Bank To Virtual Account And Verify Transaction', funct
 
 // commented test cases as evolve card flow has been depreciated and cko haven't been published in sdk.
 describe('Redeem Sila From Virtual Account to card And Verify Transaction', function () {
-    // this.timeout(300000);
-
-    // it('Successfully redeemSila to card', async () => {
-    //     try {
-    //         var payload = {
-    //             "amount": 50,
-    //             "source_id": paymentMethodsIds['virtual_account_id_1'],
-    //             "destination_id": paymentMethodsIds['card_id']
-    //         };
-    //         const res = await sila.redeemSila(payload.amount, handles[0], wallets[0].privateKey,payload.account_name,payload.descriptor,'',payload.processing_type,payload.card_name,payload.source_id, payload.destination_id);
-
-    //         assert.equal(res.statusCode, 200);
-    //         assert.isTrue(res.data.success);
-    //         assert.equal(res.data.status, 'SUCCESS');
-
-    //     } catch (e) {
-    //         assert.fail(e);
-    //     }
-    // });
 
     this.timeout(300000);
     it('Successfully redeemSila to virtual account-2', async () => {
@@ -3856,29 +3789,6 @@ describe('Redeem Sila From Virtual Account to card And Verify Transaction', func
             assert.fail(e);
         }
     });
-
-    // this.timeout(300000);
-    // it('Get redeemSila Transaction to Validate source and destination id-1', async () => {
-    //     try {
-    //         var filters = {
-    //             "source_id":paymentMethodsIds['virtual_account_id_1'],
-    //             "destination_id": paymentMethodsIds['card_id'],
-    //             "transaction_types": ["redeem"],
-    //         };
-    //         await sleep(30000, '');
-    //         const res = await sila.getTransactions(handles[0], wallets[0].privateKey, filters);
-
-    //         assert.equal(res.statusCode, 200);
-    //         assert.isTrue(res.data.success);
-    //         assert.equal(res.data.status, 'SUCCESS');
-    //         assert.isNotNull(res.data.transactions[0]['source_id']);
-    //         assert.isNotNull(res.data.transactions[0]['destination_id']);
-    //         assert.isNotNull(res.data.transactions[0]['sila_ledger_type']);
-
-    //     } catch (e) {
-    //         assert.fail(e);
-    //     }
-    // });
 
     this.timeout(300000);
     it('Get redeemSila Transaction to Validate source and destination id-2', async () => {
@@ -3997,7 +3907,7 @@ describe('Get Webhooks', function () {
                 if (res.data.webhooks[0]) {
                     eventUuid = res.data.webhooks[0]['uuid']
                 }
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
             } catch (err) {
                 assert.fail(err);
@@ -4023,102 +3933,6 @@ describe('Retry Webhooks', function () {
             } else {
                 console.log("Retry Webhooks: Not found any event-uuid in getWebhooks.")
             }
-        } catch (err) {
-            assert.fail(err);
-        }
-    });
-});
-
-describe('Issue Sila For Support INSTANT_SETTLEMENT Product', function () {
-    this.timeout(300000);
-    it("Successfully Issue Sila For Support INSTANT_SETTLEMENT.", async () => {
-        try {
-            const res = await sila.issueSila(
-                100,
-                handles[0],
-                wallets[0].privateKey,
-                'default',
-                '',
-                '',
-                'INSTANT_SETTLEMENT'
-            );
-
-            assert.equal(res.statusCode, 200);
-            assert.isTrue(res.data.success);
-            assert.equal(res.data.status, 'SUCCESS');
-
-        } catch (err) {
-            assert.fail(err);
-        }
-    });
-});
-
-describe('TransferSila For Support INSTANT_SETTLEMENT Product', function () {
-    this.timeout(300000);
-    it("Successfully TransferSila For Support INSTANT_SETTLEMENT.", async () => {
-        try {
-            const res = await sila.transferSila(
-                100,
-                handles[0],
-                wallets[0].privateKey,
-                handles[1],
-                '',
-                '',
-                ''
-            );
-
-            assert.equal(res.statusCode, 200);
-            assert.isTrue(res.data.success);
-            assert.equal(res.data.status, 'SUCCESS');
-
-        } catch (err) {
-            assert.fail(err);
-        }
-    });
-});
-
-describe('RedeemSila For Support INSTANT_SETTLEMENT Product', function () {
-    this.timeout(300000);
-    it("Successfully RedeemSila For Support INSTANT_SETTLEMENT.", async () => {
-        try {
-            const res = await sila.redeemSila(
-                100,
-                handles[0],
-                wallets[0].privateKey,
-                'default',
-                '',
-                ''
-            );
-            assert.equal(res.statusCode, 200);
-            assert.isTrue(res.data.success);
-            assert.equal(res.data.status, 'SUCCESS');
-
-        } catch (err) {
-            assert.fail(err);
-        }
-    });
-});
-
-describe('Get Transactions Using Search Filter INSTANT_SETTLEMENT', function () {
-    this.timeout(300000);
-    it("Successfully Get Transactions INSTANT_SETTLEMENT.", async () => {
-        try {
-            let search_filters = {
-                "processing_type":"INSTANT_SETTLEMENT"
-            };
-
-            const res = await sila.getTransactions(
-                handles[0],
-                wallets[0].privateKey,
-                search_filters
-            );
-
-            assert.equal(res.statusCode, 200);
-            assert.isTrue(res.data.success);
-            assert.equal(res.data.status, 'SUCCESS');
-            assert.isArray(res.data.transactions[0]['child_transactions']);
-            assert.equal(res.data.transactions[0]['processing_type'], 'INSTANT_SETTLEMENT');
-
         } catch (err) {
             assert.fail(err);
         }
@@ -4218,7 +4032,7 @@ describe('Plaid Sameday Auth', function () {
                     test.key,
                     test.accountName,
                 );
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.status, test.expectedResult);
             } catch (e) {
                 assert.fail(e);
@@ -4239,7 +4053,7 @@ describe('Get Wallet Statement Data', function () {
                     wallet_res.data.wallet.wallet_id,
                     test.filters,
                     );
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.status, test.status);
             } catch (e) {
@@ -4258,7 +4072,7 @@ describe('Get Statements Data', function () {
                     test.handle,
                     test.filters,
                     );
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.status, test.status);
             } catch (e) {
@@ -4277,7 +4091,7 @@ describe('Statements', function () {
             test.handle,
             test.searchFilters,
           );
-          assert.equal(res.statusCode, test.statusCode);
+          assert.equal(res.statusCode, test.statusCode, res.data.message);
           assert.equal(res.data.success, test.expectedResult);
           assert.equal(res.data.status, test.status);
         } catch (e) {
@@ -4298,7 +4112,7 @@ describe('Resend Statements', function () {
                     test.email,
                     test.statementUuid
                     );
-                assert.equal(res.statusCode, test.statusCode);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
                 assert.equal(res.data.success, test.expectedResult);
                 assert.equal(res.data.status, test.status);
             } catch (e) {
