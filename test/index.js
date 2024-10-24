@@ -3939,6 +3939,102 @@ describe('Retry Webhooks', function () {
     });
 });
 
+describe('Issue Sila For Support INSTANT_SETTLEMENT Product', function () {
+    this.timeout(300000);
+    it("Successfully Issue Sila For Support INSTANT_SETTLEMENT.", async () => {
+        try {
+            const res = await sila.issueSila(
+                100,
+                handles[0],
+                wallets[0].privateKey,
+                'default',
+                '',
+                '',
+                'INSTANT_SETTLEMENT'
+            );
+
+            assert.equal(res.statusCode, 200, res.data.message);
+            assert.isTrue(res.data.success);
+            assert.equal(res.data.status, 'SUCCESS');
+
+        } catch (err) {
+            assert.fail(err);
+        }
+    });
+});
+
+describe('TransferSila For Support INSTANT_SETTLEMENT Product', function () {
+    this.timeout(300000);
+    it("Successfully TransferSila For Support INSTANT_SETTLEMENT.", async () => {
+        try {
+            const res = await sila.transferSila(
+                100,
+                handles[0],
+                wallets[0].privateKey,
+                handles[1],
+                '',
+                '',
+                ''
+            );
+
+            assert.equal(res.statusCode, 200, res.data.message);
+            assert.isTrue(res.data.success);
+            assert.equal(res.data.status, 'SUCCESS');
+
+        } catch (err) {
+            assert.fail(err);
+        }
+    });
+});
+
+describe('RedeemSila For Support INSTANT_SETTLEMENT Product', function () {
+    this.timeout(300000);
+    it("Successfully RedeemSila For Support INSTANT_SETTLEMENT.", async () => {
+        try {
+            const res = await sila.redeemSila(
+                100,
+                handles[0],
+                wallets[0].privateKey,
+                'default',
+                '',
+                ''
+            );
+            assert.equal(res.statusCode, 200, res.data.message);
+            assert.isTrue(res.data.success);
+            assert.equal(res.data.status, 'SUCCESS');
+
+        } catch (err) {
+            assert.fail(err);
+        }
+    });
+});
+
+describe('Get Transactions Using Search Filter INSTANT_SETTLEMENT', function () {
+    this.timeout(300000);
+    it("Successfully Get Transactions INSTANT_SETTLEMENT.", async () => {
+        try {
+            let search_filters = {
+                "processing_type":"INSTANT_SETTLEMENT"
+            };
+
+            const res = await sila.getTransactions(
+                handles[0],
+                wallets[0].privateKey,
+                search_filters
+            );
+
+            assert.equal(res.statusCode, 200, res.data.message);
+            assert.isTrue(res.data.success);
+            assert.equal(res.data.status, 'SUCCESS');
+            assert.isArray(res.data.transactions[0]['child_transactions']);
+            assert.equal(res.data.transactions[0]['processing_type'], 'INSTANT_SETTLEMENT');
+
+        } catch (err) {
+            assert.fail(err);
+        }
+    });
+});
+
 describe('Get Transactions Using Search Filter payment_method_id (single virtual account)', function () {
     this.timeout(300000);
     it("Successfully Get Transactions single virtual account.", async () => {
@@ -3953,7 +4049,7 @@ describe('Get Transactions Using Search Filter payment_method_id (single virtual
                 search_filters
             );
 
-            assert.equal(res.statusCode, 200);
+            assert.equal(res.statusCode, 200, res.data.message);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
             assert.isArray(res.data.transactions);
@@ -3981,7 +4077,7 @@ describe('Test Virtual Account Ach Transaction', function () {
                 wallets[0].privateKey,
                 payload
             );
-            assert.equal(res.statusCode, 200);
+            assert.equal(res.statusCode, 200, res.data.message);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
 
@@ -4002,7 +4098,7 @@ describe('Close Virtual Account', function () {
                 paymentMethodsIds['virtual_account_number_1']
             );
 
-            assert.equal(res.statusCode, 200);
+            assert.equal(res.statusCode, 200, res.data.message);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
             assert.equal(res.data.virtual_account.account_number, paymentMethodsIds['virtual_account_number_1']);
