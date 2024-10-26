@@ -1270,7 +1270,6 @@ const addPhoneTests = [
         expectedResult: true,
         status: 'SUCCESS',
         phone: '1234567891',
-        smsOptIn: true,
         description: `${fifthUser.handle} should add phone`,
         messageRegex: /Successfully added phone/,
     },
