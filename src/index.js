@@ -869,7 +869,7 @@ const addEmail = (handle, privateKey, email) => {
  * @param {String} phone The user's new phone
  * @param {Object} optional
  */
-const addPhone = (handle, privateKey, phone ) => {
+const addPhone = (handle, privateKey, phone) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
   body.phone = phone;
