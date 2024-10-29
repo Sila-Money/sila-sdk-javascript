@@ -373,12 +373,11 @@ const register = (user) => {
     message.address.country = user.country ? user.country : 'US';
   }
 
-  if (user.contactAlias || user.phone || user.email || user.smsOptIn) {
+  if (user.contactAlias || user.phone || user.email) {
     message.contact = {};
     message.contact.contact_alias = user.contactAlias;
     message.contact.phone = user.phone;
     message.contact.email = user.email;
-    message.contact.sms_opt_in = user.smsOptIn;
   }
 
   if (user.cryptoAddress || user.cryptoAlias) {
@@ -422,14 +421,6 @@ const register = (user) => {
     message.identity = {};
     message.identity.identity_value = user.ssn ? user.ssn : user.ein;
     message.identity.identity_alias = user.ssn ? 'SSN' : 'EIN';
-  }
-
-  if (user.deviceFingerprint) {
-    message.device = {};
-    message.device.device_fingerprint = user.deviceFingerprint;
-    if (user.sessionIdentifier){
-      message.device.session_identifier = user.sessionIdentifier;
-    }
   }
 
   return makeRequest('register', message);
@@ -561,7 +552,7 @@ const linkAccount = (
  * @param {String} accountName The nickname of the account to debit from. It defaults to 'default' // Optional, OR "card_name": "default", never both.
  * @param {String} descriptor Optional. Max Length 100. Note that only the first 10 characters show on the resulting bank statement.
  * @param {String} businessUuid Optional. UUID of a business with an approved ACH name. The format should be a UUID string.
- * @param {String} processingType Optional. Choice field. Examples: STANDARD_ACH, SAME_DAY_ACH or INSTANT_ACH
+ * @param {String} processingType Optional. Choice field. Examples: STANDARD_ACH or SAME_DAY_ACH
  * @param {String} cardName  The nickname of the card to debit from. It defaults to 'default' // Optional, OR "account_name": "default", never both.
  * @param {String} sourceId source account id to debit from (optional)
  * @param {String} destinationId destination account id for credit (optional)
@@ -618,7 +609,6 @@ const issueSila = (
  * @param {String} cardName  The nickname of the card to debit from. Optional, OR "account_name": "default", never both.
  * @param {String} sourceId source account id to debit from (optional)
  * @param {String} destinationId destination account id for credit (optional)
- * @param {String} mockWireAccountName Optional with value of "mock_account_success" or "mock_account_fail"
  * @param {String} transactionIdempotencyId Optional. UUID to uniquely identify the transaction to make it idempotent.
  */
 const redeemSila = (
@@ -785,18 +775,16 @@ const updateEmail = (handle, privateKey, email) => {
  * @param {Object} optional The updated phone
  * @param {String} optional.phone
  * @param {String} optional.uuid
- * @param {Boolean} optional.smsOptIn
  */
 const updatePhone = (
   handle,
   privateKey,
-  { phone = undefined, uuid = undefined, smsOptIn = undefined } = {},
+  { phone = undefined, uuid = undefined } = {},
 ) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
   body.phone = phone;
   body.uuid = uuid;
-  body.sms_opt_in = smsOptIn;
 
   return makeRequest('update/phone', body, privateKey);
 };
@@ -880,13 +868,11 @@ const addEmail = (handle, privateKey, email) => {
  * @param {String} privateKey The user's wallet private key
  * @param {String} phone The user's new phone
  * @param {Object} optional
- * @param {Boolean} optional.smsOptIn
  */
-const addPhone = (handle, privateKey, phone, { smsOptIn = undefined } = {}) => {
+const addPhone = (handle, privateKey, phone) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
   body.phone = phone;
-  body.sms_opt_in = smsOptIn;
 
   return makeRequest('add/phone', body, privateKey);
 };
@@ -925,26 +911,6 @@ const addAddress = (handle, privateKey, address) => {
   body.country = address.country;
 
   return makeRequest('add/address', body, privateKey);
-};
-
-/**
- *
- * @param {string} handle The user handle
- * @param {string} privateKey The user's private key
- * @param {Object} device Options for device registration
- * @param {string} device.deviceFingerprint Required key containing the Iovation device token to be used in verification
- */
-const addDevice = (
-  handle,
-  privateKey,
-  { deviceFingerprint = undefined, sessionIdentifier = undefined } = {},
-) => {
-  const fullHandle = getFullHandle(handle);
-  const body = setHeaders({ header: {} }, fullHandle);
-  body.device_fingerprint = deviceFingerprint;
-  body.session_identifier = sessionIdentifier;
-
-  return makeRequest('add/device', body, privateKey);
 };
 
 /**
@@ -1491,21 +1457,6 @@ const plaidUpdateLinkToken = ({ account_name }, user_handle) => {
 /**
  *
  * @param {*} payload
- * @param {String} user_handle
- * @param {String} user_private_key
- * @returns
- */
-const checkInstantAch = ({ account_name, kyc_level }, user_handle, user_private_key) => {
-  const body = setHeaders({ header: {} }, user_handle);
-  body.account_name = account_name;
-  if (kyc_level) body.kyc_level = kyc_level;
-
-  return makeRequest('check_instant_ach', body, user_private_key);
-};
-
-/**
- *
- * @param {*} payload
  * @param {*} user_private_key
  * @returns
  */
@@ -1796,38 +1747,6 @@ const createTestVirtualAccountAchTransaction = (userHandle, userPrivateKey, payl
 };
 
 /**
- * @param {String} userHandle
- * @param {String} userPrivateKey
- * @param {Object} payload
- * @returns
- */
-const approveWire = (userHandle, userPrivateKey, payload) => {
-  var body = setHeaders({
-    header: {}
-  }, userHandle);
-  body.transaction_id = payload.transaction_id;
-  body.approve        = payload.approve;
-  body.notes          = payload.notes;
-  body.mock_wire_account_name = payload.mock_wire_account_name;
-  return makeRequest("approve_wire", body, userPrivateKey);
-};
-
-/**
- * @param {String} userHandle
- * @param {String} userPrivateKey
- * @param {Object} payload
- * @returns
- */
-const mockWireOutFile = (userHandle, userPrivateKey, payload) => {
-  var body = setHeaders({
-    header: {}
-  }, userHandle);
-  body.transaction_id = payload.transaction_id;
-  body.wire_status    = payload.wire_status;
-  return makeRequest("mock_wire_out_file", body, userPrivateKey);
-};
-
-/**
  *
  * @param {Object} params The configuration parameters
  * @param {String} params.key
@@ -2052,7 +1971,6 @@ export default {
   addPhone,
   addIdentity,
   addAddress,
-  addDevice,
   updateEmail,
   updatePhone,
   updateIdentity,
@@ -2067,7 +1985,6 @@ export default {
   checkPartnerKyc,
   updateAccount,
   plaidUpdateLinkToken,
-  checkInstantAch,
   getInstitutions,
   linkCard,
   getCards,
@@ -2082,8 +1999,6 @@ export default {
   retryWebhook,
   closeVirtualAccount,
   createTestVirtualAccountAchTransaction,
-  approveWire,
-  mockWireOutFile,
   uploadDocuments,
   getStatementsData,
   getWalletStatementData,
