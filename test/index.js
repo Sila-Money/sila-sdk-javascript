@@ -58,6 +58,7 @@ const [
 const timestamp = Date.now();
 const email = `fake${timestamp}@silamoney.com`;
 const fake_card_name = `fake_card_${timestamp}`;
+const ckoCardName = `cko_card_${timestamp}`;
 
 const firstUser = new sila.User();
 firstUser.firstName = 'First';
@@ -67,7 +68,7 @@ firstUser.city = 'Anytown';
 firstUser.state = 'NY';
 firstUser.zip = '12345';
 firstUser.phone = '1234567890';
-firstUser.email = 'test_1@silamoney.com';
+firstUser.email = `${firstHandle}@silamoney.com`;
 firstUser.dateOfBirth = '1990-01-01';
 firstUser.ssn = '319103848';
 firstUser.cryptoAddress = wallets[0].address;
@@ -81,13 +82,13 @@ secondUser.handle = secondHandle;
 
 const thirdUser = Object.assign({}, firstUser);
 thirdUser.firstName = 'Fail';
-thirdUser.email = 'fail@silamoney.com';
+thirdUser.email = `fail_${thirdHandle}@silamoney.com`;
 thirdUser.cryptoAddress = wallets[2].address;
 thirdUser.handle = thirdHandle;
 
 const fourthUser = Object.assign({}, firstUser);
 fourthUser.firstName = 'Fourth';
-fourthUser.email = 'test_4@silamoney.com';
+fourthUser.email = `${fourthHandle}@silamoney.com`;
 fourthUser.cryptoAddress = wallets[4].address;
 fourthUser.handle = fourthHandle;
 
@@ -95,7 +96,7 @@ const businessUser = Object.assign({}, firstUser);
 businessUser.entity_name = 'test business';
 businessUser.ssn = undefined;
 businessUser.ein = '320567252';
-businessUser.email = 'test_4@silamoney.com';
+businessUser.email = `${businessHandle}@silamoney.com`;
 businessUser.cryptoAddress = wallets[5].address;
 businessUser.business_type = 'corporation';
 businessUser.business_website = 'https://www.yourbusinesscustomer.com';
@@ -120,7 +121,7 @@ fifthUser.address = '123 Main St';
 fifthUser.city = 'Anytown';
 fifthUser.state = 'NY';
 fifthUser.zip = '12345';
-fifthUser.email = 'test_5@silamoney.com';
+fifthUser.email = `${fifthHandle}@silamoney.com`;
 fifthUser.dateOfBirth = '1990-01-01';
 fifthUser.ssn = '319103848';
 
@@ -192,32 +193,6 @@ const MxProcessorToken = () => {
           .catch(function (error) {
             resolve({});
         });
-    });
-    return promise;
-};
-
-const linkCardToken = () => {
-    const promise = new Promise((resolve) => {
-        const bodyParams = "cBm0RU8eASGfSxLYJjsG73Q\tn9010111999999992\te202205\ts2545";
-        const headersObj = {'Content-Type': 'application/tabapay-compact'}
-        headersObj['Referer'] = 'https://sso.sandbox.tabapay.com:8443/SSOEvolveISO.html';
-
-        const options = {
-            url: 'https://sso.sandbox.tabapay.com:8443/v2/SSOEncrypt',
-            method: 'post',
-            headers: headersObj,
-            data: bodyParams,
-        };
-        axios(options)
-            .then(function (response) {
-                const token = response.data.slice(3);
-                resolve(token);
-            })
-            .catch(function (error) {
-                console.error(error)
-                return;
-            });
-
     });
     return promise;
 };
@@ -1228,7 +1203,7 @@ const addEmailTests = [
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
-        email: 'erickjeronimo1@gmail.com',
+        email: `added_email_${uuid4()}@gmail.com`,
         description: `${handles[0]} should add email`,
     },
     {
@@ -1341,7 +1316,7 @@ const updateEmailTests = [
         expectedResult: true,
         status: 'SUCCESS',
         email: {
-            email: 'erickjeronimo1@gmail.com',
+            email: `${handles[0]}_updated@silamoney.com`,
             uuid: 4,
         },
         description: `${handles[0]} should update email`,
@@ -1398,7 +1373,7 @@ const updateIdentityTests = [
         status: 'SUCCESS',
         identity: {
             alias: 'SSN',
-            value: Math.floor(Math.random() * 999999999),
+            value: `${Math.floor(Math.random() * 500)}-22-${Math.floor(Math.random() * 9998)}`,
             uuid: 7,
         },
         description: `${handles[0]} should update identity`,
@@ -1919,7 +1894,7 @@ const statementsTests = [
             userName: "Postman User",
             userHandle: "user_handle1_1686776339cudgjmzwckh4ohh",
             accountType: "VIRTUAL_ACCOUNT",
-            email: "sunilarc14@silamoney.com",
+            email: `email_${uuid4()}@silamoney.com`,
         },
         statusCode: 200,
         expectedResult: true,
@@ -1940,7 +1915,7 @@ const resendStatementsTests = [
     {
         handle: handles[0],
         key: wallets[0].privateKey,
-        email: "sunilarc14@silamoney.com",
+        email: `email_${uuid4()}@silamoney.com`,
         statementUuid: "59a4feba-0fcd-40ac-bd9a-59e47da0b640",
         statusCode: 200,
         expectedResult: true,
@@ -3143,12 +3118,26 @@ describe('Link Card', function () {
     this.timeout(300000);
     it("Successfully linked the Card.", async () => {
         try {
-            const resToken = await linkCardToken();
+            const createTokenRes = await sila.createCkoTestingToken(handles[0], {
+                card_number: "4659105569051157",
+                expiration_month: "12",
+                expiration_year: "30",
+                cko_public_key: "pk_sbox_i2uzy5w5nsllogfsc4xdscorcii",
+            });
+
+            const ckoToken = createTokenRes.data.token;
+
+            assert.equal(createTokenRes.statusCode, 200);
+            assert.isTrue(createTokenRes.data.success);
+            assert.equal(createTokenRes.data.status, "SUCCESS");
+
             const cardObj = {
-                "card_name":"visa",
-                "account_postal_code":"12345",
-                "token":resToken
-            }
+                card_name: ckoCardName,
+                account_postal_code: "12345",
+                token: ckoToken,
+                provider: "CKO",
+            };
+
             const res = await sila.linkCard(
                 handles[0],
                 wallets[0].privateKey,
@@ -3166,28 +3155,41 @@ describe('Link Card', function () {
 
 describe('Link Anonymous Card', function () {
     this.timeout(300000);
-    it("Successfully linked the Anonymous Card.", async () => {
+    it('Successfully linked the Anonymous Card.', async () => {
         try {
-            const resToken = await linkCardToken();
+            const createTokenRes = await sila.createCkoTestingToken(handles[0], {
+                card_number: "4659105569051157",
+                expiration_month: "12",
+                expiration_year: "30",
+                cko_public_key: "pk_sbox_i2uzy5w5nsllogfsc4xdscorcii",
+            });
+
+            const ckoToken = createTokenRes.data.token;
+
+            assert.equal(createTokenRes.statusCode, 200);
+            assert.isTrue(createTokenRes.data.success);
+            assert.equal(createTokenRes.data.status, "SUCCESS");
+
             const cardObj = {
-                card_name: "John Doe's Card",
+                card_name: "anonymous_card",
                 account_postal_code: "12345",
-                token: resToken,
-                skip_verification: "true",
-                anonymous: true, 
+                token: ckoToken,
+                provider: "CKO",
+                skip_verification: true,
+                anonymous: true,
                 first_name: "John",
-                last_name: "Doe", 
+                last_name: "Doe",
                 address: {
                     street_address_1: "123 Main St",
                     street_address_2: "Apt 4B",
                     city: "Anytown",
                     county: "Anycounty",
-                    state: 'CA',
+                    state: "CA",
                     country: "US",
-                    postal_code: "12345"
+                    postal_code: "12345",
                 },
             };
-              
+
             const res = await sila.linkCard(
                 handles[0],
                 wallets[0].privateKey,
@@ -4307,7 +4309,7 @@ describe('Delete Cards', function () {
     it("Successfully Deletes Cards with Different Providers", async () => {
         try {
             const cardData = [
-                { cardName: 'visa', provider: 'evolve', handle: handles[0], wallet: wallets[0].privateKey },
+                { cardName: ckoCardName, provider: 'cko', handle: handles[0], wallet: wallets[0].privateKey },
                 { cardName: fake_card_name, provider: 'cko', handle: handles[1], wallet: wallets[1].privateKey },
             ];
 

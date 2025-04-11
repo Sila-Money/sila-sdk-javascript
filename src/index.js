@@ -417,6 +417,14 @@ const register = (user) => {
     message.entity.registration_state = user.registration_state;
   }
 
+  if (user.id_document) {
+    message.id_document = {};
+    message.identity.doc_type = user.doc_type
+    message.identity.doc_id = user.doc_id
+    if (user.doc_state) message.identity.doc_state = user.doc_state
+    if (user.doc_country) message.identity.doc_country = user.doc_country
+  }
+
   if (user.ssn || user.ein) {
     message.identity = {};
     message.identity.identity_value = user.ssn ? user.ssn : user.ein;
@@ -1112,6 +1120,7 @@ const uploadDocument = async (userHandle, userPrivateKey, document) => {
     body.mime_type = document.mimeType;
     body.document_type = document.documentType;
     body.description = document.description;
+    body.verification_uuid = document.verification_uuid;
 
     return makeFileRequest('documents', body, tmpFilePathObj, tmpFileObj, userPrivateKey);
 };
