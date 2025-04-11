@@ -419,13 +419,18 @@ const checkPartnerKYCTests = [
     },
 ];
 
+const accountName1 = `sync_direct_${timestamp}`;
+const accountName2 = `defaultpt_${timestamp}`;
+const accountName3 = `sync_by_id_${timestamp}`;
+const accountName4 = `defaultMx_${timestamp}`;
+
 const linkAccountDirectTests = [
     {
         handle: handles[0],
         key: wallets[0].privateKey,
         accountNumber: '123456789012',
         routingNumber: '123456780',
-        accountName: 'sync_direct',
+        accountName: accountName1,
         expectedResult: 'SUCCESS',
         statusCode: 200,
         description: 'Direct bank account link should be successful',
@@ -465,7 +470,7 @@ const linkAccountTests = [
     {
         handle: handles[0],
         key: wallets[0].privateKey,
-        accountName: 'defaultpt',
+        accountName: accountName2,
         expectedResult: 'SUCCESS',
         statusCode: 200,
         messageRegex: /successfully linked/,
@@ -486,7 +491,7 @@ const linkAccountTests = [
     {
         handle: handles[0],
         key: wallets[0].privateKey,
-        accountName: 'sync_by_id',
+        accountName: accountName3,
         expectedResult: 'SUCCESS',
         statusCode: 200,
         messageRegex: /successfully linked/,
@@ -527,7 +532,7 @@ const linkAccountMXTests = [
     {
         handle: handles[0],
         key: wallets[0].privateKey,
-        accountName: 'defaultMx',
+        accountName: accountName4,
         expectedResult: 'SUCCESS',
         statusCode: 200,
         providerTokenType:'processor',
@@ -567,7 +572,7 @@ const getAccountBalanceTests = [
     {
         handle: handles[0],
         key: wallets[0].privateKey,
-        accountName: 'sync_direct',
+        accountName: accountName1,
         statusCode: 400,
         expectedResult: false,
         description: `${handles[0]} should fail retrieve direct link account balance`,
@@ -575,7 +580,7 @@ const getAccountBalanceTests = [
     {
         handle: handles[0],
         key: wallets[0].privateKey,
-        accountName: 'defaultMx',
+        accountName: accountName4,
         statusCode: 200,
         expectedResult: true,
         description: `${handles[0]} should retrieve default MX account balance`,
@@ -782,7 +787,7 @@ const issueSilaTests = [
         handle: handles[0],
         key: wallets[0].privateKey,
         amount: 200,
-        accountName: 'defaultMx',
+        accountName: accountName4,
         statusCode: 200,
         expectedResult: 'SUCCESS',
         description: `${fifthHandle} should issue sila tokens successfully with defaultMx`,
@@ -2917,7 +2922,7 @@ describe('Plaid Update Link Token', function () {
     this.timeout(300000);
     it("Successfully update plaid token.", async () => {
         try {
-            const res = await sila.plaidUpdateLinkToken({account_name: 'defaultpt' }, handles[0]);
+            const res = await sila.plaidUpdateLinkToken({account_name: accountName2 }, handles[0]);
 
             assert.isDefined(res.data.status);
             assert.isDefined(res.data.message);
@@ -4282,10 +4287,10 @@ describe('Delete Account', function () {
     this.timeout(300000);
   
     const accountsToDelete = [
-      'sync_direct',
-      'defaultpt',
-      'sync_by_id',
-      'defaultMx',
+      accountName1,
+      accountName2,
+      accountName3,
+      accountName4,
       'default'
     ];
   
