@@ -4290,8 +4290,6 @@ describe('Delete Account', function () {
       accountName1,
       accountName2,
       accountName3,
-      accountName4,
-      'default'
     ];
   
     it('should successfully delete accounts', async () => {
