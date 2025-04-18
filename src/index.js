@@ -1120,7 +1120,9 @@ const uploadDocument = async (userHandle, userPrivateKey, document) => {
     body.mime_type = document.mimeType;
     body.document_type = document.documentType;
     body.description = document.description;
-    body.verification_uuid = document.verification_uuid;
+    if (document.verification_uuid) {
+      body.verification_uuid = document.verification_uuid;
+    }
 
     return makeFileRequest('documents', body, tmpFilePathObj, tmpFileObj, userPrivateKey);
 };
