@@ -1,3 +1,8 @@
+v1.1.3
+	Enhancements:
+   - Key inputs to sign() are normalized: any superfluous 0x prefixes are removed and a single 0x is ensured prior to signing.
+   - CI matrix extended to include Node.js v22 for compatibility verification.
+
 v1.1.2
 	Enhancements:
 		- Added new option fields doc_type, doc_id, doc_state and doc_country for /register.
