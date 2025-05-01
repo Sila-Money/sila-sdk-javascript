@@ -47,7 +47,8 @@ const sign = (message, key) => {
     throw new Error('Unable to sign request: keys not set');
   }
   const hash =  ethers.solidityPackedKeccak256(['string'], [message]);
-  const signingKey = new ethers.SigningKey('0x' + key)
+  const normalizeKey = key.startsWith('0x') ? key : '0x' + key;
+  const signingKey = new ethers.SigningKey(normalizeKey)
   const signatureObject = signingKey.sign(hash)
 
   const r = signatureObject.r.slice(2);
