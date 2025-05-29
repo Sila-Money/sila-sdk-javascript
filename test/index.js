@@ -91,6 +91,9 @@ fourthUser.firstName = 'Fourth';
 fourthUser.email = `${fourthHandle}@silamoney.com`;
 fourthUser.cryptoAddress = wallets[4].address;
 fourthUser.handle = fourthHandle;
+fourthUser.doc_type = 'id_drivers_license';
+fourthUser.doc_id = '2397719';
+fourthUser.doc_state = 'OR';
 
 const businessUser = Object.assign({}, firstUser);
 businessUser.entity_name = 'test business';
