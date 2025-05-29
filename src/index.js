@@ -420,10 +420,10 @@ const register = (user) => {
 
   if (user.id_document) {
     message.id_document = {};
-    message.identity.doc_type = user.doc_type
-    message.identity.doc_id = user.doc_id
-    if (user.doc_state) message.identity.doc_state = user.doc_state
-    if (user.doc_country) message.identity.doc_country = user.doc_country
+    message.id_document.doc_type = user.doc_type
+    message.id_document.doc_id = user.doc_id
+    if (user.doc_state) message.id_document.doc_state = user.doc_state
+    if (user.doc_country) message.id_document.doc_country = user.doc_country
   }
 
   if (user.ssn || user.ein) {
