@@ -566,6 +566,7 @@ const linkAccount = (
  * @param {String} sourceId source account id to debit from (optional)
  * @param {String} destinationId destination account id for credit (optional)
  * @param {String} transactionIdempotencyId Optional. UUID to uniquely identify the transaction to make it idempotent.
+ * @param {String} transactionIdempotencyIdentifier Optional. String to uniquely identify the transaction to make it idempotent.
  */
 const issueSila = (
   amount,
@@ -578,7 +579,8 @@ const issueSila = (
   cardName = undefined,
   sourceId = undefined,
   destinationId = undefined,
-  transactionIdempotencyId = undefined
+  transactionIdempotencyId = undefined,
+  transactionIdempotencyIdentifier = undefined,
 ) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
@@ -602,6 +604,9 @@ const issueSila = (
   if (businessUuid) body.business_uuid = businessUuid;
   if (processingType) body.processing_type = processingType;
   if (transactionIdempotencyId) body.transaction_idempotency_id = transactionIdempotencyId;
+  if (transactionIdempotencyIdentifier) {
+    body.transaction_idempotency_identifier = transactionIdempotencyIdentifier;
+  }
 
   return makeRequest('issue_sila', body, privateKey);
 };
@@ -619,6 +624,7 @@ const issueSila = (
  * @param {String} sourceId source account id to debit from (optional)
  * @param {String} destinationId destination account id for credit (optional)
  * @param {String} transactionIdempotencyId Optional. UUID to uniquely identify the transaction to make it idempotent.
+ * @param {String} transactionIdempotencyIdentifier Optional. String to uniquely identify the transaction to make it idempotent.
  */
 const redeemSila = (
   amount,
@@ -632,6 +638,7 @@ const redeemSila = (
   sourceId = undefined,
   destinationId = undefined,
   transactionIdempotencyId = undefined,
+  transactionIdempotencyIdentifier = undefined,
 ) => {
   const fullHandle = getFullHandle(handle);
   const body = setHeaders({ header: {} }, fullHandle);
@@ -657,6 +664,9 @@ const redeemSila = (
   body.processing_type = processingType;
 
   if (transactionIdempotencyId) body.transaction_idempotency_id = transactionIdempotencyId;
+  if (transactionIdempotencyIdentifier) {
+    body.transaction_idempotency_identifier = transactionIdempotencyIdentifier;
+  }
 
   return makeRequest('redeem_sila', body, privateKey);
 };
@@ -674,6 +684,7 @@ const redeemSila = (
  * @param {String} sourceId source account id to debit from (optional)
  * @param {String} destinationId destination account id for credit (optional)
  * @param {String} transactionIdempotencyId Optional. UUID to uniquely identify the transaction to make it idempotent.
+ * @param {String} transactionIdempotencyIdentifier Optional. String to uniquely identify the transaction to make it idempotent.
  */
 
 const transferSila = (
@@ -688,6 +699,7 @@ const transferSila = (
   sourceId = undefined,
   destinationId = undefined,
   transactionIdempotencyId = undefined,
+  transactionIdempotencyIdentifier = undefined,
 ) => {
   const fullHandle = getFullHandle(handle);
   const fullDestination = getFullHandle(destinationHandle);
@@ -701,6 +713,9 @@ const transferSila = (
   if (sourceId) body.source_id = sourceId;
   if (destinationId) body.destination_id = destinationId;
   if (transactionIdempotencyId) body.transaction_idempotency_id = transactionIdempotencyId;
+  if (transactionIdempotencyIdentifier) {
+    body.transaction_idempotency_identifier = transactionIdempotencyIdentifier;
+  }
 
   return makeRequest('transfer_sila', body, privateKey);
 };
