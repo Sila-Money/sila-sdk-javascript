@@ -13,6 +13,18 @@ const sleep = (ms, description) => {
     return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
+const generateValidSSN = () => {
+  const area = Math.ceil(Math.random() * 898);
+  const group = Math.ceil(Math.random() * 98);
+  const serial = Math.ceil(Math.random() * 9998);
+
+  const areaStr = String(area).padStart(3, '0');
+  const groupStr = String(group).padStart(2, '0');
+  const serialStr = String(serial).padStart(4, '0');
+
+  return `${areaStr}-${groupStr}-${serialStr}`;
+};
+
 sila.configure({
     key: '9c17e7b767b8f4a63863caf1619ef3e9967a34b287ce58542f3eb19b5a72f076', // Add your private key here. USE ENV VARIABLE
     handle: 'arc_sandbox_test_app01', // Add your app handle here
@@ -57,7 +69,7 @@ firstUser.zip = '12345';
 firstUser.phone = '1234567890';
 firstUser.email = `${firstHandle}@silamoney.com`;
 firstUser.dateOfBirth = '1990-01-01';
-firstUser.ssn = '319103848';
+firstUser.ssn = generateValidSSN();
 firstUser.cryptoAddress = wallets[0].address;
 firstUser.handle = firstHandle;
 
@@ -113,7 +125,7 @@ fifthUser.state = 'NY';
 fifthUser.zip = '12345';
 fifthUser.email = `${fifthHandle}@silamoney.com`;
 fifthUser.dateOfBirth = '1990-01-01';
-fifthUser.ssn = '319103848';
+fifthUser.ssn = generateValidSSN();
 
 const plaidToken = () => {
   const promise = new Promise((resolve, reject) => {
@@ -1328,7 +1340,7 @@ const addIdentityTests = [
         status: 'SUCCESS',
         identity: {
             alias: 'SSN',
-            value: '543212222',
+            value: generateValidSSN(),
         },
         description: `${secondHandle} should add identity`,
     },
@@ -1442,7 +1454,7 @@ const updateIdentityTests = [
         status: 'SUCCESS',
         identity: {
             alias: 'SSN',
-            value: `${Math.floor(Math.random() * 500)}-22-${Math.floor(Math.random() * 9998)}`,
+            value: generateValidSSN(),
             uuid: 7,
         },
         description: `${firstHandle} should update identity`,
