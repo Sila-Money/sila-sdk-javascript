@@ -14,6 +14,7 @@ import User from './models/user';
 import Wallet from './models/wallet';
 import WalletFilters from './models/walletFilters';
 import { post } from './utils/post';
+import pkg from '../package.json';
 
 let appKey = null;
 let appHandle = null;
@@ -97,7 +98,7 @@ const signOpts = (opts, key, businessPrivateKey) => {
   const options = lodash.cloneDeep(opts);
   if (opts.body.header) {
     options.headers = {};
-    options.headers['User-Agent'] = 'SilaSDK-node/0.2.51';
+    options.headers['User-Agent'] = `SilaSDK-node/${pkg.version}`;
     const bodyString = JSON.stringify(options.body);
     options.headers.authsignature = sign(bodyString, appKey);
     if (key) options.headers.usersignature = sign(bodyString, key);
