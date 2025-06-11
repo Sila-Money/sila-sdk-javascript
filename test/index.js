@@ -13,6 +13,18 @@ const sleep = (ms, description) => {
     return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
+const generateValidSSN = () => {
+  const area = Math.ceil(Math.random() * 898);
+  const group = Math.ceil(Math.random() * 98);
+  const serial = Math.ceil(Math.random() * 9998);
+
+  const areaStr = String(area).padStart(3, '0');
+  const groupStr = String(group).padStart(2, '0');
+  const serialStr = String(serial).padStart(4, '0');
+
+  return `${areaStr}-${groupStr}-${serialStr}`;
+};
+
 sila.configure({
     key: '9c17e7b767b8f4a63863caf1619ef3e9967a34b287ce58542f3eb19b5a72f076', // Add your private key here. USE ENV VARIABLE
     handle: 'arc_sandbox_test_app01', // Add your app handle here
@@ -34,26 +46,13 @@ const wallets = [
     sila.generateWallet(),
 ];
 
-const handles = [
-    `nodeSDK-${uuid4()}`,
-    `nodeSDK-${uuid4()}`,
-    `nodeSDK-${uuid4()}`,
-    `nodeSDK-${uuid4()}`,
-    `nodeSDK-${uuid4()}`,
-    `nodeSDK-${uuid4()}`,
-    `nodeSDK-${uuid4()}`,
-    `nodeSDK-${uuid4()}`,
-];
-
-const [
-    firstHandle,
-    secondHandle,
-    thirdHandle,
-    fourthHandle,
-    businessHandle,
-    basicHandle,
-    fifthHandle,
-] = handles;
+const firstHandle = `node-sdk-first-handle-${uuid4()}`;
+const secondHandle = `node-sdk-second-handle-${uuid4()}`;
+const thirdHandle = `node-sdk-third-handle-${uuid4()}`;
+const fourthHandle = `node-sdk-fourth-handle-${uuid4()}`;
+const fifthHandle = `node-sdk-fifth-handle-${uuid4()}`;
+const businessHandle = `node-sdk-biz-handle-${uuid4()}`;
+const basicHandle = `node-sdk-basic-handle-${uuid4()}`;
 
 const timestamp = Date.now();
 const email = `fake${timestamp}@silamoney.com`;
@@ -70,7 +69,7 @@ firstUser.zip = '12345';
 firstUser.phone = '1234567890';
 firstUser.email = `${firstHandle}@silamoney.com`;
 firstUser.dateOfBirth = '1990-01-01';
-firstUser.ssn = '319103848';
+firstUser.ssn = generateValidSSN();
 firstUser.cryptoAddress = wallets[0].address;
 firstUser.handle = firstHandle;
 
@@ -126,7 +125,7 @@ fifthUser.state = 'NY';
 fifthUser.zip = '12345';
 fifthUser.email = `${fifthHandle}@silamoney.com`;
 fifthUser.dateOfBirth = '1990-01-01';
-fifthUser.ssn = '319103848';
+fifthUser.ssn = generateValidSSN();
 
 const plaidToken = () => {
   const promise = new Promise((resolve, reject) => {
@@ -164,43 +163,47 @@ const plaidToken = () => {
   return promise;
 };
 
+const MxProcessorToken = async () => {
+    const authToken =
+    'OWNlOTFhZWQtMDA4Zi00YjFmLThlMzktNGU3YTU5NjZlOTVhOmYyZThkYzE4MmY2MzQ5OTk5NjMzMDJlYTE3OGU3NTBkZWU2NDQ3ODM=';
+    const userGuid = 'USR-78912abf-a65b-4661-806b-bdcf4e062e16';
+    const memberGuid = 'MBR-1e0d03f3-d42e-46e7-86fb-ae07b79c557a';
+    const accountGuid = 'ACT-cc129199-606c-41a3-aeec-ee32980362d4';
+    const scopeString = [
+    `user-guid:${userGuid}`,
+    `member-guid:${memberGuid}`,
+    `account-guid:${accountGuid}`,
+    ].join(' ');
 
-const MxProcessorToken = () => {
-    const promise = new Promise((resolve) => {
-        var data = JSON.stringify({
-            "payment_processor_authorization_code":
-            {
-              user_guid: "USR-78912abf-a65b-4661-806b-bdcf4e062e16",
-              member_guid: "MBR-1e0d03f3-d42e-46e7-86fb-ae07b79c557a",
-              account_guid: "ACT-cc129199-606c-41a3-aeec-ee32980362d4"
-            }
-          });
-
-          var config = {
-            method: 'post',
-            url: 'https://int-api.mx.com/payment_processor_authorization_code',
-            headers: {
-              'Authorization': 'Basic OWNlOTFhZWQtMDA4Zi00YjFmLThlMzktNGU3YTU5NjZlOTVhOmYyZThkYzE4MmY2MzQ5OTk5NjMzMDJlYTE3OGU3NTBkZWU2NDQ3ODM=',
-              'Accept': 'application/vnd.mx.api.v1+json',
-              'Content-Type': 'application/json'
-            },
-            data : data
-          };
-
-          axios(config)
-          .then(function (response) {
-            const token = response.data.payment_processor_authorization_code.authorization_code;
-
-            resolve({ token });
-          })
-          .catch(function (error) {
-            resolve({});
-        });
+    const data = JSON.stringify({
+        authorization_code: { scope: scopeString },
     });
-    return promise;
+
+    const config = {
+        method: 'post',
+        url: 'https://int-api.mx.com/authorization_code',
+        headers: {
+            Authorization: `Basic ${authToken}`,
+            Accept: 'application/vnd.mx.api.v1+json',
+            'Content-Type': 'application/json',
+        },
+        data,
+    };
+
+    const tokenPayload = {};
+
+    try {
+        const response = await axios(config);
+        const token = response.data.authorization_code.code;
+        tokenPayload.token = token;
+    } catch (e) {
+    tokenPayload.error = JSON.stringify(e);
+    console.error('Error fetching MX token:', e.message);
+    }
+    return tokenPayload;
 };
 
-//SANDBOX
+// SANDBOX
 const validBusinessUuid = '9f280665-629f-45bf-a694-133c86bffd5e';
 
 const invalidBusinessUuid = '6d933c10-fa89-41ab-b443-2e78a7cc8cac';
@@ -214,28 +217,28 @@ let eventUuid = '';
 
 const checkHandleTests = [
     {
-        input: handles[0],
+        input: firstHandle,
         expectedResult: 'SUCCESS',
         statusCode: 200,
-        description: `"${handles[0]}.silamoney.eth" should be available.`,
+        description: `"${firstHandle}.silamoney.eth" should be available.`,
     },
     {
-        input: handles[1],
+        input: secondHandle,
         expectedResult: 'SUCCESS',
         statusCode: 200,
-        description: `"${handles[1]}.silamoney.eth" should be available.`,
+        description: `"${secondHandle}.silamoney.eth" should be available.`,
     },
     {
-        input: handles[2],
+        input: thirdHandle,
         expectedResult: 'SUCCESS',
         statusCode: 200,
-        description: `"${handles[2]}.silamoney.eth" should be available.`,
+        description: `"${thirdHandle}.silamoney.eth" should be available.`,
     },
     {
-        input: handles[3],
+        input: fourthHandle,
         expectedResult: 'SUCCESS',
         statusCode: 200,
-        description: `"${handles[3]}.silamoney.eth" should be available.`,
+        description: `"${fourthHandle}.silamoney.eth" should be available.`,
     },
 ];
 
@@ -244,37 +247,37 @@ const createEntityTests = [
         input: firstUser,
         expectedResult: 'SUCCESS',
         statusCode: 200,
-        description: `Valid registration test for ${handles[0]}.silamoney.eth`,
+        description: `Valid registration test for ${firstHandle}.silamoney.eth`,
     },
     {
         input: secondUser,
         expectedResult: 'SUCCESS',
         statusCode: 200,
-        description: `Valid registration test for ${handles[1]}.silamoney.eth`,
+        description: `Valid registration test for ${secondHandle}.silamoney.eth`,
     },
     {
         input: thirdUser,
         expectedResult: 'SUCCESS',
         statusCode: 200,
-        description: `Valid registration test for ${handles[2]}.silamoney.eth`,
+        description: `Valid registration test for ${thirdHandle}.silamoney.eth`,
     },
     {
         input: firstUser,
         expectedResult: 'FAILURE',
         statusCode: 400,
-        description: `Invalid registration test for ${handles[0]}.silamoney.eth`,
+        description: `Invalid registration test for ${firstHandle}.silamoney.eth`,
     },
     {
         input: fourthUser,
         expectedResult: 'SUCCESS',
         statusCode: 200,
-        description: `Valid registration test for ${handles[3]}.silamoney.eth`,
+        description: `Valid registration test for ${fourthHandle}.silamoney.eth`,
     },
     {
         input: businessUser,
         expectedResult: 'SUCCESS',
         statusCode: 200,
-        description: `Valid registration test for ${handles[4]}.silamoney.eth`,
+        description: `Valid registration test for ${businessHandle}.silamoney.eth`,
     },
     {
         input: basicUser,
@@ -292,59 +295,59 @@ const createEntityTests = [
 
 const checkHandleTakenTests = [
     {
-        input: handles[0],
+        input: firstHandle,
         expectedResult: 'FAILURE',
         statusCode: 200,
-        description: `"${handles[0]}.silamoney.eth" should be taken.`,
+        description: `"${firstHandle}.silamoney.eth" should be taken.`,
     },
     {
-        input: handles[1],
+        input: secondHandle,
         expectedResult: 'FAILURE',
         statusCode: 200,
-        description: `"${handles[1]}.silamoney.eth" should be taken.`,
+        description: `"${secondHandle}.silamoney.eth" should be taken.`,
     },
     {
-        input: handles[2],
+        input: thirdHandle,
         expectedResult: 'FAILURE',
         statusCode: 200,
-        description: `"${handles[2]}.silamoney.eth" should be taken.`,
+        description: `"${thirdHandle}.silamoney.eth" should be taken.`,
     },
     {
-        input: handles[3],
+        input: fourthHandle,
         expectedResult: 'FAILURE',
         statusCode: 200,
-        description: `"${handles[3]}.silamoney.eth" should be taken.`,
+        description: `"${fourthHandle}.silamoney.eth" should be taken.`,
     },
 ];
 
 const requestKYCTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         expectedResult: 'SUCCESS',
         statusCode: 200,
-        description: `"${handles[0]}.silamoney.eth" should be sent for KYC check.`,
+        description: `"${firstHandle}.silamoney.eth" should be sent for KYC check.`,
     },
     {
-        handle: handles[1],
+        handle: secondHandle,
         key: wallets[1].privateKey,
         expectedResult: 'SUCCESS',
         statusCode: 200,
-        description: `"${handles[1]}.silamoney.eth" should be sent for KYC check.`,
+        description: `"${secondHandle}.silamoney.eth" should be sent for KYC check.`,
     },
     {
-        handle: handles[3],
+        handle: fourthHandle,
         key: wallets[4].privateKey,
         expectedResult: 'SUCCESS',
         statusCode: 200,
-        description: `"${handles[3]}.silamoney.eth" should be sent for KYC check.`,
+        description: `"${fourthHandle}.silamoney.eth" should be sent for KYC check.`,
     },
     {
-        handle: handles[4],
+        handle: businessHandle,
         key: wallets[5].privateKey,
         expectedResult: 'SUCCESS',
         statusCode: 200,
-        description: `"${handles[4]}.silamoney.eth" should be sent for KYC check.`,
+        description: `"${businessHandle}.silamoney.eth" should be sent for KYC check.`,
     },
 ];
 
@@ -359,7 +362,7 @@ const requestKYCLevelTests = [
         messageRegex: /submitted for KYC review/,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         expectedResult: 'FAILURE',
         kyc_level: uuid4(),
@@ -371,36 +374,36 @@ const requestKYCLevelTests = [
 
 const checkKYCTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 200,
         expectedResult: 'SUCCESS',
         messageRegex: /\bpassed\b/,
-        description: `"${handles[0]}.silamoney.eth" should pass KYC check.`,
+        description: `"${firstHandle}.silamoney.eth" should pass KYC check.`,
     },
     {
-        handle: handles[1],
+        handle: secondHandle,
         key: wallets[1].privateKey,
         statusCode: 200,
         expectedResult: 'SUCCESS',
         messageRegex: /\bpassed\b/,
-        description: `"${handles[1]}.silamoney.eth" should pass KYC check.`,
+        description: `"${secondHandle}.silamoney.eth" should pass KYC check.`,
     },
     {
-        handle: handles[3],
+        handle: fourthHandle,
         key: wallets[4].privateKey,
         statusCode: 200,
         expectedResult: 'SUCCESS',
         messageRegex: /\bpassed\b/,
-        description: `"${handles[3]}.silamoney.eth" should pass KYC check.`,
+        description: `"${fourthHandle}.silamoney.eth" should pass KYC check.`,
     },
     {
-        handle: handles[4],
+        handle: businessHandle,
         key: wallets[5].privateKey,
         statusCode: 200,
         expectedResult: 'FAILURE',
         messageRegex: /\bpassed\b/,
-        description: `"${handles[4]}.silamoney.eth" should pass KYC check.`,
+        description: `"${businessHandle}.silamoney.eth" should pass KYC check.`,
     },
     {
         handle: fifthHandle,
@@ -429,7 +432,7 @@ const accountName4 = `defaultMx_${timestamp}`;
 
 const linkAccountDirectTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         accountNumber: '123456789012',
         routingNumber: '123456780',
@@ -439,7 +442,7 @@ const linkAccountDirectTests = [
         description: 'Direct bank account link should be successful',
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         accountNumber: '123456789013',
         routingNumber: '123456780',
@@ -449,7 +452,7 @@ const linkAccountDirectTests = [
         description: 'Direct bank account link should be successful',
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         accountNumber: '123456789013',
         routingNumber: '123456780',
@@ -462,27 +465,27 @@ const linkAccountDirectTests = [
 
 const linkAccountTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         expectedResult: 'SUCCESS',
         statusCode: 200,
         messageRegex: /successfully linked/,
-        description: `"${handles[0]}" should link account through plaid token`,
+        description: `"${firstHandle}" should link account through plaid token`,
         withAccountId: false,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         accountName: accountName2,
         expectedResult: 'SUCCESS',
         statusCode: 200,
         messageRegex: /successfully linked/,
-        description: `"${handles[0]}" should link account through plaid token`,
+        description: `"${firstHandle}" should link account through plaid token`,
         withAccountId: false,
         plaidTokenType: 'legacy'
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         token: `public-sandbox-${uuid4()}`,
         expectedResult: 'FAILURE',
@@ -492,31 +495,31 @@ const linkAccountTests = [
         withAccountId: false,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         accountName: accountName3,
         expectedResult: 'SUCCESS',
         statusCode: 200,
         messageRegex: /successfully linked/,
-        description: `"${handles[0]}" should link account with plaid token and account id`,
+        description: `"${firstHandle}" should link account with plaid token and account id`,
         withAccountId: true,
     },
     {
-        handle: handles[1],
+        handle: secondHandle,
         key: wallets[1].privateKey,
         expectedResult: 'SUCCESS',
         statusCode: 200,
         messageRegex: /successfully linked/,
-        description: `"${handles[1]}" should link account through plaid token`,
+        description: `"${secondHandle}" should link account through plaid token`,
         withAccountId: false,
     },
     {
-        handle: handles[3],
+        handle: fourthHandle,
         key: wallets[4].privateKey,
         expectedResult: 'SUCCESS',
         statusCode: 200,
         messageRegex: /successfully linked/,
-        description: `"${handles[3]}" should link account through plaid token`,
+        description: `"${fourthHandle}" should link account through plaid token`,
         withAccountId: false,
     },
     {
@@ -533,84 +536,84 @@ const linkAccountTests = [
 
 const linkAccountMXTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         accountName: accountName4,
         expectedResult: 'SUCCESS',
         statusCode: 200,
         providerTokenType:'processor',
-        description: `"${handles[0]}" should link account through MX processor token`,
+        description: `"${firstHandle}" should link account through MX processor token`,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         accountName: 'defaultMxx',
         token: 'incorrect-token',
         expectedResult: 'FAILURE',
         statusCode: 400,
         providerTokenType:'processor',
-        description: `"${handles[0]}" should link account through valid MX processor token`,
+        description: `"${firstHandle}" should link account through valid MX processor token`,
     },
 ];
 
 const getAccountsTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 200,
         accounts: 6,
-        description: `"${handles[0]}" should retrieve all accounts`,
+        description: `"${firstHandle}" should retrieve all accounts`,
     },
 ];
 
 const getAccountBalanceTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         accountName: 'default',
         statusCode: 200,
         expectedResult: true,
-        description: `${handles[0]} should retrieve default account balance`,
+        description: `${firstHandle} should retrieve default account balance`,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         accountName: accountName1,
         statusCode: 400,
         expectedResult: false,
-        description: `${handles[0]} should fail retrieve direct link account balance`,
+        description: `${firstHandle} should fail retrieve direct link account balance`,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         accountName: accountName4,
         statusCode: 200,
         expectedResult: true,
-        description: `${handles[0]} should retrieve default MX account balance`,
+        description: `${firstHandle} should retrieve default MX account balance`,
     },
 ];
 
 const registerWalletTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         wallet: wallets[3],
         nickname: 'new_wallet',
         default: true,
         statusCode: 200,
         expectedResult: true,
-        description: `${handles[0]} should register new wallet`,
+        description: `${firstHandle} should register new wallet`,
         statementsEnabled: true,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         wallet: invalidWallet,
         nickname: 'fail_wallet',
         default: false,
         statusCode: 403,
         expectedResult: false,
-        description: `${handles[0]} should fail register new wallet with invalid signature`,
+        description: `${firstHandle} should fail register new wallet with invalid signature`,
         statementsEnabled: true,
     },
 ];
@@ -620,29 +623,29 @@ secondWalletFilters.blockchain_address = wallets[3].address;
 
 const getWalletsTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 200,
         expectedResult: true,
         wallets: 2,
-        description: `${handles[0]} should retrieve all wallets`,
+        description: `${firstHandle} should retrieve all wallets`,
         statementsEnabled: true,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         filters: secondWalletFilters,
         statusCode: 200,
         expectedResult: true,
         wallets: 1,
-        description: `${handles[0]} should retrieve all wallets`,
+        description: `${firstHandle} should retrieve all wallets`,
         statementsEnabled: true,
     },
 ];
 
 const updateWalletTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         walletProperties: {
             nickname: 'default',
@@ -651,12 +654,12 @@ const updateWalletTests = [
         statusCode: 200,
         expectedResult: true,
         changes: 2,
-        description: `${handles[0]} should update wallet successfully`,
+        description: `${firstHandle} should update wallet successfully`,
         blockchainAddress: wallets[0].address,
         statementsEnabled: true,
     },
     {
-        handle: handles[1],
+        handle: secondHandle,
         key: wallets[1].privateKey,
         walletProperties: {
             nickname: 'default',
@@ -665,7 +668,7 @@ const updateWalletTests = [
         statusCode: 200,
         expectedResult: true,
         changes: 2,
-        description: `${handles[1]} should update wallet successfully`,
+        description: `${secondHandle} should update wallet successfully`,
         blockchainAddress: wallets[1].address,
         statementsEnabled: true,
     },
@@ -673,9 +676,9 @@ const updateWalletTests = [
 
 const getWalletTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
-        description: `${handles[0]} should retrieve wallet (${wallets[0].address})`,
+        description: `${firstHandle} should retrieve wallet (${wallets[0].address})`,
         statusCode: 200,
         expectedResult: true,
         default: true,
@@ -684,9 +687,9 @@ const getWalletTests = [
         statementsEnabled: true,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[3].privateKey,
-        description: `${handles[0]} should retrieve wallet (${wallets[3].address})`,
+        description: `${firstHandle} should retrieve wallet (${wallets[3].address})`,
         statusCode: 200,
         expectedResult: true,
         default: false,
@@ -698,30 +701,30 @@ const getWalletTests = [
 
 const deleteWalletTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 403,
         expectedResult: false,
-        description: `${handles[0]} shouldn't delete default wallet`,
+        description: `${firstHandle} shouldn't delete default wallet`,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[3].privateKey,
         statusCode: 200,
         expectedResult: true,
-        description: `${handles[0]} should delete wallet`,
+        description: `${firstHandle} should delete wallet`,
     },
 ];
 
 const cancelTransactionTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         generateIssueTransaction: true,
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
-        description: `${handles[0]} should cancel transaction`,
+        description: `${firstHandle} should cancel transaction`,
     },
 ];
 
@@ -729,65 +732,65 @@ const issueReferences = [];
 
 const issueSilaTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         amount: 50000,
         statusCode: 200,
         expectedResult: 'SUCCESS',
-        description: `${handles[0]} should issue sila tokens successfully`,
+        description: `${firstHandle} should issue sila tokens successfully`,
         messageRegex: /submitted to processing queue/,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         amount: 50000,
         statusCode: 200,
         descriptor: issueTransactionDescriptor,
         businessUuid: validBusinessUuid,
         expectedResult: 'SUCCESS',
-        description: `${handles[0]} should issue sila tokens successfully with business uuid and descriptor`,
+        description: `${firstHandle} should issue sila tokens successfully with business uuid and descriptor`,
         messageRegex: /submitted to processing queue/,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         amount: 100,
         statusCode: 400,
         descriptor: issueTransactionDescriptor,
         businessUuid: invalidBusinessUuid,
         expectedResult: 'FAILURE',
-        description: `${handles[0]} should fail issue sila tokens with invalid business uuid and descriptor`,
+        description: `${firstHandle} should fail issue sila tokens with invalid business uuid and descriptor`,
         messageRegex: achRegex,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         amount: 100,
         statusCode: 200,
         processingType: 'SAME_DAY_ACH',
         expectedResult: 'SUCCESS',
-        description: `${handles[0]} should issue sila tokens successfully with processing type`,
+        description: `${firstHandle} should issue sila tokens successfully with processing type`,
         messageRegex: /submitted to processing queue/,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         amount: 420,
         statusCode: 200,
         expectedResult: 'SUCCESS',
-        description: `${handles[0]} should not issue sila tokens`,
+        description: `${firstHandle} should not issue sila tokens`,
     },
     {
-        handle: handles[1],
+        handle: secondHandle,
         key: wallets[1].privateKey,
         amount: 100,
         cardName: fake_card_name,
         statusCode: 200,
         expectedResult: 'SUCCESS',
-        description: `${handles[1]} should issue sila tokens successfully with card name`,
+        description: `${secondHandle} should issue sila tokens successfully with card name`,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         amount: 200,
         accountName: accountName4,
@@ -799,19 +802,19 @@ const issueSilaTests = [
 
 const getTransactionsTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
-        description: `${handles[0]} should retrieve transactions with user private key signature`,
+        description: `${firstHandle} should retrieve transactions with user private key signature`,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
-        description: `${handles[0]} should retrieve transactions without user private key signature`,
+        description: `${firstHandle} should retrieve transactions without user private key signature`,
     },
     {
         statusCode: 200,
@@ -821,32 +824,58 @@ const getTransactionsTests = [
     },
 ];
 
-var issueTransactionIdempotencyId = uuid4();
-var transferTransactionIdempotencyId = uuid4();
-var redeemTransactionIdempotencyId = uuid4();
+const issueTransactionIdempotencyId = uuid4();
+const transferTransactionIdempotencyId = uuid4();
+const redeemTransactionIdempotencyId = uuid4();
+const issueTransactionIdempotencyIdentifier = `issueTransactionIdempotencyIdentifier ${uuid4()}`;
+const transferTransactionIdempotencyIdentifier = `transferTransactionIdempotencyIdentifier ${uuid4()}`;
+const redeemTransactionIdempotencyIdentifier = `redeemTransactionIdempotencyIdentifier ${uuid4()}`;
 
 const idempotencyIssueReferences = [];
 
 const idempotencySilaTransactionTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         amount: 500,
         statusCode: 200,
         expectedResult: 'SUCCESS',
-        description: `${handles[0]} should issue sila tokens successfully for Idempotency test`,
+        description: `${firstHandle} should issue sila tokens successfully for Idempotency test`,
         messageRegex: /submitted to processing queue/,
         transaction_idempotency_id:issueTransactionIdempotencyId,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         amount: 500,
         statusCode: 200,
         expectedResult: 'SUCCESS',
-        description: `${handles[0]} should issue sila tokens successfully for Idempotency test`,
+        description: `${firstHandle} should issue sila tokens successfully for Idempotency test`,
         messageRegex: /submitted to processing queue/,
         transaction_idempotency_id:issueTransactionIdempotencyId,
+    },
+];
+
+const idempotencyIdentifierSilaTransactionTests = [
+    {
+        handle: firstHandle,
+        key: wallets[0].privateKey,
+        amount: 500,
+        statusCode: 200,
+        expectedResult: 'SUCCESS',
+        description: `${firstHandle} should issue sila tokens successfully for Idempotency Identifier test`,
+        messageRegex: /submitted to processing queue/,
+        transaction_idempotency_identifier: issueTransactionIdempotencyIdentifier,
+    },
+    {
+        handle: firstHandle,
+        key: wallets[0].privateKey,
+        amount: 500,
+        statusCode: 200,
+        expectedResult: 'SUCCESS',
+        description: `${firstHandle} should issue sila tokens successfully for Idempotency Identifier test`,
+        messageRegex: /submitted to processing queue/,
+        transaction_idempotency_identifier: issueTransactionIdempotencyIdentifier,
     },
 ];
 
@@ -909,13 +938,13 @@ const pollGetTransactionsTest = async (test, referencesArray) => {
 
 const pollIssueTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         filterIndex: 0,
         statusCode: 200,
         expectedResult: true,
         status: 'success',
-        description: `${handles[0]} should issue sila tokens`,
+        description: `${firstHandle} should issue sila tokens`,
     },
 ];
 
@@ -923,91 +952,91 @@ const transferReferences = [];
 
 const transferSilaTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
-        destinationHanle: handles[1],
+        destinationHandle: secondHandle,
         amount: 100,
-        description: `${handles[0]} should transfer to ${handles[1]}`,
+        description: `${firstHandle} should transfer to ${secondHandle}`,
         statusCode: 200,
         expectedResult: 'SUCCESS',
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
-        destinationHanle: 'digital_geko_e2e.silamoney.eth',
+        destinationHandle: 'digital_geko_e2e.silamoney.eth',
         amount: 100,
-        description: `${handles[0]} should fail transfer to app handle`,
+        description: `${firstHandle} should fail transfer to app handle`,
         statusCode: 401,
         expectedResult: 'FAILURE',
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
-        destinationHanle: handles[1],
+        destinationHandle: secondHandle,
         amount: 100,
         walletNickname: 'default',
-        description: `${handles[0]} should transfer to ${handles[1]} with wallet nickname`,
+        description: `${firstHandle} should transfer to ${secondHandle} with wallet nickname`,
         statusCode: 200,
         expectedResult: 'SUCCESS',
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
-        destinationHanle: handles[1],
+        destinationHandle: secondHandle,
         amount: 100,
         walletNickname: uuid4(),
-        description: `${handles[0]} should fail transfer to ${handles[1]} with random wallet nickname`,
+        description: `${firstHandle} should fail transfer to ${secondHandle} with random wallet nickname`,
         statusCode: 403,
         expectedResult: 'FAILURE',
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
-        destinationHanle: handles[1],
+        destinationHandle: secondHandle,
         amount: 100,
         walletAddress: wallets[1].address,
-        description: `${handles[0]} should transfer to ${handles[1]} with wallet address`,
+        description: `${firstHandle} should transfer to ${secondHandle} with wallet address`,
         statusCode: 200,
         expectedResult: 'SUCCESS',
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
-        destinationHanle: handles[0],
+        destinationHandle: firstHandle,
         amount: 100,
         walletAddress: wallets[0].address,
-        description: `${handles[0]} should fail transfer to ${handles[0]} with the origin wallet address`,
+        description: `${firstHandle} should fail transfer to ${firstHandle} with the origin wallet address`,
         statusCode: 403,
         expectedResult: 'FAILURE',
     },
     {
-        handle: handles[3],
+        handle: fourthHandle,
         key: wallets[4].privateKey,
-        destinationHanle: handles[0],
+        destinationHandle: firstHandle,
         amount: 100,
-        description: `${handles[3]} should fail to init transfer to ${handles[0]}`,
+        description: `${fourthHandle} should fail to init transfer to ${firstHandle}`,
         statusCode: 400,
         expectedResult: 'FAILURE',
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
-        destinationHanle: handles[1],
+        destinationHandle: secondHandle,
         amount: 100,
         descriptor: transferDescriptor,
         businessUuid: validBusinessUuid,
-        description: `${handles[0]} should transfer to ${handles[1]} with business uuid and descriptor`,
+        description: `${firstHandle} should transfer to ${secondHandle} with business uuid and descriptor`,
         statusCode: 200,
         expectedResult: 'SUCCESS',
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
-        destinationHanle: handles[1],
+        destinationHandle: secondHandle,
         amount: 100,
         descriptor: transferDescriptor,
         businessUuid: invalidBusinessUuid,
-        description: `${handles[0]} should fail transfer to ${handles[1]} with invalid business uuid and descriptor`,
+        description: `${firstHandle} should fail transfer to ${secondHandle} with invalid business uuid and descriptor`,
         statusCode: 400,
         expectedResult: 'FAILURE',
     },
@@ -1017,36 +1046,59 @@ const idempotencyTransferReferences = [];
 
 const transferSilaIdempotencyTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
-        destinationHanle: handles[1],
-        amount: 100,
-        description: `${handles[0]} should transfer to ${handles[1]} for Idempotency test`,
+        destinationHandle: secondHandle,
+        amount: 50,
+        description: `${firstHandle} should transfer to ${secondHandle} for Idempotency test`,
         statusCode: 200,
         expectedResult: 'SUCCESS',
-        transaction_idempotency_id:transferTransactionIdempotencyId,
+        transaction_idempotency_id: transferTransactionIdempotencyId,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
-        destinationHanle: handles[1],
-        amount: 100,
-        description: `${handles[0]} should transfer to ${handles[1]} for Idempotency test`,
+        destinationHandle: secondHandle,
+        amount: 50,
+        description: `${firstHandle} should transfer to ${secondHandle} for Idempotency test`,
         statusCode: 200,
         expectedResult: 'SUCCESS',
-        transaction_idempotency_id:transferTransactionIdempotencyId,
+        transaction_idempotency_id: transferTransactionIdempotencyId,
+    },
+];
+
+const transferSilaIdempotencyIdentifierTests = [
+    {
+        handle: firstHandle,
+        key: wallets[0].privateKey,
+        destinationHandle: secondHandle,
+        amount: 50,
+        description: `${firstHandle} should transfer to ${secondHandle} for Idempotency Identifier test`,
+        statusCode: 200,
+        expectedResult: 'SUCCESS',
+        transaction_idempotency_identifier: transferTransactionIdempotencyIdentifier,
+    },
+    {
+        handle: firstHandle,
+        key: wallets[0].privateKey,
+        destinationHandle: secondHandle,
+        amount: 50,
+        description: `${firstHandle} should transfer to ${secondHandle} for Idempotency Identifier test`,
+        statusCode: 200,
+        expectedResult: 'SUCCESS',
+        transaction_idempotency_identifier: transferTransactionIdempotencyIdentifier,
     },
 ];
 
 const pollTransferTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
-        filterIndex: 2,
+        filterIndex: 0,
         statusCode: 200,
         expectedResult: true,
         status: 'success',
-        description: `${handles[0]} should transfer sila tokens`,
+        description: `${firstHandle} should transfer sila tokens`,
     },
 ];
 
@@ -1062,36 +1114,36 @@ const getSilaBalanceTests = [
 
 const openVirtualAccountTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         virtual_account_name: 'testVarAccount-1',
         statusCode: 200,
         expectedResult: 'SUCCESS',
         status: 'success',
         virtual_account_id:'',
-        description: `${handles[0]} should open first virtual account successfully`,
+        description: `${firstHandle} should open first virtual account successfully`,
         statementsEnabled: false,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         virtual_account_name: 'testVarAccount-2',
         statusCode: 200,
         expectedResult: 'SUCCESS',
         status: 'success',
         virtual_account_id:'',
-        description: `${handles[0]} should open second virtual account successfully`,
+        description: `${firstHandle} should open second virtual account successfully`,
         statementsEnabled: false,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         virtual_account_name: 'testVarAccount-3',
         statusCode: 200,
         expectedResult: 'SUCCESS',
         status: 'success',
         virtual_account_id:'',
-        description: `${handles[0]} should open third virtual account successfully`,
+        description: `${firstHandle} should open third virtual account successfully`,
         statementsEnabled: true,
     },
 ];
@@ -1110,47 +1162,47 @@ const redeemReferences = [];
 
 const redeemSilaTests = [
     {
-        handle: handles[1],
+        handle: secondHandle,
         key: wallets[1].privateKey,
         amount: 100,
-        description: `${handles[1]} should redeem sila`,
+        description: `${secondHandle} should redeem sila`,
         statusCode: 200,
         expectedResult: 'SUCCESS',
     },
     {
-        handle: handles[3],
+        handle: fourthHandle,
         key: wallets[4].privateKey,
         amount: 100,
-        description: `${handles[3]} should fail to init redeem sila`,
+        description: `${fourthHandle} should fail to init redeem sila`,
         statusCode: 400,
         expectedResult: 'FAILURE',
     },
     {
-        handle: handles[1],
+        handle: secondHandle,
         key: wallets[1].privateKey,
         amount: 100,
         descriptor: redeemDescriptor,
         businessUuid: validBusinessUuid,
-        description: `${handles[1]} should redeem sila with business uuid and descriptor`,
+        description: `${secondHandle} should redeem sila with business uuid and descriptor`,
         statusCode: 200,
         expectedResult: 'SUCCESS',
     },
     {
-        handle: handles[1],
+        handle: secondHandle,
         key: wallets[1].privateKey,
         amount: 100,
         descriptor: redeemDescriptor,
         businessUuid: invalidBusinessUuid,
-        description: `${handles[1]} should fail redeem sila with invalid business uuid and descriptors`,
+        description: `${secondHandle} should fail redeem sila with invalid business uuid and descriptors`,
         statusCode: 400,
         expectedResult: 'FAILURE',
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         amount: 100,
         processingType: 'SAME_DAY_ACH',
-        description: `${handles[1]} should redeem sila with processing type`,
+        description: `${secondHandle} should redeem sila with processing type`,
         statusCode: 200,
         expectedResult: 'SUCCESS',
     },
@@ -1158,22 +1210,43 @@ const redeemSilaTests = [
 
 const redeemSilaIdempotencyTests = [
     {
-        handle: handles[1],
+        handle: secondHandle,
         key: wallets[1].privateKey,
         amount: 100,
-        description: `${handles[1]} should redeem sila for Idempotency test`,
+        description: `${secondHandle} should redeem sila for Idempotency test`,
         statusCode: 200,
         expectedResult: 'SUCCESS',
         transaction_idempotency_id:redeemTransactionIdempotencyId,
     },
     {
-        handle: handles[1],
+        handle: secondHandle,
         key: wallets[1].privateKey,
         amount: 100,
-        description: `${handles[1]} should redeem sila for Idempotency test`,
+        description: `${secondHandle} should redeem sila for Idempotency test`,
         statusCode: 200,
         expectedResult: 'SUCCESS',
         transaction_idempotency_id:redeemTransactionIdempotencyId,
+    },
+];
+
+const redeemSilaIdempotencyIdentifierTests = [
+    {
+        handle: secondHandle,
+        key: wallets[1].privateKey,
+        amount: 100,
+        description: `${secondHandle} should redeem sila for Idempotency Identifier test`,
+        statusCode: 200,
+        expectedResult: 'SUCCESS',
+        transaction_idempotency_identifier: redeemTransactionIdempotencyIdentifier,
+    },
+    {
+        handle: secondHandle,
+        key: wallets[1].privateKey,
+        amount: 100,
+        description: `${secondHandle} should redeem sila for Idempotency Identifier test`,
+        statusCode: 200,
+        expectedResult: 'SUCCESS',
+        transaction_idempotency_identifier: redeemTransactionIdempotencyIdentifier,
     },
 ];
 
@@ -1181,22 +1254,22 @@ const redeemSilaIdempotencyTests = [
 
 const pollRedeemTests = [
     {
-        handle: handles[1],
+        handle: secondHandle,
         key: wallets[1].privateKey,
         filterIndex: 0,
         statusCode: 200,
         expectedResult: true,
         status: 'success',
-        description: `${handles[1]} should redeem sila tokens`,
+        description: `${secondHandle} should redeem sila tokens`,
     },
 ];
 
 const plaidSamedayAuthTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         accountName: 'default',
-        description: `${handles[0]} default account should fail plaid sameday auth`,
+        description: `${firstHandle} default account should fail plaid sameday auth`,
         statusCode: 400,
         expectedResult: 'FAILURE',
     },
@@ -1206,44 +1279,44 @@ const registrationData = [];
 
 const addEmailTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
         email: `added_email_${uuid4()}@gmail.com`,
-        description: `${handles[0]} should add email`,
+        description: `${firstHandle} should add email`,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 400,
         expectedResult: false,
         status: 'FAILURE',
         email: '',
-        description: `${handles[0]} should fail to add email`,
+        description: `${firstHandle} should fail to add email`,
     },
 ];
 
 const addPhoneTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
         phone: '1234567890',
-        description: `${handles[1]} should add phone`,
+        description: `${secondHandle} should add phone`,
         messageRegex: /Successfully added phone/,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 400,
         expectedResult: false,
         status: 'FAILURE',
         phone: '',
-        description: `${handles[1]} should fail to add phone`,
+        description: `${secondHandle} should fail to add phone`,
         messageRegex: /Bad request/,
     },
     {
@@ -1260,19 +1333,19 @@ const addPhoneTests = [
 
 const addIdentityTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
         identity: {
             alias: 'SSN',
-            value: '543212222',
+            value: generateValidSSN(),
         },
-        description: `${handles[1]} should add identity`,
+        description: `${secondHandle} should add identity`,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 400,
         expectedResult: false,
@@ -1281,13 +1354,13 @@ const addIdentityTests = [
             alias: '',
             value: '',
         },
-        description: `${handles[1]} should fail to add identity`,
+        description: `${secondHandle} should fail to add identity`,
     },
 ];
 
 const addAddressTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 200,
         expectedResult: true,
@@ -1301,10 +1374,10 @@ const addAddressTests = [
             postal_code: '12345',
             country: 'US',
         },
-        description: `${handles[1]} should add address`,
+        description: `${secondHandle} should add address`,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 400,
         expectedResult: false,
@@ -1312,25 +1385,25 @@ const addAddressTests = [
         address: {
             street_address_2: undefined,
         },
-        description: `${handles[1]} should fail to add address`,
+        description: `${secondHandle} should fail to add address`,
     },
 ];
 
 const updateEmailTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
         email: {
-            email: `${handles[0]}_updated@silamoney.com`,
+            email: `${firstHandle}_updated@silamoney.com`,
             uuid: 4,
         },
-        description: `${handles[0]} should update email`,
+        description: `${firstHandle} should update email`,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 400,
         expectedResult: false,
@@ -1339,13 +1412,13 @@ const updateEmailTests = [
             email: '',
             uuid: undefined,
         },
-        description: `${handles[0]} should fail to update email`,
+        description: `${firstHandle} should fail to update email`,
     },
 ];
 
 const updatePhoneTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 200,
         expectedResult: true,
@@ -1354,11 +1427,11 @@ const updatePhoneTests = [
             phone: '1234567890',
             uuid: 5,
         },
-        description: `${handles[1]} should update phone`,
+        description: `${secondHandle} should update phone`,
         messageRegex: /Successfully updated phone/,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 400,
         expectedResult: false,
@@ -1367,28 +1440,28 @@ const updatePhoneTests = [
             phone: '',
             uuid: undefined,
         },
-        description: `${handles[1]} should fail to update phone`,
+        description: `${secondHandle} should fail to update phone`,
         messageRegex: /Bad request/,
     },
 ];
 
 const updateIdentityTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
         identity: {
             alias: 'SSN',
-            value: `${Math.floor(Math.random() * 500)}-22-${Math.floor(Math.random() * 9998)}`,
+            value: generateValidSSN(),
             uuid: 7,
         },
-        description: `${handles[0]} should update identity`,
+        description: `${firstHandle} should update identity`,
         messageRegex: /Successfully updated identity/,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 400,
         expectedResult: false,
@@ -1398,14 +1471,14 @@ const updateIdentityTests = [
             value: '',
             uuid: undefined,
         },
-        description: `${handles[1]} should fail to update identity`,
+        description: `${secondHandle} should fail to update identity`,
         messageRegex: /Bad request/,
     },
 ];
 
 const updateAddressTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 200,
         expectedResult: true,
@@ -1420,11 +1493,11 @@ const updateAddressTests = [
             country: 'US',
             uuid: 8,
         },
-        description: `${handles[1]} should update address`,
+        description: `${secondHandle} should update address`,
         messageRegex: /Successfully updated address/,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 400,
         expectedResult: false,
@@ -1439,19 +1512,19 @@ const updateAddressTests = [
             country: '',
             uuid: undefined,
         },
-        description: `${handles[0]} should fail to update address`,
+        description: `${firstHandle} should fail to update address`,
         messageRegex: /Bad request/,
     },
 ];
 
 const updateEntityTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         privateKey: wallets[0].privateKey,
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
-        description: `${handles[0]} should update entity`,
+        description: `${firstHandle} should update entity`,
         entity: {
             first_name: 'NewFirst',
             last_name: 'NewLast',
@@ -1460,12 +1533,12 @@ const updateEntityTests = [
         },
     },
     {
-        handle: handles[4],
+        handle: businessHandle,
         privateKey: wallets[5].privateKey,
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
-        description: `${handles[4]} should update entity`,
+        description: `${businessHandle} should update entity`,
         entity: {
             entity_name: 'New Company',
             business_type: 'corporation',
@@ -1479,120 +1552,120 @@ const updateEntityTests = [
 
 const deleteEmailTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
         uuid: 0,
-        description: `${handles[0]} should delete email`,
+        description: `${firstHandle} should delete email`,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 400,
         expectedResult: false,
         status: 'FAILURE',
         uuid: undefined,
-        description: `${handles[0]} should fail to delete email`,
+        description: `${firstHandle} should fail to delete email`,
     },
 ];
 
 const deletePhoneTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
         uuid: 1,
-        description: `${handles[0]} should delete phone`,
+        description: `${firstHandle} should delete phone`,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 400,
         expectedResult: false,
         status: 'FAILURE',
         uuid: undefined,
-        description: `${handles[0]} should fail to delete phone`,
+        description: `${firstHandle} should fail to delete phone`,
     },
 ];
 
 const deleteIdentityTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
         uuid: 2,
-        description: `${handles[0]} should delete identity`,
+        description: `${firstHandle} should delete identity`,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 400,
         expectedResult: false,
         status: 'FAILURE',
         uuid: undefined,
-        description: `${handles[0]} should fail to delete identity`,
+        description: `${firstHandle} should fail to delete identity`,
     },
 ];
 
 const deleteAddressTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
         uuid: 3,
-        description: `${handles[0]} should delete address`,
+        description: `${firstHandle} should delete address`,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 400,
         expectedResult: false,
         status: 'FAILURE',
         uuid: undefined,
-        description: `${handles[0]} should fail to delete address`,
+        description: `${firstHandle} should fail to delete address`,
     },
 ];
 
 const linkBusinessMemberTests = [
     {
-        user_handle: handles[0],
+        user_handle: firstHandle,
         user_private_key: wallets[0].privateKey,
-        business_handle: handles[4],
+        business_handle: businessHandle,
         business_private_key: wallets[5].privateKey,
         role: 'administrator',
         details: 'first admin',
     },
     {
-        user_handle: handles[0],
+        user_handle: firstHandle,
         user_private_key: wallets[0].privateKey,
-        business_handle: handles[4],
+        business_handle: businessHandle,
         business_private_key: wallets[5].privateKey,
         role: 'controlling_officer',
         details: 'first controlling officer',
     },
     {
-        user_handle: handles[0],
+        user_handle: firstHandle,
         user_private_key: wallets[0].privateKey,
-        business_handle: handles[4],
+        business_handle: businessHandle,
         business_private_key: wallets[5].privateKey,
-        member_handle: handles[1],
+        member_handle: secondHandle,
         role: 'administrator',
         details: 'second admin',
     },
     {
-        user_handle: handles[0],
+        user_handle: firstHandle,
         user_private_key: wallets[0].privateKey,
-        business_handle: handles[4],
+        business_handle: businessHandle,
         business_private_key: wallets[5].privateKey,
-        member_handle: handles[3],
+        member_handle: fourthHandle,
         role: 'beneficial_owner',
         details: 'first beneficial owner',
         ownership_stake: 0.6,
@@ -1601,9 +1674,9 @@ const linkBusinessMemberTests = [
 
 const unLinkBusinessMemberTests = [
     {
-        user_handle: handles[0],
+        user_handle: firstHandle,
         user_private_key: wallets[0].privateKey,
-        business_handle: handles[4],
+        business_handle: businessHandle,
         business_private_key: wallets[5].privateKey,
         role: 'administrator',
         details: 'first admin',
@@ -1612,31 +1685,31 @@ const unLinkBusinessMemberTests = [
 
 const getEntityTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
         saveReference: true,
-        description: `${handles[0]} should retrieve entity`,
+        description: `${firstHandle} should retrieve entity`,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         options: { prettyDates: true },
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
-        description: `${handles[0]} should retrieve entity with pretty dates`,
+        description: `${firstHandle} should retrieve entity with pretty dates`,
     },
     {
-        handle: handles[4],
+        handle: businessHandle,
         key: wallets[5].privateKey,
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
         registration_state: 'AL',
-        description: `${handles[5]} should retrieve entity with registration_state`,
+        description: `${basicHandle} should retrieve entity with registration_state`,
     },
 ];
 
@@ -1698,7 +1771,7 @@ const documentReferences = [];
 
 const uploadDocumentTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         document: {
             filePath: `${__dirname}/images/logo-geko.png`,
@@ -1712,10 +1785,10 @@ const uploadDocumentTests = [
         expectedResult: true,
         status: 'SUCCESS',
         multiple:false,
-        description: `${handles[0]} should upload file succesfully`,
+        description: `${firstHandle} should upload file succesfully`,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         document: [
             {
@@ -1739,10 +1812,10 @@ const uploadDocumentTests = [
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
-        description: `${handles[0]} should upload multiple file succesfully`,
+        description: `${firstHandle} should upload multiple file succesfully`,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         document: {
             filePath: `${__dirname}/images/logo-geko.png`,
@@ -1751,22 +1824,22 @@ const uploadDocumentTests = [
         statusCode: 400,
         expectedResult: false,
         status: 'FAILURE',
-        description: `${handles[0]} should fail to upload file`,
+        description: `${firstHandle} should fail to upload file`,
     },
 ];
 
 const listDocumentsTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         documentsLength: 3,
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
-        description: `${handles[0]} should retrieve uploaded files successfully`,
+        description: `${firstHandle} should retrieve uploaded files successfully`,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         filters: {
             page: 1,
@@ -1782,41 +1855,41 @@ const listDocumentsTests = [
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
-        description: `${handles[0]} should retrieve uploaded files successfully with all filters`,
+        description: `${firstHandle} should retrieve uploaded files successfully with all filters`,
     },
 ];
 
 const getDocumentTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         documentIndex: 0,
         statusCode: 200,
         contentType: 'image/png',
-        description: `${handles[0]} should retrieve uploaded file successfully`,
+        description: `${firstHandle} should retrieve uploaded file successfully`,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 400,
         expectedResult: false,
         status: 'FAILURE',
-        description: `${handles[0]} should fail to retrieve uploaded file`,
+        description: `${firstHandle} should fail to retrieve uploaded file`,
     },
 ];
 
 const getWebhooksTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         filters: {},
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
-        description: `${handles[0]} should retrieve webhooks successfully with no filters`,
+        description: `${firstHandle} should retrieve webhooks successfully with no filters`,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         filters: {
             uuid: undefined,
@@ -1833,10 +1906,10 @@ const getWebhooksTests = [
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
-        description: `${handles[0]} should retrieve webhooks successfully with event_type:account_status filters`,
+        description: `${firstHandle} should retrieve webhooks successfully with event_type:account_status filters`,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         filters: {
             uuid: undefined,
@@ -1853,13 +1926,13 @@ const getWebhooksTests = [
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
-        description: `${handles[0]} should retrieve webhooks successfully with endpoint_name:account status filters`,
+        description: `${firstHandle} should retrieve webhooks successfully with endpoint_name:account status filters`,
     },
 ];
 
 const getWalletStatementDataTests = [
         {
-            handle: handles[0],
+            handle: firstHandle,
             key: wallets[0].privateKey,
             walletId: wallets[0],
             filters: {
@@ -1871,13 +1944,13 @@ const getWalletStatementDataTests = [
             statusCode: 200,
             expectedResult: true,
             status: 'SUCCESS',
-            description: `${handles[0]} should get wallet statement data successfully with all filters`,
+            description: `${firstHandle} should get wallet statement data successfully with all filters`,
         },
 ];
 
 const getStatementsDataTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         filters: {
             month: "11-2022",
             page: 1,
@@ -1886,13 +1959,13 @@ const getStatementsDataTests = [
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
-        description: `${handles[0]} should get statements data successfully with all filters`,
+        description: `${firstHandle} should get statements data successfully with all filters`,
     },
 ];
 
 const statementsTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         searchFilters: {
             startDate: "2023-06-17",
@@ -1907,34 +1980,34 @@ const statementsTests = [
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
-        description: `${handles[0]} should get statements successfully with all filters`,
+        description: `${firstHandle} should get statements successfully with all filters`,
     },
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
-        description: `${handles[0]} should get statements successfully`,
+        description: `${firstHandle} should get statements successfully`,
     },
 ];
 
 const resendStatementsTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         email: `email_${uuid4()}@silamoney.com`,
         statementUuid: "59a4feba-0fcd-40ac-bd9a-59e47da0b640",
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
-        description: `${handles[0]} should get resend statements successfully`,
+        description: `${firstHandle} should get resend statements successfully`,
     },
 ];
 
 const createCkoTestingTokenTests = [
     {
-        handle: handles[1],
+        handle: secondHandle,
         key: wallets[1].privateKey,
         payload: {
             "card_number": "4659105569051157",
@@ -1945,10 +2018,10 @@ const createCkoTestingTokenTests = [
         statusCode: 200,
         expectedResult: true,
         status: 'SUCCESS',
-        description: `${handles[1]} should create cko testing token successfully`,
+        description: `${secondHandle} should create cko testing token successfully`,
     },
     {
-        handle: handles[1],
+        handle: secondHandle,
         key: wallets[1].privateKey,
         payload: {
             "card_number": "4659105569051158",
@@ -1959,26 +2032,26 @@ const createCkoTestingTokenTests = [
         statusCode: 400,
         expectedResult: false,
         status: 'FAILURE',
-        description: `${handles[1]} should fail to create cko testing token`,
+        description: `${secondHandle} should fail to create cko testing token`,
     }
 ];
 
 const refundDebitCardTests = [
     {
-        handle: handles[0],
+        handle: firstHandle,
         key: wallets[0].privateKey,
         statusCode: 202,
         expectedResult: true,
         status: 'SUCCESS',
-        description: `${handles[0]} should refund debit card successfully`,
+        description: `${firstHandle} should refund debit card successfully`,
     },
     {
-        handle: handles[1],
+        handle: secondHandle,
         key: wallets[1].privateKey,
         statusCode: 404,
         expectedResult: false,
         status: 'FAILURE',
-        description: `${handles[1]} should fail to refund debit card`,
+        description: `${secondHandle} should fail to refund debit card`,
     }
 ];
 
@@ -2177,9 +2250,9 @@ describe('Unlink business member', function () {
     it(`second admin should be unlinked`, async () => {
         try {
             const res = await sila.unlinkBusinessMember(
-                handles[1],
+                secondHandle,
                 wallets[1].privateKey,
-                handles[4],
+                businessHandle,
                 wallets[5].privateKey,
                 'administrator',
             );
@@ -2704,12 +2777,12 @@ describe('Certify Beneficial Owner', function () {
     it(`Successfully certify beneficial owner`, async () => {
         try {
             const res = await sila.certifyBeneficialOwner(
-                handles[0],
+                firstHandle,
                 wallets[0].privateKey,
-                handles[4],
+                businessHandle,
                 wallets[5].privateKey,
-                handles[3],
-                (await sila.getEntity(handles[3], wallets[4].privateKey)).data
+                fourthHandle,
+                (await sila.getEntity(fourthHandle, wallets[4].privateKey)).data
                     .memberships[0].certification_token,
             );
             assert.equal(res.statusCode, 200);
@@ -2725,9 +2798,9 @@ describe('Certify Business', function () {
     it(`Successfully certify business`, async () => {
         try {
             const res = await sila.certifyBusiness(
-                handles[0],
+                firstHandle,
                 wallets[0].privateKey,
-                handles[4],
+                businessHandle,
                 wallets[5].privateKey,
             );
 
@@ -2743,7 +2816,7 @@ describe('Plaid Link Token', function () {
     this.timeout(300000);
     it("Successfully generate plaid token.", async () => {
         try {
-            const res = await sila.plaidLinkToken(handles[0], wallets[0].privateKey);
+            const res = await sila.plaidLinkToken(firstHandle, wallets[0].privateKey);
 
             assert.isTrue(res.data.success);
             assert.isDefined(res.data.link_token);
@@ -2758,6 +2831,7 @@ describe('MX Processor Token', function () {
     it("Successfully generate MX Processor token.", async () => {
         try {
             const res = await MxProcessorToken();
+            assert.isUndefined(res.error);
             assert.isDefined(res.token);
         } catch (error) {
             assert.fail(error);
@@ -2790,7 +2864,7 @@ describe('Delete Account', function () {
     this.timeout(300000);
     it('Successfully delete account', async () => {
         try {
-            const res = await sila.deleteAccount(handles[0], "delete", wallets[0].privateKey);
+            const res = await sila.deleteAccount(firstHandle, "delete", wallets[0].privateKey);
 
             assert.equal(res.data.account_name, "delete")
         } catch (error) {
@@ -2806,7 +2880,7 @@ describe('Update Account', function () {
             const res = await sila.updateAccount({
                 account_name: 'forupdate',
                 new_account_name: 'updated',
-            },handles[0], wallets[0].privateKey);
+            },firstHandle, wallets[0].privateKey);
 
             assert.isTrue(res.data.success);
             assert.equal(res.data.account.account_name, "updated");
@@ -2825,7 +2899,7 @@ describe('Update Account:Freeze Account', function () {
             const res = await sila.updateAccount({
                 account_name: 'updated',
                 active: false,
-            },handles[0], wallets[0].privateKey);
+            },firstHandle, wallets[0].privateKey);
 
             assert.isTrue(res.data.success);
             assert.equal(res.data.account.account_name, "updated");
@@ -2844,7 +2918,7 @@ describe('Update Account: Unfreeze the freeze account', function () {
             const res = await sila.updateAccount({
                 account_name: 'updated',
                 active: true,
-            },handles[0], wallets[0].privateKey);
+            },firstHandle, wallets[0].privateKey);
 
             assert.isTrue(res.data.success);
             assert.equal(res.data.account.account_name, "updated");
@@ -2925,7 +2999,7 @@ describe('Plaid Update Link Token', function () {
     this.timeout(300000);
     it("Successfully update plaid token.", async () => {
         try {
-            const res = await sila.plaidUpdateLinkToken({account_name: accountName2 }, handles[0]);
+            const res = await sila.plaidUpdateLinkToken({account_name: accountName2 }, firstHandle);
 
             assert.isDefined(res.data.status);
             assert.isDefined(res.data.message);
@@ -3126,7 +3200,7 @@ describe('Link Card', function () {
     this.timeout(300000);
     it("Successfully linked the Card.", async () => {
         try {
-            const createTokenRes = await sila.createCkoTestingToken(handles[0], {
+            const createTokenRes = await sila.createCkoTestingToken(firstHandle, {
                 card_number: "4659105569051157",
                 expiration_month: "12",
                 expiration_year: "30",
@@ -3147,7 +3221,7 @@ describe('Link Card', function () {
             };
 
             const res = await sila.linkCard(
-                handles[0],
+                firstHandle,
                 wallets[0].privateKey,
                 cardObj,
             );
@@ -3165,7 +3239,7 @@ describe('Link Anonymous Card', function () {
     this.timeout(300000);
     it('Successfully linked the Anonymous Card.', async () => {
         try {
-            const createTokenRes = await sila.createCkoTestingToken(handles[0], {
+            const createTokenRes = await sila.createCkoTestingToken(firstHandle, {
                 card_number: "4659105569051157",
                 expiration_month: "12",
                 expiration_year: "30",
@@ -3199,7 +3273,7 @@ describe('Link Anonymous Card', function () {
             };
 
             const res = await sila.linkCard(
-                handles[0],
+                firstHandle,
                 wallets[0].privateKey,
                 cardObj,
             );
@@ -3217,7 +3291,7 @@ describe('Get Cards', function () {
     this.timeout(300000);
     it("Successfully Get Card List.", async () => {
         try {
-            const res = await sila.getCards(handles[0], wallets[0].privateKey);
+            const res = await sila.getCards(firstHandle, wallets[0].privateKey);
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
@@ -3229,7 +3303,7 @@ describe('Get Cards', function () {
     });
 });
 
-describe('create cko testing token and link card with CKO token', function () {
+describe('Create cko testing token and link card with CKO token', function () {
     this.timeout(300000);
 
     createCkoTestingTokenTests.forEach((test) => {
@@ -3254,7 +3328,7 @@ describe('create cko testing token and link card with CKO token', function () {
                 };
 
                 const linkCardResponse = await sila.linkCard(
-                    handles[1],
+                    secondHandle,
                     wallets[1].privateKey,
                     ckoTokenPayload
                 );
@@ -3363,6 +3437,55 @@ describe('Issue Sila Transaction Idempotency Test ', function () {
     });
 });
 
+describe('Issue Sila Transaction Idempotency Identifier Test ', function () {
+    this.timeout(300000);
+    let localTransIds = [];
+    idempotencyIdentifierSilaTransactionTests.forEach((test) => {
+        it(test.description, async () => {
+            try {
+                let accountName = undefined;
+                let cardName = undefined;
+                if(test.accountName) {
+                    accountName = test.accountName;
+                }
+                if(test.cardName) {
+                    cardName = test.cardName;
+                }
+                const res = await sila.issueSila(
+                    test.amount,
+                    test.handle,
+                    test.key,
+                    accountName,
+                    test.descriptor,
+                    test.businessUuid,
+                    test.processingType,
+                    cardName,
+                    test.source_id,
+                    test.destination_id,
+                    null,
+                    test.transaction_idempotency_identifier,
+                );
+
+                if (res.statusCode === 200) idempotencyIssueReferences.push(res.data.reference);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
+                assert.equal(res.data.status, test.expectedResult);
+                if (res.data.status === 'SUCCESS'){
+                    assert.isString(res.data.transaction_id);
+                    if (!localTransIds.includes(res.data.transaction_id)) {
+                        localTransIds.push(res.data.transaction_id);
+                    }
+                    assert.equal(localTransIds.length, 1);
+
+                }
+                if (test.descriptor && res.data.descriptor)
+                    assert.equal(res.data.descriptor, test.descriptor);
+            } catch (err) {
+                assert.fail(err);
+            }
+        });
+    });
+});
+
 describe('Poll Idempotency Issue Sila', function () {
     this.timeout(400000);
     pollIssueTests.forEach((test) => {
@@ -3381,7 +3504,7 @@ describe('Transfer Sila', function () {
                     test.amount,
                     test.handle,
                     test.key,
-                    test.destinationHanle,
+                    test.destinationHandle,
                     test.walletNickname,
                     test.walletAddress,
                     test.descriptor,
@@ -3422,7 +3545,7 @@ describe('Transfer Sila Idempotency Test', function () {
                     test.amount,
                     test.handle,
                     test.key,
-                    test.destinationHanle,
+                    test.destinationHandle,
                     test.walletNickname,
                     test.walletAddress,
                     test.descriptor,
@@ -3430,6 +3553,7 @@ describe('Transfer Sila Idempotency Test', function () {
                     test.source_id,
                     test.destination_id,
                     test.transaction_idempotency_id,
+                    test.transaction_idempotency_identifier,
                 );
                 if (res.statusCode === 200) idempotencyTransferReferences.push(res.data.reference);
                 assert.equal(res.statusCode, test.statusCode, res.data.message);
@@ -3444,6 +3568,44 @@ describe('Transfer Sila Idempotency Test', function () {
                 }
                 if (test.descriptor && res.data.descriptor)
                     assert.equal(res.data.descriptor, test.descriptor);
+            } catch (e) {
+                assert.fail(e);
+            }
+        });
+    });
+});
+
+describe('Transfer Sila Idempotency Identifier Test', function () {
+    this.timeout(300000);
+    let localTransIds = [];
+    transferSilaIdempotencyIdentifierTests.forEach((test) => {
+        it(test.description, async () => {
+            try {
+                const res = await sila.transferSila(
+                    test.amount,
+                    test.handle,
+                    test.key,
+                    test.destinationHandle,
+                    test.walletNickname,
+                    test.walletAddress,
+                    test.descriptor,
+                    test.businessUuid,
+                    test.source_id,
+                    test.destination_id,
+                    null,
+                    test.transaction_idempotency_identifier,
+                );
+                if (res.statusCode === 200) idempotencyTransferReferences.push(res.data.reference);
+                assert.equal(res.statusCode, test.statusCode, res.data.message);
+                assert.equal(res.data.status, test.expectedResult);
+                if (res.data.status === 'SUCCESS') {
+                    if (!localTransIds.includes(res.data.transaction_id)) {
+                        localTransIds.push(res.data.transaction_id)
+                    }
+                    assert.equal(localTransIds.length, 1);
+                    assert.isString(res.data.transaction_id);
+                    assert.isString(res.data.destination_address);
+                }
             } catch (e) {
                 assert.fail(e);
             }
@@ -3543,6 +3705,7 @@ describe('Redeem Sila Idempotency Test', function () {
                     test.source_id,
                     test.destination_id,
                     test.transaction_idempotency_id,
+                    null,
                 );
 
                 if (res.statusCode === 200)
@@ -3558,6 +3721,53 @@ describe('Redeem Sila Idempotency Test', function () {
 
                 if (test.descriptor && res.data.descriptor)
                     assert.equal(res.data.descriptor, test.descriptor);
+            } catch (e) {
+                assert.fail(e);
+            }
+        });
+    });
+});
+
+describe('Redeem Sila Idempotency Identifier Test', function () {
+    this.timeout(300000);
+    let localTransIds = [];
+    redeemSilaIdempotencyIdentifierTests.forEach((test) => {
+        it(test.description, async () => {
+            try {
+                let accountName = undefined;
+                let cardName = undefined;
+                if(test.accountName) {
+                    accountName = test.accountName;
+                }
+                if(test.cardName) {
+                    cardName = test.cardName;
+                }
+                const res = await sila.redeemSila(
+                    test.amount,
+                    test.handle,
+                    test.key,
+                    accountName,
+                    test.descriptor,
+                    test.businessUuid,
+                    test.processingType,
+                    cardName,
+                    test.source_id,
+                    test.destination_id,
+                    null,
+                    test.transaction_idempotency_identifier,
+                );
+
+                if (res.statusCode === 200)
+                    assert.equal(res.statusCode, test.statusCode, res.data.message);
+                assert.equal(res.data.status, test.expectedResult);
+                if (res.data.status === 'SUCCESS') {
+                    assert.isString(res.data.transaction_id);
+                    if (!localTransIds.includes(res.data.transaction_id)) {
+                        localTransIds.push(res.data.transaction_id)
+                    }
+                    assert.equal(localTransIds.length, 1);
+                }
+
             } catch (e) {
                 assert.fail(e);
             }
@@ -3611,7 +3821,7 @@ describe('Update Virtual Account', function () {
                 "virtual_account_id":paymentMethodsIds['virtual_account_id_1'],
                 "statements_enabled":true,
             }
-            const res = await sila.updateVirtualAccount(handles[0], wallets[0].privateKey, payload);
+            const res = await sila.updateVirtualAccount(firstHandle, wallets[0].privateKey, payload);
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
@@ -3628,7 +3838,7 @@ describe('Get Virtual Account', function () {
     this.timeout(300000);
     it('Successfully get virtual account', async () => {
         try {
-            const res = await sila.getVirtualAccount(handles[0], wallets[0].privateKey, openVirtualAccountTests[0].virtual_account_id);
+            const res = await sila.getVirtualAccount(firstHandle, wallets[0].privateKey, openVirtualAccountTests[0].virtual_account_id);
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
@@ -3646,7 +3856,7 @@ describe('Get Virtual Accounts', function () {
     this.timeout(300000);
     it('Successfully get all virtual accounts', async () => {
         try {
-            const res = await sila.getVirtualAccounts(handles[0], wallets[0].privateKey);
+            const res = await sila.getVirtualAccounts(firstHandle, wallets[0].privateKey);
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
@@ -3664,7 +3874,7 @@ describe('Get Payment Methods', function () {
     this.timeout(300000);
     it('Successfully get all payment methods', async () => {
         try {
-            const res = await sila.getPaymentMethods(handles[0], wallets[0].privateKey);
+            const res = await sila.getPaymentMethods(firstHandle, wallets[0].privateKey);
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
             assert.equal(res.data.status, 'SUCCESS');
@@ -3705,7 +3915,7 @@ describe('Issue Sila From Bank To Virtual Account And Verify Transaction', funct
                 "source_id": paymentMethodsIds['bank_account_id'],
                 "destination_id": paymentMethodsIds['virtual_account_id_1']
             };
-            const res = await sila.issueSila(payload.amount, handles[0], wallets[0].privateKey,payload.account_name,payload.descriptor,'',payload.processing_type,payload.card_name,payload.source_id, payload.destination_id);
+            const res = await sila.issueSila(payload.amount, firstHandle, wallets[0].privateKey,payload.account_name,payload.descriptor,'',payload.processing_type,payload.card_name,payload.source_id, payload.destination_id);
 
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
@@ -3723,7 +3933,7 @@ describe('Issue Sila From Bank To Virtual Account And Verify Transaction', funct
                 "source_id": paymentMethodsIds['bank_account_id'],
                 "destination_id": paymentMethodsIds['virtual_account_id_2']
             };
-            const res = await sila.issueSila(payload.amount, handles[0], wallets[0].privateKey,payload.account_name,payload.descriptor,'',payload.processing_type,payload.card_name,payload.source_id, payload.destination_id);
+            const res = await sila.issueSila(payload.amount, firstHandle, wallets[0].privateKey,payload.account_name,payload.descriptor,'',payload.processing_type,payload.card_name,payload.source_id, payload.destination_id);
 
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
@@ -3742,7 +3952,7 @@ describe('Issue Sila From Bank To Virtual Account And Verify Transaction', funct
                 "source_id":paymentMethodsIds['bank_account_id'],
             };
 
-            let res = await sila.getTransactions(handles[0], wallets[0].privateKey, filters);
+            let res = await sila.getTransactions(firstHandle, wallets[0].privateKey, filters);
             let { statusCode } = res;
             let { success } = res.data;
 
@@ -3756,7 +3966,7 @@ describe('Issue Sila From Bank To Virtual Account And Verify Transaction', funct
                 (status === 'pending' || status === 'queued')
             ) {
                 await sleep(30000, 'Get IssueSila Transaction to Validate source and destination id');
-                res = await sila.getTransactions(handles[0], wallets[0].privateKey, filters);
+                res = await sila.getTransactions(firstHandle, wallets[0].privateKey, filters);
                 ({ statusCode } = res);
                 ({ success } = res.data);
                 ({ status} = res.data.transactions[0]);
@@ -3788,7 +3998,7 @@ describe('Redeem Sila From Virtual Account to card And Verify Transaction', func
                 "destination_id": paymentMethodsIds['bank_account_id']
             };
             await sleep(30000, '');
-            const res = await sila.redeemSila(payload.amount, handles[0], wallets[0].privateKey,payload.account_name,payload.descriptor,'',payload.processing_type,payload.card_name,payload.source_id, payload.destination_id);
+            const res = await sila.redeemSila(payload.amount, firstHandle, wallets[0].privateKey,payload.account_name,payload.descriptor,'',payload.processing_type,payload.card_name,payload.source_id, payload.destination_id);
 
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
@@ -3808,7 +4018,7 @@ describe('Redeem Sila From Virtual Account to card And Verify Transaction', func
                 "transaction_types": ["redeem"],
             };
 
-            const res = await sila.getTransactions(handles[0], wallets[0].privateKey, filters);
+            const res = await sila.getTransactions(firstHandle, wallets[0].privateKey, filters);
 
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
@@ -3830,9 +4040,9 @@ describe('Transfer Sila Using Source And Destination ID', function () {
         try {
             const res = await sila.transferSila(
                 50,
-                handles[0],
+                firstHandle,
                 wallets[0].privateKey,
-                handles[0],
+                firstHandle,
                 '',
                 '',
                 '',
@@ -3857,9 +4067,9 @@ describe('Transfer Sila Using Source And Destination ID', function () {
         try {
             const res = await sila.transferSila(
                 50,
-                handles[0],
+                firstHandle,
                 wallets[0].privateKey,
-                handles[0],
+                firstHandle,
                 '',
                 '',
                 '',
@@ -3890,7 +4100,7 @@ describe('Transfer Sila Using Source And Destination ID', function () {
             await sleep(60000, '');
 
 
-            let res = await sila.getTransactions(handles[0], wallets[0].privateKey, filters);
+            let res = await sila.getTransactions(firstHandle, wallets[0].privateKey, filters);
 
             assert.equal(res.statusCode, 200);
             assert.isTrue(res.data.success);
@@ -3931,7 +4141,7 @@ describe('Retry Webhooks', function () {
         try {
             if (eventUuid) {
                 const res = await sila.retryWebhook(
-                    handles[0],
+                    firstHandle,
                     wallets[0].privateKey,
                     eventUuid,
                 );
@@ -3954,7 +4164,7 @@ describe('Issue Sila For Support INSTANT_SETTLEMENT Product', function () {
         try {
             const res = await sila.issueSila(
                 100,
-                handles[0],
+                firstHandle,
                 wallets[0].privateKey,
                 'default',
                 '',
@@ -3978,9 +4188,9 @@ describe('TransferSila For Support INSTANT_SETTLEMENT Product', function () {
         try {
             const res = await sila.transferSila(
                 100,
-                handles[0],
+                firstHandle,
                 wallets[0].privateKey,
-                handles[1],
+                secondHandle,
                 '',
                 '',
                 ''
@@ -4002,7 +4212,7 @@ describe('RedeemSila For Support INSTANT_SETTLEMENT Product', function () {
         try {
             const res = await sila.redeemSila(
                 100,
-                handles[0],
+                firstHandle,
                 wallets[0].privateKey,
                 'default',
                 '',
@@ -4027,7 +4237,7 @@ describe('Get Transactions Using Search Filter INSTANT_SETTLEMENT', function () 
             };
 
             const res = await sila.getTransactions(
-                handles[0],
+                firstHandle,
                 wallets[0].privateKey,
                 search_filters
             );
@@ -4053,7 +4263,7 @@ describe('Get Transactions Using Search Filter payment_method_id (single virtual
             };
 
             const res = await sila.getTransactions(
-                handles[0],
+                firstHandle,
                 wallets[0].privateKey,
                 search_filters
             );
@@ -4082,7 +4292,7 @@ describe('Test Virtual Account Ach Transaction', function () {
                 "ach_name": "SILA INC"
             }
             const res = await sila.createTestVirtualAccountAchTransaction(
-                handles[0],
+                firstHandle,
                 wallets[0].privateKey,
                 payload
             );
@@ -4101,7 +4311,7 @@ describe('Close Virtual Account', function () {
     it("Successfully Close Virtual Account.", async () => {
         try {
             const res = await sila.closeVirtualAccount(
-                handles[0],
+                firstHandle,
                 wallets[0].privateKey,
                 paymentMethodsIds['virtual_account_id_1'],
                 paymentMethodsIds['virtual_account_number_1']
@@ -4298,7 +4508,7 @@ describe('Delete Account', function () {
     it('should successfully delete accounts', async () => {
       try {
         for (const accountName of accountsToDelete) {
-          const res = await sila.deleteAccount(handles[0], accountName, wallets[0].privateKey);
+          const res = await sila.deleteAccount(firstHandle, accountName, wallets[0].privateKey);
           assert.equal(res.statusCode, 200);
           assert(res.data.success);
           assert.equal(res.data.account_name, accountName);
@@ -4315,8 +4525,8 @@ describe('Delete Cards', function () {
     it("Successfully Deletes Cards with Different Providers", async () => {
         try {
             const cardData = [
-                { cardName: ckoCardName, provider: 'cko', handle: handles[0], wallet: wallets[0].privateKey },
-                { cardName: fake_card_name, provider: 'cko', handle: handles[1], wallet: wallets[1].privateKey },
+                { cardName: ckoCardName, provider: 'cko', handle: firstHandle, wallet: wallets[0].privateKey },
+                { cardName: fake_card_name, provider: 'cko', handle: secondHandle, wallet: wallets[1].privateKey },
             ];
 
                 for (const { cardName, provider, handle, wallet } of cardData) {

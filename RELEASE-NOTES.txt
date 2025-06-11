@@ -1,3 +1,9 @@
+v1.1.5
+	Enhancements:
+		- Added transaction_idempotency_identifier new optional input field in /issue_sila.
+		- Added transaction_idempotency_identifier new optional input field in /redeem_sila.
+		- Added transaction_idempotency_identifier new optional input field in /transfer_sila.
+
 v1.1.4
 	Enhancements:
    - Add id_document to register message
