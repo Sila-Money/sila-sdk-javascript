@@ -13,6 +13,8 @@ strategy:
   matrix:
     node14:
       nodeVersion: '14.x'
+    node22:
+      nodeVersion: '22.x'
 
 steps:
 - task: NodeTool@0

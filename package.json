@@ -1,4 +1,7 @@
 {
+  "name": "sila-sdk",
+  "version": "1.1.5",
+  "main": "lib/index.js",
   "scripts": {
     "build": "babel ./src -d ./lib",
     "lint": "eslint ./src",
@@ -36,9 +39,6 @@
       "cobertura"
     ]
   },
-  "name": "sila-sdk",
-  "version": "1.1.0",
-  "main": "lib/index.js",
   "directories": {
     "lib": "lib",
     "test": "test"
