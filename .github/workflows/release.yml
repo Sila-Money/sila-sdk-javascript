@@ -35,6 +35,7 @@ jobs:
           git config user.email "github-actions@github.com"
           git add package.json
           git commit -m "Bump version to ${{ steps.bump_version.outputs.new_version }}"
+          git pull --rebase origin master
           git push origin master
 
       - name: Create GitHub release
@@ -53,10 +54,3 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish
-
-      - name: Clear GPG keys
-        if: always()
-        run: gpg --batch --yes --delete-secret-and-public-keys \
-          $(gpg --list-secret-keys --keyid-format LONG \
-            | grep sec | awk '{print $2}' | cut -d'/' -f2) || true
-            
